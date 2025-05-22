@@ -88,16 +88,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       result.fold((failure) {
         logger.error('Google sign-in failure', error: failure);
-        emit(AuthError(
-            message: 'Failed to sign in with Google: ${failure.message}'));
+
+        // Provide a more user-friendly error message for common Google Sign-In issues
+        String errorMessage = failure.message;
+        if (errorMessage.contains('ApiException: 10') ||
+            errorMessage.contains('PlatformException(sign_in_failed')) {
+          errorMessage =
+              'Google Play Services are not available or need to be updated on your device.';
+        } else if (errorMessage.contains('network_error')) {
+          errorMessage =
+              'Network error. Please check your internet connection and try again.';
+        } else if (errorMessage.contains('sign_in_canceled')) {
+          errorMessage = 'Sign-in was cancelled. Please try again.';
+        }
+
+        emit(AuthError(message: errorMessage));
       }, (user) {
         emit(AuthAuthenticated(user: user));
       });
     } catch (e, stackTrace) {
       logger.error('Error during Google sign in',
           error: e, stackTrace: stackTrace);
-      emit(
-          AuthError(message: 'Failed to sign in with Google: ${e.toString()}'));
+
+      // Provide a friendlier error message
+      String errorMessage =
+          'Failed to sign in with Google. Please try again later.';
+      emit(AuthError(message: errorMessage));
     }
   }
 

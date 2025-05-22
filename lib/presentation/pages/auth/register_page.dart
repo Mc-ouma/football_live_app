@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/pages/home/home_page.dart';
 import 'package:football_live_app/presentation/widgets/app_logo.dart';
@@ -72,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
             setState(() {
               _isLoading = false;
             });
-            
+
             if (state is AuthAuthenticated) {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const HomePage()),
@@ -108,18 +109,19 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 30),
                     Text(
                       'Create Account',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Sign up to get started',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
+                            color: Colors.white.withOpacity(0.8),
+                          ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 30),
@@ -224,7 +226,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _submitForm,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
@@ -253,7 +256,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             'OR',
-                            style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                            style:
+                                TextStyle(color: Colors.white.withOpacity(0.8)),
                           ),
                         ),
                         const Expanded(child: Divider(color: Colors.white54)),
@@ -271,9 +275,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        icon: Image.asset(
-                          'assets/images/google_logo.png',
+                        icon: SvgPicture.asset(
+                          'assets/images/google_logo.svg',
                           height: 24,
+                          width: 24,
+                          colorFilter: const ColorFilter.mode(
+                              Colors.white, BlendMode.srcIn),
                         ),
                         label: const Text('Sign up with Google'),
                       ),
@@ -284,7 +291,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         Text(
                           'Already have an account? ',
-                          style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                          style:
+                              TextStyle(color: Colors.white.withOpacity(0.8)),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context),

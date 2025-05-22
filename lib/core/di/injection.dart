@@ -1,6 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/network/network_info.dart';
 import 'package:football_live_app/core/utils/logger.dart';
@@ -42,7 +41,7 @@ Future<void> init() async {
   sl.registerSingleton<SharedPreferences>(sharedPreferences);
 
   sl.registerLazySingleton(() => Dio());
-  sl.registerLazySingleton(() => InternetConnectionChecker());
+  sl.registerLazySingleton(() => InternetConnectionChecker.createInstance());
   sl.registerLazySingleton(() => Connectivity());
   sl.registerLazySingleton(() => LoggerService());
 

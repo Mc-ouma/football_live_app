@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/pages/auth/register_page.dart';
 import 'package:football_live_app/presentation/pages/home/home_page.dart';
@@ -60,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
             setState(() {
               _isLoading = false;
             });
-            
+
             if (state is AuthAuthenticated) {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const HomePage()),
@@ -97,18 +98,19 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 40),
                     Text(
                       'Welcome Back',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
                     Text(
                       'Sign in to continue',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
+                            color: Colors.white.withOpacity(0.8),
+                          ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
@@ -176,7 +178,8 @@ class _LoginPageState extends State<LoginPage> {
                                   child: Text(
                                     'Forgot Password?',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ),
@@ -188,7 +191,8 @@ class _LoginPageState extends State<LoginPage> {
                                 child: ElevatedButton(
                                   onPressed: _isLoading ? null : _submitForm,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
@@ -217,7 +221,8 @@ class _LoginPageState extends State<LoginPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             'OR',
-                            style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                            style:
+                                TextStyle(color: Colors.white.withOpacity(0.8)),
                           ),
                         ),
                         const Expanded(child: Divider(color: Colors.white54)),
@@ -235,9 +240,12 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        icon: Image.asset(
-                          'assets/images/google_logo.png',
+                        icon: SvgPicture.asset(
+                          'assets/images/google_logo.svg',
                           height: 24,
+                          width: 24,
+                          colorFilter: const ColorFilter.mode(
+                              Colors.white, BlendMode.srcIn),
                         ),
                         label: const Text('Sign in with Google'),
                       ),
@@ -248,12 +256,14 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         Text(
                           'Don\'t have an account? ',
-                          style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                          style:
+                              TextStyle(color: Colors.white.withOpacity(0.8)),
                         ),
                         TextButton(
                           onPressed: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const RegisterPage()),
+                              MaterialPageRoute(
+                                  builder: (_) => const RegisterPage()),
                             );
                           },
                           child: const Text(

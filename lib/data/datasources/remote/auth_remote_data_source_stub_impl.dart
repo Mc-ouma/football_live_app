@@ -39,10 +39,20 @@ class AuthRemoteDataSourceStubImpl implements AuthRemoteDataSource {
   @override
   Future<UserModel> signInWithGoogle() async {
     _logger.info('Using stub auth: signInWithGoogle');
+
+    // Simulate network delay to make it feel more realistic
+    await Future.delayed(const Duration(milliseconds: 800));
+
     final user = UserModel.empty().copyWith(
       displayName: 'Stub Google User',
       email: 'google-stub@example.com',
+      photoUrl: 'https://lh3.googleusercontent.com/a/default-user',
+      isAnonymous: false,
+      emailVerified: true,
+      creationTime: DateTime.now(),
+      lastSignInTime: DateTime.now(),
     );
+
     _authController.add(user);
     return user;
   }
