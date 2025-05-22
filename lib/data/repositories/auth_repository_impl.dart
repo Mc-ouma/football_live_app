@@ -154,7 +154,6 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       await localDataSource.cacheUser(updatedUser);
       return Right(updatedUser);
-      return Right(user);
     } on AuthException catch (e) {
       logger.error('Error updating user profile', error: e);
       return Left(AuthFailure(message: e.message, code: e.code));
