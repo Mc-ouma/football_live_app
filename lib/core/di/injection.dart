@@ -22,6 +22,7 @@ import 'package:football_live_app/domain/usecases/auth/sign_in_with_google.dart'
 import 'package:football_live_app/domain/usecases/auth/sign_out.dart';
 import 'package:football_live_app/domain/usecases/football/get_league_standings.dart';
 import 'package:football_live_app/domain/usecases/football/get_live_matches.dart';
+import 'package:football_live_app/domain/usecases/football/get_match_details.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_prediction.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_predictions.dart';
 import 'package:football_live_app/domain/usecases/football/get_player_statistics.dart';
@@ -105,18 +106,19 @@ Future<void> init() async {
     ),
   );
 
-  sl.registerLazySingleton<PredictionRepository>(
-    () => PredictionRepositoryImpl(
-      remoteDataSource: sl<FootballRemoteDataSource>(),
-      connectivity: sl<Connectivity>(),
-      logger: sl<LoggerService>(),
-    ),
-  );
-
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       remoteDataSource: sl<AuthRemoteDataSource>(),
       localDataSource: sl<AuthLocalDataSource>(),
+      networkInfo: sl<NetworkInfo>(),
+      logger: sl<LoggerService>(),
+    ),
+  );
+
+  sl.registerLazySingleton<PredictionRepository>(
+    () => PredictionRepositoryImpl(
+      remoteDataSource: sl<FootballRemoteDataSource>(),
+      networkInfo: sl<NetworkInfo>(),
       logger: sl<LoggerService>(),
     ),
   );
@@ -124,23 +126,33 @@ Future<void> init() async {
   // Use Cases
   sl.registerLazySingleton(() => GetLiveMatches(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetUpcomingFixtures(sl<FootballRepository>()));
+  sl.registerLazySingleton(() => GetMatchDetails(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetLeagueStandings(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetTeamInformation(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetPlayerStatistics(sl<FootballRepository>()));
-  sl.registerLazySingleton(
-      () => GetMatchPrediction(sl<PredictionRepository>()));
-  sl.registerLazySingleton(
-      () => GetMatchPredictions(sl<PredictionRepository>()));
 
+  // Auth Use Cases
   sl.registerLazySingleton(() => SignInWithEmail(sl<AuthRepository>()));
   sl.registerLazySingleton(() => SignInWithGoogle(sl<AuthRepository>()));
   sl.registerLazySingleton(() => SignOut(sl<AuthRepository>()));
   sl.registerLazySingleton(() => GetCurrentUser(sl<AuthRepository>()));
 
+  // Prediction Use Cases
+  sl.registerLazySingleton(
+      () => GetMatchPrediction(sl<PredictionRepository>()));
+  sl.registerLazySingleton(
+      () => GetMatchPredictions(sl<PredictionRepository>()));
+
   // BLoCs
   sl.registerFactory(
     () => LiveMatchesBloc(
       getLiveMatches: sl<GetLiveMatches>(),
+      logger: sl<LoggerService>(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => UpcomingFixturesBloc(
       getUpcomingFixtures: sl<GetUpcomingFixtures>(),
       logger: sl<LoggerService>(),
     ),
@@ -149,13 +161,6 @@ Future<void> init() async {
   sl.registerFactory(
     () => StandingsBloc(
       getLeagueStandings: sl<GetLeagueStandings>(),
-      logger: sl<LoggerService>(),
-    ),
-  );
-
-  sl.registerFactory(
-    () => UpcomingFixturesBloc(
-      getUpcomingFixtures: sl<GetUpcomingFixtures>(),
       logger: sl<LoggerService>(),
     ),
   );
@@ -177,17 +182,16 @@ Future<void> init() async {
   sl.registerFactory(
     () => PredictionBloc(
       getMatchPrediction: sl<GetMatchPrediction>(),
-      getMatchPredictions: sl<GetMatchPredictions>(),
       logger: sl<LoggerService>(),
     ),
   );
 
   sl.registerFactory(
     () => AuthBloc(
+      getCurrentUser: sl<GetCurrentUser>(),
       signInWithEmail: sl<SignInWithEmail>(),
       signInWithGoogle: sl<SignInWithGoogle>(),
       signOut: sl<SignOut>(),
-      getCurrentUser: sl<GetCurrentUser>(),
       logger: sl<LoggerService>(),
     ),
   );

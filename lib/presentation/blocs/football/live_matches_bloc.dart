@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/core/utils/logger.dart';
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/domain/usecases/football/get_live_matches.dart';
 import 'package:football_live_app/domain/usecases/football/get_upcoming_fixtures.dart';
 

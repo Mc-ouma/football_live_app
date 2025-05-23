@@ -2,17 +2,17 @@ import 'package:football_live_app/core/config/env_config.dart';
 import 'package:football_live_app/core/errors/exceptions.dart';
 import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/utils/logger.dart';
-import 'package:football_live_app/data/models/match_model.dart';
+import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/data/models/player_model.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:football_live_app/data/models/standing_model.dart';
 
 abstract class FootballRemoteDataSource {
   /// Gets the current live matches
-  Future<List<MatchModel>> getLiveMatches();
+  Future<List<FixtureData>> getLiveMatches();
 
   /// Gets upcoming fixtures based on parameters
-  Future<List<MatchModel>> getUpcomingFixtures({
+  Future<List<FixtureData>> getUpcomingFixtures({
     DateTime? date,
     int? teamId,
     int? leagueId,
@@ -21,7 +21,7 @@ abstract class FootballRemoteDataSource {
   });
 
   /// Gets match details by ID
-  Future<MatchModel> getMatchDetails(int matchId);
+  Future<FixtureData> getMatchDetails(int matchId);
 
   /// Gets league standings
   Future<LeagueStandingModel> getLeagueStandings({
@@ -30,7 +30,7 @@ abstract class FootballRemoteDataSource {
   });
 
   /// Gets team information
-  Future<TeamModel> getTeamInformation(int teamId);
+  Future<Team> getTeamInformation(int teamId);
 
   /// Gets team statistics for a specific league/season
   Future<dynamic> getTeamStatistics({
@@ -51,13 +51,13 @@ abstract class FootballRemoteDataSource {
   });
 
   /// Search for teams by name
-  Future<List<TeamModel>> searchTeams(String query);
+  Future<List<Team>> searchTeams(String query);
 
   /// Search for players by name
   Future<List<PlayerModel>> searchPlayers(String query);
 
   /// Gets available leagues
-  Future<List<LeagueModel>> getLeagues({
+  Future<List<League>> getLeagues({
     String? country,
     int? season,
     bool current = true,
@@ -80,7 +80,7 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   });
 
   @override
-  Future<List<MatchModel>> getLiveMatches() async {
+  Future<List<FixtureData>> getLiveMatches() async {
     try {
       // According to API-Football documentation, we can use '/fixtures?live=all'
       // to get all live matches across all leagues
@@ -103,21 +103,24 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
         return [];
       }
 
-      // Parse response data
-      final List<dynamic> matchesData = responseBody['response'] ?? [];
-      final matches =
-          matchesData.map((match) => MatchModel.fromJson(match)).toList();
+      // Parse response using the fixture model
+      final fixtureResponse = FixtureResponse.fromJson(responseBody);
+      logger.info('Retrieved ${fixtureResponse.results} live matches');
 
-      logger.info('Fetched ${matches.length} live matches');
-      return matches;
+      return fixtureResponse.response;
     } catch (e) {
-      logger.error('Error getting live matches', error: e);
-      rethrow;
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching live matches', error: e);
+      throw ServerException(
+        message: 'Failed to get live matches: ${e.toString()}',
+      );
     }
   }
 
   @override
-  Future<List<MatchModel>> getUpcomingFixtures({
+  Future<List<FixtureData>> getUpcomingFixtures({
     DateTime? date,
     int? teamId,
     int? leagueId,
@@ -125,329 +128,42 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
     int limit = 10,
   }) async {
     try {
-      final queryParameters = <String, dynamic>{};
+      // Build the query parameters
+      final Map<String, dynamic> params = {};
 
       if (date != null) {
-        final dateString =
+        // Format date as YYYY-MM-DD (API requirement)
+        params['date'] =
             '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-        queryParameters['date'] = dateString;
       }
 
-      if (teamId != null) queryParameters['team'] = teamId;
-      if (leagueId != null) queryParameters['league'] = leagueId;
-      if (season != null) queryParameters['season'] = season;
+      if (teamId != null) {
+        params['team'] = teamId.toString();
+      }
 
-      // Add next parameter to get upcoming fixtures
-      if (date == null) queryParameters['next'] = limit;
+      if (leagueId != null) {
+        params['league'] = leagueId.toString();
+      }
+
+      if (season != null) {
+        params['season'] = season.toString();
+      }
+
+      // Set the status to upcoming fixtures
+      params['status'] = 'NS'; // Not Started
+
+      // Set the timezone (optional)
+      params['timezone'] =
+          'Europe/London'; // Use UTC or your preferred timezone
 
       final response = await apiClient.get(
         EnvConfig.fixtures,
-        queryParameters: queryParameters,
+        queryParameters: params,
       );
 
       final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
 
-      final List<dynamic> fixturesData = responseBody['response'] ?? [];
-      return fixturesData
-          .map((fixture) => MatchModel.fromJson(fixture))
-          .toList();
-    } catch (e) {
-      logger.error('Error getting upcoming fixtures', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<MatchModel> getMatchDetails(int matchId) async {
-    try {
-      final response = await apiClient.get(
-        EnvConfig.fixtures,
-        queryParameters: {'id': matchId},
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> fixturesData = responseBody['response'] ?? [];
-      if (fixturesData.isEmpty) {
-        throw NotFoundException(message: 'Match with ID $matchId not found');
-      }
-
-      return MatchModel.fromJson(fixturesData[0]);
-    } catch (e) {
-      logger.error('Error getting match details', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<LeagueStandingModel> getLeagueStandings({
-    required int leagueId,
-    required int season,
-  }) async {
-    try {
-      final response = await apiClient.get(
-        EnvConfig.standings,
-        queryParameters: {
-          'league': leagueId,
-          'season': season,
-        },
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> standingsData = responseBody['response'] ?? [];
-      if (standingsData.isEmpty) {
-        throw NotFoundException(
-          message:
-              'Standings for league $leagueId and season $season not found',
-        );
-      }
-
-      return LeagueStandingModel.fromJson(standingsData[0]);
-    } catch (e) {
-      logger.error('Error getting league standings', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<TeamModel> getTeamInformation(int teamId) async {
-    try {
-      final response = await apiClient.get(
-        EnvConfig.teams,
-        queryParameters: {'id': teamId},
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> teamsData = responseBody['response'] ?? [];
-      if (teamsData.isEmpty) {
-        throw NotFoundException(message: 'Team with ID $teamId not found');
-      }
-
-      final teamData = teamsData[0]['team'] ?? {};
-      return TeamModel.fromJson(teamData);
-    } catch (e) {
-      logger.error('Error getting team information', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<dynamic> getTeamStatistics({
-    required int teamId,
-    required int leagueId,
-    required int season,
-  }) async {
-    try {
-      final response = await apiClient.get(
-        '${EnvConfig.teams}/statistics',
-        queryParameters: {
-          'team': teamId,
-          'league': leagueId,
-          'season': season,
-        },
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final statisticsData = responseBody['response'] ?? {};
-      return statisticsData;
-    } catch (e) {
-      logger.error('Error getting team statistics', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<PlayerModel> getPlayerInformation(int playerId) async {
-    try {
-      final response = await apiClient.get(
-        EnvConfig.players,
-        queryParameters: {'id': playerId},
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> playersData = responseBody['response'] ?? [];
-      if (playersData.isEmpty) {
-        throw NotFoundException(message: 'Player with ID $playerId not found');
-      }
-
-      final playerData = playersData[0]['player'] ?? {};
-      return PlayerModel.fromJson(playerData);
-    } catch (e) {
-      logger.error('Error getting player information', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<PlayerStatisticsModel> getPlayerStatistics({
-    required int playerId,
-    required int season,
-    int? leagueId,
-    int? teamId,
-  }) async {
-    try {
-      final queryParams = {
-        'id': playerId,
-        'season': season,
-      };
-
-      if (leagueId != null) queryParams['league'] = leagueId;
-      if (teamId != null) queryParams['team'] = teamId;
-
-      final response = await apiClient.get(
-        EnvConfig.players,
-        queryParameters: queryParams,
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> playersData = responseBody['response'] ?? [];
-      if (playersData.isEmpty) {
-        throw NotFoundException(
-          message: 'Statistics for player $playerId not found',
-        );
-      }
-
-      return PlayerStatisticsModel.fromJson(playersData[0]);
-    } catch (e) {
-      logger.error('Error getting player statistics', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<List<TeamModel>> searchTeams(String query) async {
-    try {
-      final response = await apiClient.get(
-        EnvConfig.teams,
-        queryParameters: {'search': query},
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> teamsData = responseBody['response'] ?? [];
-      return teamsData
-          .map((team) => TeamModel.fromJson(team['team'] ?? {}))
-          .toList();
-    } catch (e) {
-      logger.error('Error searching teams', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<List<PlayerModel>> searchPlayers(String query) async {
-    try {
-      final response = await apiClient.get(
-        EnvConfig.players,
-        queryParameters: {'search': query},
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> playersData = responseBody['response'] ?? [];
-      return playersData
-          .map((player) => PlayerModel.fromJson(player['player'] ?? {}))
-          .toList();
-    } catch (e) {
-      logger.error('Error searching players', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<List<LeagueModel>> getLeagues({
-    String? country,
-    int? season,
-    bool current = true,
-  }) async {
-    try {
-      final queryParams = <String, dynamic>{};
-
-      if (country != null) queryParams['country'] = country;
-      if (season != null) queryParams['season'] = season;
-      if (current) queryParams['current'] = 'true';
-
-      final response = await apiClient.get(
-        EnvConfig.leagues,
-        queryParameters: queryParams,
-      );
-
-      final responseBody = response.data;
-      if (responseBody['errors']?.isNotEmpty ?? false) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
-      }
-
-      final List<dynamic> leaguesData = responseBody['response'] ?? [];
-      return leaguesData
-          .map((league) => LeagueModel.fromJson(league['league'] ?? {}))
-          .toList();
-    } catch (e) {
-      logger.error('Error getting leagues', error: e);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<PredictionModel?> getMatchPrediction(int matchId) async {
-    try {
-      final response = await apiClient.get(
-        EnvConfig.predictions,
-        queryParameters: {'fixture': matchId},
-      );
-
-      final responseBody = response.data;
+      // Check for API errors
       if (responseBody['errors'] != null &&
           responseBody['errors'] is Map &&
           responseBody['errors'].isNotEmpty) {
@@ -458,40 +174,305 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
 
       // Check if we have results
       if (responseBody['results'] == 0) {
-        logger.info('No prediction found for match ID $matchId');
-        return null;
+        logger.info('No upcoming fixtures found');
+        return [];
       }
 
-      // Parse response data
-      final List<dynamic> predictionsData = responseBody['response'] ?? [];
-      if (predictionsData.isEmpty) {
-        return null;
+      // Parse response using the fixture model
+      final fixtureResponse = FixtureResponse.fromJson(responseBody);
+      logger.info('Retrieved ${fixtureResponse.results} upcoming fixtures');
+
+      // Apply the limit if needed
+      if (fixtureResponse.response.length > limit) {
+        return fixtureResponse.response.sublist(0, limit);
       }
 
-      return PredictionModel.fromJson(predictionsData[0]);
+      return fixtureResponse.response;
     } catch (e) {
-      logger.error('Error getting match prediction', error: e);
-      rethrow;
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching upcoming fixtures', error: e);
+      throw ServerException(
+        message: 'Failed to get upcoming fixtures: ${e.toString()}',
+      );
     }
   }
 
   @override
-  Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds) async {
+  Future<FixtureData> getMatchDetails(int matchId) async {
     try {
-      // We'll fetch predictions one by one as the API might not support bulk operations
-      final List<PredictionModel> predictions = [];
+      // Build the query parameters
+      final Map<String, dynamic> params = {
+        'id': matchId.toString(),
+      };
 
-      for (final matchId in matchIds) {
-        final prediction = await getMatchPrediction(matchId);
-        if (prediction != null) {
-          predictions.add(prediction);
-        }
+      final response = await apiClient.get(
+        EnvConfig.fixtures,
+        queryParameters: params,
+      );
+
+      final responseBody = response.data;
+
+      // Check for API errors
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
       }
 
-      return predictions;
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        throw ServerException(
+          message: 'No match found with ID: $matchId',
+        );
+      }
+
+      // Parse response using the fixture model
+      final fixtureResponse = FixtureResponse.fromJson(responseBody);
+      logger.info('Retrieved match details for match ID: $matchId');
+
+      return fixtureResponse.response.first;
     } catch (e) {
-      logger.error('Error getting match predictions', error: e);
-      rethrow;
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching match details', error: e);
+      throw ServerException(
+        message: 'Failed to get match details: ${e.toString()}',
+      );
     }
+  }
+
+  @override
+  Future<LeagueStandingModel> getLeagueStandings({
+    required int leagueId,
+    required int season,
+  }) async {
+    // This depends on the structure of your LeagueStandingModel
+    // Implementation would need to be adapted to your specific models
+    throw UnimplementedError('Not implemented yet');
+  }
+
+  @override
+  Future<Team> getTeamInformation(int teamId) async {
+    try {
+      // Build the query parameters
+      final Map<String, dynamic> params = {
+        'id': teamId.toString(),
+      };
+
+      final response = await apiClient.get(
+        EnvConfig.teams,
+        queryParameters: params,
+      );
+
+      final responseBody = response.data;
+
+      // Check for API errors
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
+      }
+
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        throw ServerException(
+          message: 'No team found with ID: $teamId',
+        );
+      }
+
+      // Parse the team information - structure depends on your API
+      final team = Team(
+        id: responseBody['response'][0]['team']['id'],
+        name: responseBody['response'][0]['team']['name'],
+        logo: responseBody['response'][0]['team']['logo'],
+      );
+
+      logger.info('Retrieved team information for team ID: $teamId');
+      return team;
+    } catch (e) {
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching team information', error: e);
+      throw ServerException(
+        message: 'Failed to get team information: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<dynamic> getTeamStatistics({
+    required int teamId,
+    required int leagueId,
+    required int season,
+  }) async {
+    // Implementation for team statistics
+    throw UnimplementedError('Not implemented yet');
+  }
+
+  @override
+  Future<PlayerModel> getPlayerInformation(int playerId) async {
+    // Implementation for player information
+    throw UnimplementedError('Not implemented yet');
+  }
+
+  @override
+  Future<PlayerStatisticsModel> getPlayerStatistics({
+    required int playerId,
+    required int season,
+    int? leagueId,
+    int? teamId,
+  }) async {
+    // Implementation for player statistics
+    throw UnimplementedError('Not implemented yet');
+  }
+
+  @override
+  Future<List<Team>> searchTeams(String query) async {
+    try {
+      // Build the query parameters
+      final Map<String, dynamic> params = {
+        'search': query,
+      };
+
+      final response = await apiClient.get(
+        EnvConfig.teams,
+        queryParameters: params,
+      );
+
+      final responseBody = response.data;
+
+      // Check for API errors
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
+      }
+
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        logger.info('No teams found for query: $query');
+        return [];
+      }
+
+      // Parse the teams information
+      final List<Team> teams = [];
+      for (final teamData in responseBody['response']) {
+        teams.add(Team(
+          id: teamData['team']['id'],
+          name: teamData['team']['name'],
+          logo: teamData['team']['logo'],
+        ));
+      }
+
+      logger.info('Found ${teams.length} teams for query: $query');
+      return teams;
+    } catch (e) {
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error searching teams', error: e);
+      throw ServerException(
+        message: 'Failed to search teams: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<List<PlayerModel>> searchPlayers(String query) async {
+    // Implementation for player search
+    throw UnimplementedError('Not implemented yet');
+  }
+
+  @override
+  Future<List<League>> getLeagues({
+    String? country,
+    int? season,
+    bool current = true,
+  }) async {
+    try {
+      // Build the query parameters
+      final Map<String, dynamic> params = {};
+
+      if (country != null) {
+        params['country'] = country;
+      }
+
+      if (season != null) {
+        params['season'] = season.toString();
+      }
+
+      if (current) {
+        params['current'] = 'true';
+      }
+
+      final response = await apiClient.get(
+        EnvConfig.leagues,
+        queryParameters: params,
+      );
+
+      final responseBody = response.data;
+
+      // Check for API errors
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
+      }
+
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        logger.info('No leagues found');
+        return [];
+      }
+
+      // Parse the leagues information
+      final List<League> leagues = [];
+      for (final leagueData in responseBody['response']) {
+        leagues.add(League(
+          id: leagueData['league']['id'],
+          name: leagueData['league']['name'],
+          country: leagueData['country']['name'],
+          logo: leagueData['league']['logo'],
+          flag: leagueData['country']['flag'],
+          season: leagueData['seasons'][0]['year'],
+          round: leagueData['seasons'][0]['current'] ? 'Current' : null,
+        ));
+      }
+
+      logger.info('Found ${leagues.length} leagues');
+      return leagues;
+    } catch (e) {
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching leagues', error: e);
+      throw ServerException(
+        message: 'Failed to get leagues: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<PredictionModel?> getMatchPrediction(int matchId) async {
+    // Implementation for match prediction
+    throw UnimplementedError('Not implemented yet');
+  }
+
+  @override
+  Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds) async {
+    // Implementation for match predictions
+    throw UnimplementedError('Not implemented yet');
   }
 }

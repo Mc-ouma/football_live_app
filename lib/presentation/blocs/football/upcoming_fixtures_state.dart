@@ -4,7 +4,7 @@ abstract class UpcomingFixturesState extends Equatable {
   const UpcomingFixturesState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class UpcomingFixturesInitial extends UpcomingFixturesState {}
@@ -12,7 +12,7 @@ class UpcomingFixturesInitial extends UpcomingFixturesState {}
 class UpcomingFixturesLoading extends UpcomingFixturesState {}
 
 class UpcomingFixturesLoaded extends UpcomingFixturesState {
-  final List<Match> fixtures;
+  final List<FixtureData> fixtures;
 
   const UpcomingFixturesLoaded({required this.fixtures});
 

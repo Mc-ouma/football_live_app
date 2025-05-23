@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/domain/entities/fixture.dart';
 
 class Standing extends Equatable {
   final int rank;
@@ -30,18 +30,18 @@ class Standing extends Equatable {
 
   @override
   List<Object?> get props => [
-        rank,
-        team,
-        points,
-        description,
-        form,
-        all,
-        home,
-        away,
-        goalsDiff,
-        group,
-        update,
-      ];
+    rank,
+    team,
+    points,
+    description,
+    form,
+    all,
+    home,
+    away,
+    goalsDiff,
+    group,
+    update,
+  ];
 }
 
 class StandingStats extends Equatable {
@@ -60,13 +60,7 @@ class StandingStats extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-        played,
-        win,
-        draw,
-        lose,
-        goals,
-      ];
+  List<Object?> get props => [played, win, draw, lose, goals];
 }
 
 class Goals extends Equatable {
@@ -83,10 +77,7 @@ class LeagueStanding extends Equatable {
   final League league;
   final List<List<Standing>> standings;
 
-  const LeagueStanding({
-    required this.league,
-    required this.standings,
-  });
+  const LeagueStanding({required this.league, required this.standings});
 
   @override
   List<Object?> get props => [league, standings];

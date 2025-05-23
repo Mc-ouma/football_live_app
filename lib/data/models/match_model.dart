@@ -1,4 +1,5 @@
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/data/models/match_statistics.dart';
+import 'package:football_live_app/domain/entities/fixture.dart';
 import 'package:football_live_app/domain/entities/prediction.dart';
 import 'package:football_live_app/data/models/match_event_model.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
@@ -23,8 +24,8 @@ class MatchModel extends Match {
     PredictionModel? prediction,
     super.lineups,
     super.statistics,
-  })  : _predictionModel = prediction,
-        super(prediction: null); // We'll override the getter
+  }) : _predictionModel = prediction,
+       super(prediction: null); // We'll override the getter
 
   @override
   Prediction? get prediction => _predictionModel?.toEntity();
@@ -100,16 +101,14 @@ class MatchModel extends Match {
         'status': statusModel.toJson(),
       },
       'league': leagueModel.toJson(),
-      'teams': {
-        'home': homeTeamModel.toJson(),
-        'away': awayTeamModel.toJson(),
-      },
-      'goals': scoreModel?.goals != null
-          ? {
-              'home': scoreModel?.goals?.home,
-              'away': scoreModel?.goals?.away,
-            }
-          : {'home': null, 'away': null},
+      'teams': {'home': homeTeamModel.toJson(), 'away': awayTeamModel.toJson()},
+      'goals':
+          scoreModel?.goals != null
+              ? {
+                'home': scoreModel?.goals?.home,
+                'away': scoreModel?.goals?.away,
+              }
+              : {'home': null, 'away': null},
       'score': scoreModel?.toJson() ?? {},
       'events': eventModels.map((e) => e.toJson()).toList(),
       'lineups': lineupModel?.toJson() ?? [],
@@ -143,38 +142,43 @@ class MatchModel extends Match {
         id: map['away_team_id'],
         name: '', // Needs to be loaded from teams table
       ),
-      score: map['goals_home'] != null || map['goals_away'] != null
-          ? ScoreModel(
-              goals: GoalsScoreModel(
-                home: map['goals_home'],
-                away: map['goals_away'],
-              ),
-              halftime: map['score_halftime_home'] != null
-                  ? HalfTimeScoreModel(
-                      home: map['score_halftime_home'],
-                      away: map['score_halftime_away'],
-                    )
-                  : null,
-              fulltime: map['score_fulltime_home'] != null
-                  ? FullTimeScoreModel(
-                      home: map['score_fulltime_home'],
-                      away: map['score_fulltime_away'],
-                    )
-                  : null,
-              extratime: map['score_extratime_home'] != null
-                  ? ExtraTimeScoreModel(
-                      home: map['score_extratime_home'],
-                      away: map['score_extratime_away'],
-                    )
-                  : null,
-              penalty: map['score_penalty_home'] != null
-                  ? PenaltyScoreModel(
-                      home: map['score_penalty_home'],
-                      away: map['score_penalty_away'],
-                    )
-                  : null,
-            )
-          : null,
+      score:
+          map['goals_home'] != null || map['goals_away'] != null
+              ? ScoreModel(
+                goals: GoalsScoreModel(
+                  home: map['goals_home'],
+                  away: map['goals_away'],
+                ),
+                halftime:
+                    map['score_halftime_home'] != null
+                        ? HalfTimeScoreModel(
+                          home: map['score_halftime_home'],
+                          away: map['score_halftime_away'],
+                        )
+                        : null,
+                fulltime:
+                    map['score_fulltime_home'] != null
+                        ? FullTimeScoreModel(
+                          home: map['score_fulltime_home'],
+                          away: map['score_fulltime_away'],
+                        )
+                        : null,
+                extratime:
+                    map['score_extratime_home'] != null
+                        ? ExtraTimeScoreModel(
+                          home: map['score_extratime_home'],
+                          away: map['score_extratime_away'],
+                        )
+                        : null,
+                penalty:
+                    map['score_penalty_home'] != null
+                        ? PenaltyScoreModel(
+                          home: map['score_penalty_home'],
+                          away: map['score_penalty_away'],
+                        )
+                        : null,
+              )
+              : null,
       // Events need to be loaded separately from the events table
       events: const [],
     );
@@ -222,15 +226,15 @@ class VenueModel extends Venue {
     String? address,
     String? surface,
   }) : super(
-          id: id,
-          name: name,
-          city: city,
-          country: country,
-          capacity: capacity,
-          image: image,
-          address: address,
-          surface: surface,
-        );
+         id: id,
+         name: name,
+         city: city,
+         country: country,
+         capacity: capacity,
+         image: image,
+         address: address,
+         surface: surface,
+       );
 
   factory VenueModel.fromJson(Map<String, dynamic> json) {
     return VenueModel(
@@ -266,11 +270,11 @@ class MatchStatusModel extends MatchStatus {
     int? elapsed,
     String? secondHalfTime,
   }) : super(
-          long: long,
-          short: short,
-          elapsed: elapsed,
-          secondHalfTime: secondHalfTime,
-        );
+         long: long,
+         short: short,
+         elapsed: elapsed,
+         secondHalfTime: secondHalfTime,
+       );
 
   factory MatchStatusModel.fromJson(Map<String, dynamic> json) {
     return MatchStatusModel(
@@ -299,29 +303,35 @@ class ScoreModel extends Score {
     ExtraTimeScoreModel? extratime,
     PenaltyScoreModel? penalty,
   }) : super(
-          goals: goals,
-          halftime: halftime,
-          fulltime: fulltime,
-          extratime: extratime,
-          penalty: penalty,
-        );
+         goals: goals,
+         halftime: halftime,
+         fulltime: fulltime,
+         extratime: extratime,
+         penalty: penalty,
+       );
 
   factory ScoreModel.fromJson(
-      Map<String, dynamic> goals, Map<String, dynamic> score) {
+    Map<String, dynamic> goals,
+    Map<String, dynamic> score,
+  ) {
     return ScoreModel(
       goals: GoalsScoreModel.fromJson(goals),
-      halftime: score['halftime'] != null
-          ? HalfTimeScoreModel.fromJson(score['halftime'])
-          : null,
-      fulltime: score['fulltime'] != null
-          ? FullTimeScoreModel.fromJson(score['fulltime'])
-          : null,
-      extratime: score['extratime'] != null
-          ? ExtraTimeScoreModel.fromJson(score['extratime'])
-          : null,
-      penalty: score['penalty'] != null
-          ? PenaltyScoreModel.fromJson(score['penalty'])
-          : null,
+      halftime:
+          score['halftime'] != null
+              ? HalfTimeScoreModel.fromJson(score['halftime'])
+              : null,
+      fulltime:
+          score['fulltime'] != null
+              ? FullTimeScoreModel.fromJson(score['fulltime'])
+              : null,
+      extratime:
+          score['extratime'] != null
+              ? ExtraTimeScoreModel.fromJson(score['extratime'])
+              : null,
+      penalty:
+          score['penalty'] != null
+              ? PenaltyScoreModel.fromJson(score['penalty'])
+              : null,
     );
   }
 
@@ -345,93 +355,63 @@ class GoalsScoreModel extends GoalsScore {
   const GoalsScoreModel({int? home, int? away}) : super(home: home, away: away);
 
   factory GoalsScoreModel.fromJson(Map<String, dynamic> json) {
-    return GoalsScoreModel(
-      home: json['home'],
-      away: json['away'],
-    );
+    return GoalsScoreModel(home: json['home'], away: json['away']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'home': home,
-      'away': away,
-    };
+    return {'home': home, 'away': away};
   }
 }
 
 class HalfTimeScoreModel extends HalfTimeScore {
   const HalfTimeScoreModel({int? home, int? away})
-      : super(home: home, away: away);
+    : super(home: home, away: away);
 
   factory HalfTimeScoreModel.fromJson(Map<String, dynamic> json) {
-    return HalfTimeScoreModel(
-      home: json['home'],
-      away: json['away'],
-    );
+    return HalfTimeScoreModel(home: json['home'], away: json['away']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'home': home,
-      'away': away,
-    };
+    return {'home': home, 'away': away};
   }
 }
 
 class FullTimeScoreModel extends FullTimeScore {
   const FullTimeScoreModel({int? home, int? away})
-      : super(home: home, away: away);
+    : super(home: home, away: away);
 
   factory FullTimeScoreModel.fromJson(Map<String, dynamic> json) {
-    return FullTimeScoreModel(
-      home: json['home'],
-      away: json['away'],
-    );
+    return FullTimeScoreModel(home: json['home'], away: json['away']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'home': home,
-      'away': away,
-    };
+    return {'home': home, 'away': away};
   }
 }
 
 class ExtraTimeScoreModel extends ExtraTimeScore {
   const ExtraTimeScoreModel({int? home, int? away})
-      : super(home: home, away: away);
+    : super(home: home, away: away);
 
   factory ExtraTimeScoreModel.fromJson(Map<String, dynamic> json) {
-    return ExtraTimeScoreModel(
-      home: json['home'],
-      away: json['away'],
-    );
+    return ExtraTimeScoreModel(home: json['home'], away: json['away']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'home': home,
-      'away': away,
-    };
+    return {'home': home, 'away': away};
   }
 }
 
 class PenaltyScoreModel extends PenaltyScore {
   const PenaltyScoreModel({int? home, int? away})
-      : super(home: home, away: away);
+    : super(home: home, away: away);
 
   factory PenaltyScoreModel.fromJson(Map<String, dynamic> json) {
-    return PenaltyScoreModel(
-      home: json['home'],
-      away: json['away'],
-    );
+    return PenaltyScoreModel(home: json['home'], away: json['away']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'home': home,
-      'away': away,
-    };
+    return {'home': home, 'away': away};
   }
 }
 
@@ -449,17 +429,17 @@ class TeamModel extends Team {
     StatisticsModel? statistics,
     bool isHome = false,
   }) : super(
-          id: id,
-          name: name,
-          logo: logo,
-          winner: winner,
-          country: country,
-          founded: founded,
-          code: code,
-          national: national,
-          form: form,
-          statistics: statistics,
-        );
+         id: id,
+         name: name,
+         logo: logo,
+         winner: winner,
+         country: country,
+         founded: founded,
+         code: code,
+         national: national,
+         form: form,
+         statistics: statistics,
+       );
 
   factory TeamModel.fromJson(Map<String, dynamic> json, {bool isHome = false}) {
     StatisticsModel? statsModel;
@@ -512,7 +492,7 @@ class TeamModel extends Team {
 
 class StatisticsModel extends Statistics {
   const StatisticsModel({required Map<String, dynamic> stats})
-      : super(stats: stats);
+    : super(stats: stats);
 
   factory StatisticsModel.fromJson(Map<String, dynamic> json) {
     return StatisticsModel(stats: json);
@@ -532,15 +512,15 @@ class LeagueModel extends League {
     String? round,
     String? type,
   }) : super(
-          id: id,
-          name: name,
-          country: country,
-          logo: logo,
-          flag: flag,
-          season: season,
-          round: round,
-          type: type,
-        );
+         id: id,
+         name: name,
+         country: country,
+         logo: logo,
+         flag: flag,
+         season: season,
+         round: round,
+         type: type,
+       );
 
   factory LeagueModel.fromJson(Map<String, dynamic> json) {
     return LeagueModel(
@@ -584,7 +564,7 @@ class LeagueModel extends League {
 
 class LineUpModel extends LineUp {
   const LineUpModel({TeamLineUpModel? home, TeamLineUpModel? away})
-      : super(home: home, away: away);
+    : super(home: home, away: away);
 
   factory LineUpModel.fromJson(List<dynamic> json) {
     TeamLineUpModel? homeLineup;
@@ -604,10 +584,7 @@ class LineUpModel extends LineUp {
       }
     }
 
-    return LineUpModel(
-      home: homeLineup,
-      away: awayLineup,
-    );
+    return LineUpModel(home: homeLineup, away: awayLineup);
   }
 
   Map<String, dynamic> toJson() {
@@ -637,23 +614,25 @@ class TeamLineUpModel extends TeamLineUp {
     List<PlayerModel>? startXI,
     List<PlayerModel>? substitutes,
   }) : super(
-          id: id,
-          name: name,
-          formation: formation,
-          coach: coach,
-          coachId: coachId,
-          startXI: startXI,
-          substitutes: substitutes,
-        );
+         id: id,
+         name: name,
+         formation: formation,
+         coach: coach,
+         coachId: coachId,
+         startXI: startXI,
+         substitutes: substitutes,
+       );
 
   factory TeamLineUpModel.fromJson(Map<String, dynamic> json) {
     final team = json['team'] ?? {};
     final coach = json['coach'] ?? {};
-    final startXI = (json['startXI'] as List?)
+    final startXI =
+        (json['startXI'] as List?)
             ?.map((p) => PlayerModel.fromJson(p))
             .toList() ??
         [];
-    final substitutes = (json['substitutes'] as List?)
+    final substitutes =
+        (json['substitutes'] as List?)
             ?.map((p) => PlayerModel.fromJson(p))
             .toList() ??
         [];
@@ -670,31 +649,27 @@ class TeamLineUpModel extends TeamLineUp {
   }
 
   Map<String, dynamic> toJson() {
-    final List<Map<String, dynamic>> startXIJson = startXI != null
-        ? startXI!.map((p) => (p as PlayerModel).toJson()).toList()
-        : [];
+    final List<Map<String, dynamic>> startXIJson =
+        startXI != null
+            ? startXI!.map((p) => (p as PlayerModel).toJson()).toList()
+            : [];
 
-    final List<Map<String, dynamic>> subsJson = substitutes != null
-        ? substitutes!.map((p) => (p as PlayerModel).toJson()).toList()
-        : [];
+    final List<Map<String, dynamic>> subsJson =
+        substitutes != null
+            ? substitutes!.map((p) => (p as PlayerModel).toJson()).toList()
+            : [];
 
     return {
-      'team': {
-        'id': id,
-        'name': name,
-      },
+      'team': {'id': id, 'name': name},
       'formation': formation,
-      'coach': {
-        'id': coachId,
-        'name': coach,
-      },
+      'coach': {'id': coachId, 'name': coach},
       'startXI': startXIJson,
       'substitutes': subsJson,
     };
   }
 }
 
-class PlayerModel extends Player {
+/* class PlayerModel extends Player {
   const PlayerModel({
     int? id,
     String? name,
@@ -732,23 +707,23 @@ class PlayerModel extends Player {
     };
   }
 }
-
-class MatchStatisticsModel extends MatchStatistics {
+ */
+/* class MatchStatisticsModel extends MatchStatistics {
   const MatchStatisticsModel({
-    List<TeamStatisticsModel>? home,
-    List<TeamStatisticsModel>? away,
+    List<MatchStatisticModel>? home,
+    List<MatchStatisticModel>? away,
   }) : super(home: home, away: away);
 
   factory MatchStatisticsModel.fromJson(List<dynamic> json) {
-    List<TeamStatisticsModel>? homeStats;
-    List<TeamStatisticsModel>? awayStats;
+    List<MatchStatisticModel>? homeStats;
+    List<MatchStatisticModel>? awayStats;
 
     for (var stats in json) {
       final team = stats['team'];
       if (team != null) {
         final List<dynamic> teamStats = stats['statistics'] ?? [];
         final statsList =
-            teamStats.map((s) => TeamStatisticsModel.fromJson(s)).toList();
+            teamStats.map((s) => MatchStatisticModel.fromJson(s)).toList();
 
         // First statistics entry is typically home team, second is away
         if (homeStats == null) {
@@ -766,10 +741,10 @@ class MatchStatisticsModel extends MatchStatistics {
   }
 
   Map<String, dynamic> toJson() {
-    final List<TeamStatisticsModel>? homeList =
-        home as List<TeamStatisticsModel>?;
-    final List<TeamStatisticsModel>? awayList =
-        away as List<TeamStatisticsModel>?;
+    final List<MatchStatisticModel>? homeList =
+        home as List<MatchStatisticModel>?;
+    final List<MatchStatisticModel>? awayList =
+        away as List<MatchStatisticModel>?;
     final result = [];
 
     if (homeList != null) {
@@ -796,23 +771,4 @@ class MatchStatisticsModel extends MatchStatistics {
   }
 }
 
-class TeamStatisticsModel extends TeamStatistics {
-  const TeamStatisticsModel({
-    required String type,
-    required dynamic value,
-  }) : super(type: type, value: value);
-
-  factory TeamStatisticsModel.fromJson(Map<String, dynamic> json) {
-    return TeamStatisticsModel(
-      type: json['type'] ?? '',
-      value: json['value'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'value': value,
-    };
-  }
-}
+ */

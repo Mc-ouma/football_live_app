@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/domain/entities/fixture.dart';
 import 'package:football_live_app/domain/entities/standing.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/widgets/error_view.dart';

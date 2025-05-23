@@ -27,6 +27,23 @@ class NewsDetailPage extends StatelessWidget {
     }
   }
 
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 7) {
+      return DateFormat('MMM d, yyyy').format(date);
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('MMMM d, yyyy • h:mm a');
@@ -375,8 +392,10 @@ class NewsDetailPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    ...newsItem.comments
-                        .map((comment) => CommentWidget(comment: comment)),
+                    ...newsItem.comments.map((comment) => CommentWidget(
+                          comment: comment,
+                          formatDate: _formatDate,
+                        )),
                     const SizedBox(height: 16),
                     OutlinedButton(
                       onPressed: () {
@@ -399,8 +418,11 @@ class NewsDetailPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ...newsItem.relatedArticles.map(
-                        (article) => RelatedArticleWidget(article: article)),
+                    ...newsItem.relatedArticles
+                        .map((article) => RelatedArticleWidget(
+                              article: article,
+                              formatDate: _formatDate,
+                            )),
                   ],
 
                   const SizedBox(height: 32),
@@ -444,23 +466,13 @@ class NewsDetailPage extends StatelessWidget {
 
 class CommentWidget extends StatelessWidget {
   final NewsComment comment;
+  final String Function(DateTime) formatDate;
 
-  const CommentWidget({Key? key, required this.comment}) : super(key: key);
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
+  const CommentWidget({
+    Key? key,
+    required this.comment,
+    required this.formatDate,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -502,7 +514,7 @@ class CommentWidget extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          _formatDate(comment.timestamp),
+                          formatDate(comment.timestamp),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade600,
@@ -576,7 +588,10 @@ class CommentWidget extends StatelessWidget {
               padding: const EdgeInsets.only(left: 44, top: 8),
               child: Column(
                 children: comment.replies
-                    .map((reply) => CommentWidget(comment: reply))
+                    .map((reply) => CommentWidget(
+                          comment: reply,
+                          formatDate: formatDate,
+                        ))
                     .toList(),
               ),
             ),
@@ -588,9 +603,13 @@ class CommentWidget extends StatelessWidget {
 
 class RelatedArticleWidget extends StatelessWidget {
   final RelatedNewsArticle article;
+  final String Function(DateTime) formatDate;
 
-  const RelatedArticleWidget({Key? key, required this.article})
-      : super(key: key);
+  const RelatedArticleWidget({
+    Key? key,
+    required this.article,
+    required this.formatDate,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -639,7 +658,7 @@ class RelatedArticleWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    article.publishedDate.toString(),
+                    formatDate(article.publishedDate),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,

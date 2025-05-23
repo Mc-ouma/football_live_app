@@ -2,9 +2,9 @@ part of 'live_matches_bloc.dart';
 
 abstract class LiveMatchesState extends Equatable {
   const LiveMatchesState();
-  
+
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LiveMatchesInitial extends LiveMatchesState {}
@@ -12,7 +12,7 @@ class LiveMatchesInitial extends LiveMatchesState {}
 class LiveMatchesLoading extends LiveMatchesState {}
 
 class LiveMatchesLoaded extends LiveMatchesState {
-  final List<Match> matches;
+  final List<FixtureData> matches;
 
   const LiveMatchesLoaded({required this.matches});
 

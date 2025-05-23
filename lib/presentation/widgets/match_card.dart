@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:football_live_app/domain/entities/match.dart';
-import 'package:football_live_app/presentation/widgets/prediction_badge.dart';
+import 'package:football_live_app/data/models/fixture_model.dart';
 
 class MatchCard extends StatelessWidget {
-  final Match match;
+  final FixtureData match;
   final VoidCallback onTap;
 
   const MatchCard({
@@ -38,13 +37,11 @@ class MatchCard extends StatelessWidget {
                         SizedBox(
                           width: 24,
                           height: 24,
-                          child: match.league.logo != null
-                              ? Image.network(
-                                  match.league.logo!,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.sports_soccer, size: 20),
-                                )
-                              : const Icon(Icons.sports_soccer, size: 20),
+                          child: Image.network(
+                            match.league.logo ?? '',
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.sports_soccer, size: 20),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -59,26 +56,27 @@ class MatchCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ), // Match time/status
+                  ),
+                  // Match time/status
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: match.status.short == 'LIVE'
+                      color: match.fixture.status.short == 'LIVE'
                           ? Colors.red
                           : Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      match.status.short == 'LIVE'
-                          ? '${match.status.elapsed ?? 0}\''
-                          : match.status.long,
+                      match.fixture.status.short == 'LIVE'
+                          ? '${match.fixture.status.elapsed ?? 0}\''
+                          : match.fixture.status.long,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: match.status.short == 'LIVE'
+                        color: match.fixture.status.short == 'LIVE'
                             ? Colors.white
                             : Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
@@ -86,17 +84,6 @@ class MatchCard extends StatelessWidget {
                   ),
                 ],
               ),
-
-              // Show prediction badge for upcoming matches
-              if (match.prediction != null && match.status.short == "NS") ...[
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    PredictionBadge(prediction: match.prediction!),
-                  ],
-                ),
-              ],
 
               const SizedBox(height: 16),
 
@@ -111,17 +98,15 @@ class MatchCard extends StatelessWidget {
                         SizedBox(
                           height: 40,
                           width: 40,
-                          child: match.homeTeam.logo != null
-                              ? Image.network(
-                                  match.homeTeam.logo!,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.shield, size: 30),
-                                )
-                              : const Icon(Icons.shield, size: 30),
+                          child: Image.network(
+                            match.teams.home.logo,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.shield, size: 30),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          match.homeTeam.name,
+                          match.teams.home.name,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontWeight: FontWeight.w500,
@@ -149,12 +134,12 @@ class MatchCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${match.score?.homeGoals ?? 0} - ${match.score?.awayGoals ?? 0}',
+                        '${match.goals.home ?? 0} - ${match.goals.away ?? 0}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: match.status.short == 'LIVE'
+                          color: match.fixture.status.short == 'LIVE'
                               ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -170,17 +155,15 @@ class MatchCard extends StatelessWidget {
                         SizedBox(
                           height: 40,
                           width: 40,
-                          child: match.awayTeam.logo != null
-                              ? Image.network(
-                                  match.awayTeam.logo!,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.shield, size: 30),
-                                )
-                              : const Icon(Icons.shield, size: 30),
+                          child: Image.network(
+                            match.teams.away.logo,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.shield, size: 30),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          match.awayTeam.name,
+                          match.teams.away.name,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontWeight: FontWeight.w500,
@@ -195,20 +178,20 @@ class MatchCard extends StatelessWidget {
               ),
 
               // Match events/stats summary
-              if (match.events.isNotEmpty) ...[
+              if (match.events != null && match.events!.isNotEmpty) ...[
                 const Divider(height: 24),
                 SizedBox(
                   height: 24,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount:
-                        match.events.length > 3 ? 3 : match.events.length,
+                        match.events!.length > 3 ? 3 : match.events!.length,
                     separatorBuilder: (context, index) => const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4),
                       child: Text('•', style: TextStyle(color: Colors.grey)),
                     ),
                     itemBuilder: (context, index) {
-                      final event = match.events[index];
+                      final event = match.events![index];
                       IconData icon;
 
                       switch (event.type) {
@@ -232,7 +215,7 @@ class MatchCard extends StatelessWidget {
                               color: Theme.of(context).colorScheme.secondary),
                           const SizedBox(width: 4),
                           Text(
-                            '${event.time}\' ${event.player?.name ?? ""}',
+                            '${event.time.elapsed}\' ${event.player.name}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context)

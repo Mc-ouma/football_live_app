@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/domain/entities/fixture.dart';
 import 'package:football_live_app/domain/entities/prediction.dart';
 import 'package:intl/intl.dart';
 
@@ -40,8 +40,10 @@ class EnhancedPredictionCard extends StatelessWidget {
 
   Widget _buildPredictionIndicator(Prediction? prediction) {
     if (prediction == null) {
-      return const Text('No prediction available',
-          style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey));
+      return const Text(
+        'No prediction available',
+        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+      );
     }
 
     final winnerType = prediction.getPredictedWinner();
@@ -75,8 +77,10 @@ class EnhancedPredictionCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Prediction',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        const Text(
+          'Prediction',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        ),
         const SizedBox(height: 4),
         Row(
           children: [
@@ -92,24 +96,20 @@ class EnhancedPredictionCard extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               '${(confidenceScore * 100).toInt()}%',
-              style: TextStyle(
-                color: confidenceColor,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: confidenceColor, fontSize: 12),
             ),
             const Spacer(),
             Chip(
               label: Text(
                 confidenceText,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 10),
               ),
               backgroundColor: confidenceColor,
               padding: EdgeInsets.zero,
-              labelPadding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              labelPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 0,
+              ),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ],
@@ -161,10 +161,7 @@ class EnhancedPredictionCard extends StatelessWidget {
                   const Spacer(),
                   Text(
                     matchTime,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                 ],
               ),
@@ -179,10 +176,9 @@ class EnhancedPredictionCard extends StatelessWidget {
                           Image.network(
                             homeTeam.logo!,
                             height: 40,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.sports_soccer,
-                              size: 40,
-                            ),
+                            errorBuilder:
+                                (_, __, ___) =>
+                                    const Icon(Icons.sports_soccer, size: 40),
                           )
                         else
                           const Icon(Icons.sports_soccer, size: 40),
@@ -197,8 +193,10 @@ class EnhancedPredictionCard extends StatelessWidget {
                   ),
                   // VS
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(12),
@@ -219,10 +217,9 @@ class EnhancedPredictionCard extends StatelessWidget {
                           Image.network(
                             awayTeam.logo!,
                             height: 40,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.sports_soccer,
-                              size: 40,
-                            ),
+                            errorBuilder:
+                                (_, __, ___) =>
+                                    const Icon(Icons.sports_soccer, size: 40),
                           )
                         else
                           const Icon(Icons.sports_soccer, size: 40),

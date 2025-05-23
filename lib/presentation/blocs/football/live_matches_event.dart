@@ -4,18 +4,18 @@ abstract class LiveMatchesEvent extends Equatable {
   const LiveMatchesEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class FetchLiveMatchesEvent extends LiveMatchesEvent {}
 
 class FetchTodayMatchesEvent extends LiveMatchesEvent {
-  final DateTime date;
+  final DateTime? date;
 
-  const FetchTodayMatchesEvent({required this.date});
+  const FetchTodayMatchesEvent({this.date});
 
   @override
-  List<Object> get props => [date];
+  List<Object?> get props => [date];
 }
 
 class StartLiveUpdatesEvent extends LiveMatchesEvent {}

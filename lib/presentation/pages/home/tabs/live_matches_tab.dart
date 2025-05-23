@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/pages/match_details/match_details_page.dart';
@@ -25,7 +25,7 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
   late TabController _tabController;
   late DateTime _selectedDate;
   late List<DateTime> _dateTabs;
-  final Map<DateTime, List<Match>?> _cachedMatches = {};
+  final Map<DateTime, List<FixtureData>?> _cachedMatches = {};
 
   @override
   void initState() {
@@ -99,16 +99,16 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
     }
   }
 
-  void _navigateToMatchDetails(Match match) {
+  void _navigateToMatchDetails(FixtureData match) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MatchDetailsPage(matchId: match.id),
+        builder: (context) => MatchDetailsPage(matchId: match.fixture.id),
       ),
     );
   }
 
-  void _storeMatchesInCache(DateTime date, List<Match> matches) {
+  void _storeMatchesInCache(DateTime date, List<FixtureData> matches) {
     _cachedMatches[date] = matches;
   }
 

@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:football_live_app/core/errors/failures.dart';
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/domain/entities/fixture.dart';
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 import 'package:football_live_app/domain/usecases/usecase.dart';
 

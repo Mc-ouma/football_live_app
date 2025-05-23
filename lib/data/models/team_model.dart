@@ -1,4 +1,4 @@
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/domain/entities/fixture.dart';
 
 class TeamModel extends Team {
   const TeamModel({

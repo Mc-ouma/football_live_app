@@ -1,114 +1,165 @@
-import 'package:football_live_app/domain/entities/prediction.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'shared_models.dart';
 
-class PredictionModel {
-  final PredictionWinnerModel? winner;
-  final Map<String, String> percent;
-  final Map<String, String> goals;
-  final String? advice;
-  final Map<String, double> comparison;
-  final bool? winOrDraw;
-  final String? underOver;
+part 'prediction_model.freezed.dart';
+part 'prediction_model.g.dart';
 
-  PredictionModel({
-    this.winner,
-    required this.percent,
-    required this.goals,
-    this.advice,
-    required this.comparison,
-    this.winOrDraw,
-    this.underOver,
-  });
+/// Root response structure for prediction endpoints
+@freezed
+class PredictionResponse with _$PredictionResponse {
+  const factory PredictionResponse({
+    required String get,
+    required Map<String, dynamic> parameters,
+    required Map<String, dynamic> errors,
+    required int results,
+    required List<PredictionData> response,
+  }) = _PredictionResponse;
 
-  factory PredictionModel.fromJson(Map<String, dynamic> json) {
-    final predictions = json['predictions'] as Map<String, dynamic>;
-    final winnerData = predictions['winner'] as Map<String, dynamic>?;
-    final percentData = (predictions['percent'] as Map<String, dynamic>?) ?? {};
-    final comparisonData = json['comparison'] as Map<String, dynamic>? ?? {};
-
-    // Create winner model if data exists
-    PredictionWinnerModel? winnerModel;
-    if (winnerData != null) {
-      winnerModel = PredictionWinnerModel(
-        id: winnerData['id']?.toString(),
-        name: winnerData['name'],
-        comment: winnerData['comment'],
-      );
-    }
-
-    return PredictionModel(
-      winner: winnerModel,
-      percent: Map<String, String>.from(percentData),
-      goals: Map<String, String>.from(predictions['goals'] as Map),
-      advice: predictions['advice'] as String?,
-      comparison: Map<String, double>.from(
-        comparisonData.map((key, value) => MapEntry(
-            key,
-            value is Map
-                ? ((value['home'] as String?)?.replaceAll('%', ''))
-                        ?.let((it) => double.parse(it) / 100) ??
-                    0.0
-                : 0.0)),
-      ),
-      winOrDraw: predictions['win_or_draw'] as bool?,
-      underOver: predictions['under_over'] as String?,
-    );
-  }
-
-  Prediction toEntity() {
-    return Prediction(
-      winner: winner?.toEntity(),
-      percent: percent,
-      goals: goals,
-      advice: advice,
-      comparison: comparison,
-      winOrDraw: winOrDraw,
-      underOver: underOver,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'predictions': {
-        'winner': winner?.toJson(),
-        'win_or_draw': winOrDraw,
-        'under_over': underOver,
-        'goals': goals,
-        'advice': advice,
-        'percent': percent,
-      },
-      'comparison': comparison,
-    };
-  }
+  factory PredictionResponse.fromJson(Map<String, dynamic> json) =>
+      _$PredictionResponseFromJson(json);
 }
 
-class PredictionWinnerModel {
-  final String? id;
-  final String? name;
-  final String? comment;
+/// Main prediction data model containing all prediction information
+@freezed
+class PredictionData with _$PredictionData {
+  const factory PredictionData({
+    required Predictions predictions,
+    required League league,
+    required Fixture fixture,
+    required Teams teams,
+  }) = _PredictionData;
 
-  PredictionWinnerModel({
-    this.id,
-    this.name,
-    this.comment,
-  });
-
-  PredictionWinner toEntity() {
-    return PredictionWinner(
-      id: id,
-      name: name,
-      comment: comment,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'comment': comment,
-    };
-  }
+  factory PredictionData.fromJson(Map<String, dynamic> json) =>
+      _$PredictionDataFromJson(json);
 }
 
-extension on String {
-  T let<T>(T Function(String) block) => block(this);
+/// Core predictions information
+@freezed
+class Predictions with _$Predictions {
+  const factory Predictions({
+    required String winner,
+    required WinnerPercentage winnerSide,
+    required bool underOver,
+    required bool goals,
+    required bool advice,
+    required double? percent,
+  }) = _Predictions;
+
+  factory Predictions.fromJson(Map<String, dynamic> json) =>
+      _$PredictionsFromJson(json);
+}
+
+/// Winner percentage information
+@freezed
+class WinnerPercentage with _$WinnerPercentage {
+  const factory WinnerPercentage({
+    required String home,
+    required String draw,
+    required String away,
+  }) = _WinnerPercentage;
+
+  factory WinnerPercentage.fromJson(Map<String, dynamic> json) =>
+      _$WinnerPercentageFromJson(json);
+}
+
+/// Comparison between teams
+@freezed
+class Comparison with _$Comparison {
+  const factory Comparison({
+    required FormComparison form,
+    required AttackComparison att,
+    required DefenseComparison def,
+    required PoissionDistribution poisson_distribution,
+    required GoalsComparison goals,
+    required TotalComparison total,
+  }) = _Comparison;
+
+  factory Comparison.fromJson(Map<String, dynamic> json) =>
+      _$ComparisonFromJson(json);
+}
+
+/// Form comparison between teams
+@freezed
+class FormComparison with _$FormComparison {
+  const factory FormComparison({
+    required String home,
+    required String away,
+  }) = _FormComparison;
+
+  factory FormComparison.fromJson(Map<String, dynamic> json) =>
+      _$FormComparisonFromJson(json);
+}
+
+/// Attack comparison between teams
+@freezed
+class AttackComparison with _$AttackComparison {
+  const factory AttackComparison({
+    required String home,
+    required String away,
+  }) = _AttackComparison;
+
+  factory AttackComparison.fromJson(Map<String, dynamic> json) =>
+      _$AttackComparisonFromJson(json);
+}
+
+/// Defense comparison between teams
+@freezed
+class DefenseComparison with _$DefenseComparison {
+  const factory DefenseComparison({
+    required String home,
+    required String away,
+  }) = _DefenseComparison;
+
+  factory DefenseComparison.fromJson(Map<String, dynamic> json) =>
+      _$DefenseComparisonFromJson(json);
+}
+
+/// Poisson distribution for match prediction
+@freezed
+class PoissionDistribution with _$PoissionDistribution {
+  const factory PoissionDistribution({
+    required String home,
+    required String away,
+  }) = _PoissionDistribution;
+
+  factory PoissionDistribution.fromJson(Map<String, dynamic> json) =>
+      _$PoissionDistributionFromJson(json);
+}
+
+/// Goals comparison between teams
+@freezed
+class GoalsComparison with _$GoalsComparison {
+  const factory GoalsComparison({
+    required String home,
+    required String away,
+  }) = _GoalsComparison;
+
+  factory GoalsComparison.fromJson(Map<String, dynamic> json) =>
+      _$GoalsComparisonFromJson(json);
+}
+
+/// Total comparison summary
+@freezed
+class TotalComparison with _$TotalComparison {
+  const factory TotalComparison({
+    required String home,
+    required String away,
+  }) = _TotalComparison;
+
+  factory TotalComparison.fromJson(Map<String, dynamic> json) =>
+      _$TotalComparisonFromJson(json);
+}
+
+/// H2H - Head to head matches
+@freezed
+class H2H with _$H2H {
+  const factory H2H({
+    required Fixture fixture,
+    required League league,
+    required Teams teams,
+    required Goals goals,
+    required Score score,
+  }) = _H2H;
+
+  factory H2H.fromJson(Map<String, dynamic> json) => _$H2HFromJson(json);
 }

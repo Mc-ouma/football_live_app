@@ -1,0 +1,23 @@
+part of 'live_matches_bloc.dart';
+
+abstract class LiveMatchesEvent extends Equatable {
+  const LiveMatchesEvent();
+
+  @override
+  List<Object> get props => [];
+}
+
+class FetchLiveMatchesEvent extends LiveMatchesEvent {}
+
+class FetchTodayMatchesEvent extends LiveMatchesEvent {
+  final DateTime date;
+
+  const FetchTodayMatchesEvent({required this.date});
+
+  @override
+  List<Object> get props => [date];
+}
+
+class StartLiveUpdatesEvent extends LiveMatchesEvent {}
+
+class StopLiveUpdatesEvent extends LiveMatchesEvent {}

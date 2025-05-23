@@ -1,4 +1,4 @@
-import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/domain/entities/fixture.dart';
 import 'package:football_live_app/data/models/team_model.dart';
 
 class MatchStatisticsResponseModel {
@@ -25,9 +25,10 @@ class MatchStatisticsResponseModel {
       errors: json['errors'] as List<dynamic>,
       results: json['results'] as int,
       paging: json['paging'] as Map<String, dynamic>,
-      response: (json['response'] as List)
-          .map((stat) => MatchStatisticsModel.fromJson(stat))
-          .toList(),
+      response:
+          (json['response'] as List)
+              .map((stat) => MatchStatisticsModel.fromJson(stat))
+              .toList(),
     );
   }
 
@@ -44,10 +45,7 @@ class MatchStatisticsResponseModel {
 }
 
 class MatchStatisticsModel extends MatchStatistics {
-  const MatchStatisticsModel({
-    required super.team,
-    required super.statistics,
-  });
+  const MatchStatisticsModel({required super.team, required super.statistics});
 
   factory MatchStatisticsModel.fromJson(Map<String, dynamic> json) {
     final teamData = json['team'] as Map<String, dynamic>;
@@ -55,27 +53,26 @@ class MatchStatisticsModel extends MatchStatistics {
 
     return MatchStatisticsModel(
       team: TeamModel.fromJson(teamData),
-      statistics: statisticsData
-          .map((stat) => MatchStatisticModel.fromJson(stat))
-          .toList(),
+      statistics:
+          statisticsData
+              .map((stat) => MatchStatisticModel.fromJson(stat))
+              .toList(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'team': (team as TeamModel).toJson(),
-      'statistics': statistics
-          .map((stat) => (stat as MatchStatisticModel).toJson())
-          .toList(),
+      'statistics':
+          statistics
+              .map((stat) => (stat as MatchStatisticModel).toJson())
+              .toList(),
     };
   }
 }
 
 class MatchStatisticModel extends MatchStatistic {
-  const MatchStatisticModel({
-    required super.type,
-    required super.value,
-  });
+  const MatchStatisticModel({required super.type, required super.value});
 
   factory MatchStatisticModel.fromJson(Map<String, dynamic> json) {
     return MatchStatisticModel(
@@ -85,10 +82,8 @@ class MatchStatisticModel extends MatchStatistic {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'value': value,
-    };
+    return {'type': type, 'value': value};
   }
 }
+
 //
