@@ -6,6 +6,26 @@ part of 'prediction_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+PredictionResponse _$PredictionResponseFromJson(Map<String, dynamic> json) =>
+    PredictionResponse(
+      get: json['get'] as String,
+      parameters: json['parameters'] as Map<String, dynamic>,
+      errors: json['errors'] as Map<String, dynamic>,
+      results: (json['results'] as num).toInt(),
+      response: (json['response'] as List<dynamic>)
+          .map((e) => PredictionData.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$PredictionResponseToJson(PredictionResponse instance) =>
+    <String, dynamic>{
+      'get': instance.get,
+      'parameters': instance.parameters,
+      'errors': instance.errors,
+      'results': instance.results,
+      'response': instance.response.map((e) => e.toJson()).toList(),
+    };
+
 _$PredictionResponseImpl _$$PredictionResponseImplFromJson(
         Map<String, dynamic> json) =>
     _$PredictionResponseImpl(

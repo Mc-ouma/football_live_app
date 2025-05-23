@@ -5,7 +5,8 @@ part 'prediction_model.freezed.dart';
 part 'prediction_model.g.dart';
 
 /// Root response structure for prediction endpoints
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
+@JsonSerializable(explicitToJson: true)
 class PredictionResponse with _$PredictionResponse {
   const factory PredictionResponse({
     required String get,
@@ -20,7 +21,7 @@ class PredictionResponse with _$PredictionResponse {
 }
 
 /// Main prediction data model containing all prediction information
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class PredictionData with _$PredictionData {
   const factory PredictionData({
     required Predictions predictions,
@@ -34,7 +35,7 @@ class PredictionData with _$PredictionData {
 }
 
 /// Core predictions information
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Predictions with _$Predictions {
   const factory Predictions({
     required String winner,
@@ -50,7 +51,7 @@ class Predictions with _$Predictions {
 }
 
 /// Winner percentage information
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class WinnerPercentage with _$WinnerPercentage {
   const factory WinnerPercentage({
     required String home,
@@ -63,7 +64,7 @@ class WinnerPercentage with _$WinnerPercentage {
 }
 
 /// Comparison between teams
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Comparison with _$Comparison {
   const factory Comparison({
     required FormComparison form,
@@ -79,7 +80,7 @@ class Comparison with _$Comparison {
 }
 
 /// Form comparison between teams
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class FormComparison with _$FormComparison {
   const factory FormComparison({
     required String home,
@@ -91,7 +92,7 @@ class FormComparison with _$FormComparison {
 }
 
 /// Attack comparison between teams
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class AttackComparison with _$AttackComparison {
   const factory AttackComparison({
     required String home,
@@ -103,7 +104,7 @@ class AttackComparison with _$AttackComparison {
 }
 
 /// Defense comparison between teams
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class DefenseComparison with _$DefenseComparison {
   const factory DefenseComparison({
     required String home,
@@ -115,7 +116,7 @@ class DefenseComparison with _$DefenseComparison {
 }
 
 /// Poisson distribution for match prediction
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class PoissionDistribution with _$PoissionDistribution {
   const factory PoissionDistribution({
     required String home,
@@ -127,7 +128,7 @@ class PoissionDistribution with _$PoissionDistribution {
 }
 
 /// Goals comparison between teams
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class GoalsComparison with _$GoalsComparison {
   const factory GoalsComparison({
     required String home,
@@ -139,7 +140,7 @@ class GoalsComparison with _$GoalsComparison {
 }
 
 /// Total comparison summary
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class TotalComparison with _$TotalComparison {
   const factory TotalComparison({
     required String home,
@@ -151,7 +152,7 @@ class TotalComparison with _$TotalComparison {
 }
 
 /// H2H - Head to head matches
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class H2H with _$H2H {
   const factory H2H({
     required Fixture fixture,

@@ -68,6 +68,12 @@ abstract class FootballRemoteDataSource {
 
   /// Gets predictions for multiple matches
   Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds);
+
+  /// Gets prediction data for a specific match
+  Future<PredictionData?> getMatchPredictionData(int matchId);
+
+  /// Gets prediction data for multiple matches
+  Future<List<PredictionData>> getMatchPredictionsData(List<int> matchIds);
 }
 
 class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
@@ -474,5 +480,82 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds) async {
     // Implementation for match predictions
     throw UnimplementedError('Not implemented yet');
+  }
+
+  @override
+  Future<PredictionData?> getMatchPredictionData(int matchId) async {
+    try {
+      // Build the query parameters
+      final Map<String, dynamic> params = {
+        'fixture': matchId.toString(),
+      };
+
+      final response = await apiClient.get(
+        EnvConfig.predictions,
+        queryParameters: params,
+      );
+
+      final responseBody = response.data;
+
+      // Check for API errors
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
+      }
+
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        logger.info('No prediction found for match ID: $matchId');
+        return null;
+      }
+
+      // Parse response using the prediction model
+      final predictionResponse = PredictionResponse.fromJson(responseBody);
+      logger.info('Retrieved prediction for match ID: $matchId');
+
+      return predictionResponse.response.first;
+    } catch (e) {
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching match prediction data', error: e);
+      throw ServerException(
+        message: 'Failed to get match prediction data: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<List<PredictionData>> getMatchPredictionsData(
+      List<int> matchIds) async {
+    try {
+      final List<PredictionData> allPredictions = [];
+
+      // API-Football requires separate calls for each match ID
+      // We'll make parallel requests to speed things up
+      final futures = matchIds.map((id) => getMatchPredictionData(id));
+      final results = await Future.wait(futures);
+
+      // Filter out null results and collect predictions
+      for (final prediction in results) {
+        if (prediction != null) {
+          allPredictions.add(prediction);
+        }
+      }
+
+      logger.info('Retrieved ${allPredictions.length} predictions');
+      return allPredictions;
+    } catch (e) {
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching multiple match predictions data', error: e);
+      throw ServerException(
+        message: 'Failed to get match predictions data: ${e.toString()}',
+      );
+    }
   }
 }

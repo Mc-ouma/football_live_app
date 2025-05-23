@@ -6,7 +6,6 @@ import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/datasources/local/football_local_data_source.dart';
 import 'package:football_live_app/data/datasources/remote/football_remote_data_source.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
-import 'package:football_live_app/domain/entities/player.dart' as entity;
 import 'package:football_live_app/domain/entities/standing.dart';
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 

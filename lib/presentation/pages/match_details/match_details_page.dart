@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:football_live_app/domain/entities/prediction.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/prediction_data_bloc.dart';
 import 'package:football_live_app/presentation/widgets/prediction_badge.dart';
+import 'package:football_live_app/presentation/widgets/enhanced_prediction_data_card.dart';
 
 class MatchDetailsPage extends StatefulWidget {
   final int matchId;
@@ -25,10 +28,15 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
 
-    // Fetch prediction for this match when the page loads
+    // Fetch predictions for this match when the page loads
     context
         .read<PredictionBloc>()
         .add(FetchMatchPredictionEvent(matchId: widget.matchId));
+
+    // Also fetch prediction data using the new bloc
+    context
+        .read<PredictionDataBloc>()
+        .add(FetchMatchPredictionDataEvent(matchId: widget.matchId));
   }
 
   @override
@@ -279,30 +287,49 @@ class _SummaryTab extends StatelessWidget {
       },
     ];
 
-    return BlocBuilder<PredictionBloc, PredictionState>(
-      builder: (context, predictionState) {
-        // Trigger prediction fetch if not already done
-        if (predictionState is PredictionInitial) {
+    return BlocBuilder<PredictionDataBloc, PredictionDataState>(
+      builder: (context, predictionDataState) {
+        // If PredictionDataBloc is in initial state, fetch prediction data
+        if (predictionDataState is PredictionDataInitial) {
           context
-              .read<PredictionBloc>()
-              .add(FetchMatchPredictionEvent(matchId: matchId));
+              .read<PredictionDataBloc>()
+              .add(FetchMatchPredictionDataEvent(matchId: matchId));
         }
 
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Match prediction section - show for upcoming matches
-            if (predictionState is PredictionLoaded) ...[
-              _buildPredictionCard(context, predictionState.prediction),
+            // First try to show match prediction using the new data model
+            if (predictionDataState is PredictionDataLoaded) ...[
+              _buildPredictionDataCard(
+                  context, predictionDataState.predictionData),
               const SizedBox(height: 20),
-            ] else if (predictionState is PredictionLoading) ...[
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: CircularProgressIndicator(),
+            ] else
+              {
+                // Fall back to the old model if the new one isn't available yet
+                BlocBuilder<PredictionBloc, PredictionState>(
+                  builder: (context, predictionState) {
+                    if (predictionState is PredictionLoaded) {
+                      return Column(
+                        children: [
+                          _buildPredictionCard(
+                              context, predictionState.prediction),
+                          const SizedBox(height: 20),
+                        ],
+                      );
+                    } else if (predictionState is PredictionLoading ||
+                        predictionDataState is PredictionDataLoading) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
-              ),
-            ],
+              },
 
             // Match timeline
             ...events.map((event) => _buildEventItem(context, event)).toList(),
@@ -446,6 +473,16 @@ class _SummaryTab extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPredictionDataCard(
+      BuildContext context, PredictionData predictionData) {
+    return EnhancedPredictionDataCard(
+      predictionData: predictionData,
+      onTap: () {
+        // You can add additional actions here if needed
+      },
     );
   }
 

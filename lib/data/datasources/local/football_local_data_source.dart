@@ -7,7 +7,6 @@ import 'package:football_live_app/data/datasources/local/app_database.dart';
 import 'package:football_live_app/data/models/fixture_adapter.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/data/models/player_model.dart';
-import 'package:football_live_app/data/models/standing_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 

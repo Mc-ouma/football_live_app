@@ -5,7 +5,8 @@ part 'fixture_model.freezed.dart';
 part 'fixture_model.g.dart';
 
 /// Root response structure for fixture endpoints
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
+@JsonSerializable(explicitToJson: true)
 class FixtureResponse with _$FixtureResponse {
   const factory FixtureResponse({
     required String get,
@@ -21,7 +22,8 @@ class FixtureResponse with _$FixtureResponse {
 }
 
 /// Main fixture data model containing all fixture information
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
+@JsonSerializable(explicitToJson: true)
 class FixtureData with _$FixtureData {
   /// Fixture data model with basic information
   const factory FixtureData({
@@ -55,39 +57,33 @@ class FixtureData with _$FixtureData {
   }) = _FixtureDataLive;
 
   factory FixtureData.fromJson(Map<String, dynamic> json) {
+    // Check what type of fixture data we're dealing with
     final hasEvents = json['events'] != null && (json['events'] is List);
     final hasLineups = json['lineups'] != null && (json['lineups'] is List);
     final hasStatistics =
         json['statistics'] != null && (json['statistics'] is List);
     final hasPlayers = json['players'] != null && (json['players'] is List);
-    final fixture = json['fixture'] as Map<String, dynamic>;
-    final status = fixture['status'] as Map<String, dynamic>;
-    final isLive =
-        status['long'] == 'In Play' ||
-        status['short'] == '1H' ||
-        status['short'] == '2H' ||
-        status['short'] == 'HT' ||
-        status['short'] == 'ET' ||
-        status['short'] == 'BT' ||
-        status['short'] == 'PP' ||
-        status['short'] == 'AET' ||
-        status['short'] == 'PEN' ||
-        status['short'] == 'LIVE' ||
-        status['short'] == 'INT' ||
-        status['short'] == 'TBD' ||
-        status['short'] == 'NS' ||
-        status['short'] == 'FT' ||
-        status['short'] == 'SUSP' ||
-        status['short'] == 'PST' ||
-        status['short'] == 'CANC' ||
-        status['short'] == 'ABD' ||
-        status['short'] == 'AWD' ||
-        status['short'] == 'WO';
 
+    // Determine if it's a live match
+    bool isLive = false;
+    if (json['fixture'] != null && json['fixture'] is Map) {
+      final fixture = json['fixture'] as Map<String, dynamic>;
+      if (fixture['status'] != null && fixture['status'] is Map) {
+        final status = fixture['status'] as Map<String, dynamic>;
+        final statusLong = status['long'] as String?;
+        final statusShort = status['short'] as String?;
+
+        isLive = statusLong == 'In Play' ||
+            ['1H', '2H', 'HT', 'ET', 'BT', 'PP', 'AET', 'PEN', 'LIVE', 'INT']
+                .contains(statusShort);
+      }
+    }
+
+    // Return the appropriate constructor based on the data
     if (hasEvents && hasLineups && hasStatistics && hasPlayers) {
-      return _$FixtureDataFromJson(json);
+      return _$FixtureDataDetailedFromJson(json);
     } else if (hasEvents && isLive) {
-      return _$FixtureDataFromJson(json);
+      return _$FixtureDataLiveFromJson(json);
     } else {
       return _$FixtureDataFromJson(json);
     }
@@ -95,7 +91,7 @@ class FixtureData with _$FixtureData {
 }
 
 /// Match event information (goals, cards, substitutions, etc.)
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Event with _$Event {
   const factory Event({
     required Time time,
@@ -111,7 +107,7 @@ class Event with _$Event {
 }
 
 /// Time information for events
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Time with _$Time {
   const factory Time({required int elapsed, int? extra}) = _Time;
 
@@ -119,7 +115,7 @@ class Time with _$Time {
 }
 
 /// Player information
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Player with _$Player {
   const factory Player({int? id, required String name}) = _Player;
 
@@ -127,7 +123,7 @@ class Player with _$Player {
 }
 
 /// Lineup information
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class LineupData with _$LineupData {
   const factory LineupData({
     required Team team,
@@ -142,7 +138,7 @@ class LineupData with _$LineupData {
 }
 
 /// Coach information
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Coach with _$Coach {
   const factory Coach({int? id, required String name, String? photo}) = _Coach;
 
@@ -150,7 +146,7 @@ class Coach with _$Coach {
 }
 
 /// Player in lineup (starting or substitute)
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class StartXI with _$StartXI {
   const factory StartXI({required PlayerDetails player}) = _StartXI;
 
@@ -159,7 +155,7 @@ class StartXI with _$StartXI {
 }
 
 /// Detailed player information used in lineups
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class PlayerDetails with _$PlayerDetails {
   const factory PlayerDetails({
     required int id,
@@ -174,7 +170,7 @@ class PlayerDetails with _$PlayerDetails {
 }
 
 /// Match statistics
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Statistics with _$Statistics {
   const factory Statistics({
     List<TeamStatistics>? home,
@@ -186,7 +182,7 @@ class Statistics with _$Statistics {
 }
 
 /// Team statistics
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class TeamStatistics with _$TeamStatistics {
   const factory TeamStatistics({required String type, required dynamic value}) =
       _TeamStatistics;
@@ -196,7 +192,7 @@ class TeamStatistics with _$TeamStatistics {
 }
 
 /// Player statistics
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class PlayerStatistics with _$PlayerStatistics {
   const factory PlayerStatistics({
     required Team team,
@@ -208,7 +204,7 @@ class PlayerStatistics with _$PlayerStatistics {
 }
 
 /// Individual player statistics
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class PlayerStatDetail with _$PlayerStatDetail {
   const factory PlayerStatDetail({
     required PlayerDetails player,
@@ -220,7 +216,7 @@ class PlayerStatDetail with _$PlayerStatDetail {
 }
 
 /// Individual statistic for a player
-@freezed
+@Freezed(makeCollectionsUnmodifiable: false)
 class Statistic with _$Statistic {
   const factory Statistic({
     required Map<String, dynamic> games,

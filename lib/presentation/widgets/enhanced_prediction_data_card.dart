@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:football_live_app/domain/entities/prediction.dart';
+import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:intl/intl.dart';
 
-class EnhancedPredictionCard extends StatelessWidget {
-  final Prediction match;
+enum WinnerType { home, away, draw, none }
+
+class EnhancedPredictionDataCard extends StatelessWidget {
+  final PredictionData predictionData;
   final VoidCallback onTap;
 
-  const EnhancedPredictionCard({
+  const EnhancedPredictionDataCard({
     Key? key,
-    required this.match,
+    required this.predictionData,
     required this.onTap,
   }) : super(key: key);
 
-  String _formatMatchDate(DateTime date) {
+  String _formatMatchDate(String dateStr) {
+    final date = DateTime.parse(dateStr);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
@@ -37,16 +40,63 @@ class EnhancedPredictionCard extends StatelessWidget {
     }
   }
 
-  Widget _buildPredictionIndicator(Prediction? prediction) {
-    if (prediction == null) {
-      return const Text(
-        'No prediction available',
-        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
-      );
+  // Get the predicted winner
+  WinnerType getPredictedWinner() {
+    final winnerStr = predictionData.predictions.winner.toLowerCase();
+
+    if (winnerStr.contains('home')) {
+      return WinnerType.home;
+    } else if (winnerStr.contains('away')) {
+      return WinnerType.away;
+    } else if (winnerStr.contains('draw')) {
+      return WinnerType.draw;
+    } else {
+      return WinnerType.none;
+    }
+  }
+
+  // Get the confidence score from percentages
+  double getConfidenceScore() {
+    final winnerType = getPredictedWinner();
+    final percentages = predictionData.predictions.winnerSide;
+
+    switch (winnerType) {
+      case WinnerType.home:
+        return _parsePercentage(percentages.home);
+      case WinnerType.away:
+        return _parsePercentage(percentages.away);
+      case WinnerType.draw:
+        return _parsePercentage(percentages.draw);
+      default:
+        return 0.0;
+    }
+  }
+
+  // Helper to parse percentage strings from the API
+  double _parsePercentage(String percentStr) {
+    final cleanStr = percentStr.replaceAll('%', '').trim();
+    try {
+      return double.parse(cleanStr) / 100;
+    } catch (e) {
+      return 0.0;
+    }
+  }
+
+  // Helper to get predicted score (if available)
+  String getPredictedScore() {
+    // If goals prediction is not available, return 'N/A'
+    if (!predictionData.predictions.goals) {
+      return 'N/A';
     }
 
-    final winnerType = prediction.getPredictedWinner();
-    final confidenceScore = prediction.getConfidenceScore();
+    // In the freezed model, we don't have direct access to predicted goals
+    // We could attempt to derive this from other prediction fields if available
+    return 'Score prediction unavailable';
+  }
+
+  Widget _buildPredictionIndicator() {
+    final winnerType = getPredictedWinner();
+    final confidenceScore = getConfidenceScore();
     final confidenceColor = _getConfidenceColor(confidenceScore);
 
     String confidenceText;
@@ -61,10 +111,10 @@ class EnhancedPredictionCard extends StatelessWidget {
     String winnerText;
     switch (winnerType) {
       case WinnerType.home:
-        winnerText = match.;
+        winnerText = predictionData.teams.home.name;
         break;
       case WinnerType.away:
-        winnerText = match.awayTeam.name;
+        winnerText = predictionData.teams.away.name;
         break;
       case WinnerType.draw:
         winnerText = 'Draw';
@@ -101,7 +151,7 @@ class EnhancedPredictionCard extends StatelessWidget {
             Chip(
               label: Text(
                 confidenceText,
-                style: TextStyle(color: Colors.white, fontSize: 10),
+                style: const TextStyle(color: Colors.white, fontSize: 10),
               ),
               backgroundColor: confidenceColor,
               padding: EdgeInsets.zero,
@@ -114,20 +164,20 @@ class EnhancedPredictionCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          'Predicted Score: ${prediction.getPredictedScore()}',
-          style: const TextStyle(fontSize: 12),
-        ),
+        if (predictionData.predictions.advice)
+          Text(
+            'Advice: ${predictionData.predictions.winner}',
+            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+          ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final homeTeam = match.homeTeam;
-    final awayTeam = match.awayTeam;
-    final prediction = match.prediction;
-    final matchTime = _formatMatchDate(match.date);
+    final homeTeam = predictionData.teams.home;
+    final awayTeam = predictionData.teams.away;
+    final matchTime = _formatMatchDate(predictionData.fixture.date);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -150,7 +200,7 @@ class EnhancedPredictionCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    match.league.name,
+                    predictionData.league.name,
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontSize: 12,
@@ -171,16 +221,12 @@ class EnhancedPredictionCard extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        if (homeTeam.logo != null)
-                          Image.network(
-                            homeTeam.logo!,
-                            height: 40,
-                            errorBuilder:
-                                (_, __, ___) =>
-                                    const Icon(Icons.sports_soccer, size: 40),
-                          )
-                        else
-                          const Icon(Icons.sports_soccer, size: 40),
+                        Image.network(
+                          homeTeam.logo,
+                          height: 40,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.sports_soccer, size: 40),
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           homeTeam.name,
@@ -212,16 +258,12 @@ class EnhancedPredictionCard extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        if (awayTeam.logo != null)
-                          Image.network(
-                            awayTeam.logo!,
-                            height: 40,
-                            errorBuilder:
-                                (_, __, ___) =>
-                                    const Icon(Icons.sports_soccer, size: 40),
-                          )
-                        else
-                          const Icon(Icons.sports_soccer, size: 40),
+                        Image.network(
+                          awayTeam.logo,
+                          height: 40,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.sports_soccer, size: 40),
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           awayTeam.name,
@@ -236,7 +278,7 @@ class EnhancedPredictionCard extends StatelessWidget {
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 8),
-              _buildPredictionIndicator(prediction),
+              _buildPredictionIndicator(),
             ],
           ),
         ),

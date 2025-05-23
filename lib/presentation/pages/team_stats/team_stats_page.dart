@@ -42,12 +42,11 @@ class _TeamStatsPageState extends State<TeamStatsPage>
       appBar: AppBar(
         title: Row(
           children: [
-            if (widget.team.logo != null)
-              Image.network(
-                widget.team.logo!,
-                height: 32,
-                errorBuilder: (_, __, ___) => const Icon(Icons.sports_soccer),
-              ),
+            Image.network(
+              widget.team.logo!,
+              height: 32,
+              errorBuilder: (_, __, ___) => const Icon(Icons.sports_soccer),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -346,26 +345,15 @@ class _TeamOverviewTabState extends State<_TeamOverviewTab> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  if (widget.team.logo != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        widget.team.logo!,
-                        height: 100,
-                        width: 100,
-                        fit: BoxFit.contain,
-                      ),
-                    )
-                  else
-                    Container(
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      widget.team.logo!,
                       height: 100,
                       width: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.sports_soccer, size: 64),
+                      fit: BoxFit.contain,
                     ),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     widget.team.name,
@@ -575,17 +563,14 @@ class _TeamFixturesTab extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      if (homeTeam.logo != null)
-                        Image.network(
-                          homeTeam.logo!,
-                          height: 36,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.sports_soccer,
-                            size: 36,
-                          ),
-                        )
-                      else
-                        const Icon(Icons.sports_soccer, size: 36),
+                      Image.network(
+                        homeTeam.logo!,
+                        height: 36,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.sports_soccer,
+                          size: 36,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         homeTeam.name,
@@ -638,17 +623,14 @@ class _TeamFixturesTab extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
-                      if (awayTeam.logo != null)
-                        Image.network(
-                          awayTeam.logo!,
-                          height: 36,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.sports_soccer,
-                            size: 36,
-                          ),
-                        )
-                      else
-                        const Icon(Icons.sports_soccer, size: 36),
+                      Image.network(
+                        awayTeam.logo!,
+                        height: 36,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.sports_soccer,
+                          size: 36,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         awayTeam.name,

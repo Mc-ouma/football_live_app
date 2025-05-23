@@ -12,9 +12,11 @@ import 'package:football_live_app/data/datasources/remote/auth_remote_data_sourc
 import 'package:football_live_app/data/datasources/remote/football_remote_data_source.dart';
 import 'package:football_live_app/data/repositories/auth_repository_impl.dart';
 import 'package:football_live_app/data/repositories/football/prediction_repository_impl.dart';
+import 'package:football_live_app/data/repositories/football/prediction_data_repository_impl.dart';
 import 'package:football_live_app/data/repositories/football_repository_impl.dart';
 import 'package:football_live_app/domain/repositories/auth_repository.dart';
 import 'package:football_live_app/domain/repositories/football/prediction_repository.dart';
+import 'package:football_live_app/domain/repositories/football/prediction_data_repository.dart';
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 import 'package:football_live_app/domain/usecases/auth/get_current_user.dart';
 import 'package:football_live_app/domain/usecases/auth/sign_in_with_email.dart';
@@ -25,6 +27,8 @@ import 'package:football_live_app/domain/usecases/football/get_live_matches.dart
 import 'package:football_live_app/domain/usecases/football/get_match_details.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_prediction.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_predictions.dart';
+import 'package:football_live_app/domain/usecases/football/get_match_prediction_data.dart';
+import 'package:football_live_app/domain/usecases/football/get_match_predictions_data.dart';
 import 'package:football_live_app/domain/usecases/football/get_player_statistics.dart';
 import 'package:football_live_app/domain/usecases/football/get_team_information.dart';
 import 'package:football_live_app/domain/usecases/football/get_upcoming_fixtures.dart';
@@ -32,6 +36,7 @@ import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/player_stats_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/prediction_data_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/team_info_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/upcoming_fixtures_bloc.dart';
@@ -110,7 +115,6 @@ Future<void> init() async {
     () => AuthRepositoryImpl(
       remoteDataSource: sl<AuthRemoteDataSource>(),
       localDataSource: sl<AuthLocalDataSource>(),
-      networkInfo: sl<NetworkInfo>(),
       logger: sl<LoggerService>(),
     ),
   );
@@ -118,7 +122,15 @@ Future<void> init() async {
   sl.registerLazySingleton<PredictionRepository>(
     () => PredictionRepositoryImpl(
       remoteDataSource: sl<FootballRemoteDataSource>(),
-      networkInfo: sl<NetworkInfo>(),
+      connectivity: sl<Connectivity>(),
+      logger: sl<LoggerService>(),
+    ),
+  );
+  
+  sl.registerLazySingleton<PredictionDataRepository>(
+    () => PredictionDataRepositoryImpl(
+      remoteDataSource: sl<FootballRemoteDataSource>(),
+      connectivity: sl<Connectivity>(),
       logger: sl<LoggerService>(),
     ),
   );
@@ -142,11 +154,16 @@ Future<void> init() async {
       () => GetMatchPrediction(sl<PredictionRepository>()));
   sl.registerLazySingleton(
       () => GetMatchPredictions(sl<PredictionRepository>()));
+  sl.registerLazySingleton(
+      () => GetMatchPredictionData(sl<PredictionDataRepository>()));
+  sl.registerLazySingleton(
+      () => GetMatchPredictionsData(sl<PredictionDataRepository>()));
 
   // BLoCs
   sl.registerFactory(
     () => LiveMatchesBloc(
       getLiveMatches: sl<GetLiveMatches>(),
+      getUpcomingFixtures: sl<GetUpcomingFixtures>(),
       logger: sl<LoggerService>(),
     ),
   );
@@ -182,6 +199,15 @@ Future<void> init() async {
   sl.registerFactory(
     () => PredictionBloc(
       getMatchPrediction: sl<GetMatchPrediction>(),
+      getMatchPredictions: sl<GetMatchPredictions>(),
+      logger: sl<LoggerService>(),
+    ),
+  );
+  
+  sl.registerFactory(
+    () => PredictionDataBloc(
+      getMatchPredictionData: sl<GetMatchPredictionData>(),
+      getMatchPredictionsData: sl<GetMatchPredictionsData>(),
       logger: sl<LoggerService>(),
     ),
   );

@@ -3,10 +3,10 @@ import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/widgets/prediction_ba                          child: Image.network(
                                   match.teams.home.logo,
                                   errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.shield, size: 30),
+                                      Icon(Icons.shield, size = 30),
                                 ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height = 8),
                         Text(
                           match.teams.home.name,
 class MatchCard extends StatelessWidget {
@@ -47,7 +47,7 @@ class MatchCard extends StatelessWidget {
                           height: 24,
                           child: match.league.logo != null
                               ? Image.network(
-                                  match.league.logo!,
+                                  match.league.logo,
                                   errorBuilder: (context, error, stackTrace) =>
                                       const Icon(Icons.sports_soccer, size: 20),
                                 )
@@ -159,7 +159,7 @@ class MatchCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${match.score?.homeGoals ?? 0} - ${match.score?.awayGoals ?? 0}',
+                        '${match.score.homeGoals ?? 0} - ${match.score.awayGoals ?? 0}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 18,

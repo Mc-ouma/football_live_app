@@ -38,7 +38,7 @@ class MatchCard extends StatelessWidget {
                           width: 24,
                           height: 24,
                           child: Image.network(
-                            match.league.logo ?? '',
+                            match.league.logo,
                             errorBuilder: (context, error, stackTrace) =>
                                 const Icon(Icons.sports_soccer, size: 20),
                           ),
@@ -178,62 +178,90 @@ class MatchCard extends StatelessWidget {
               ),
 
               // Match events/stats summary
-              if (match.events != null && match.events!.isNotEmpty) ...[
-                const Divider(height: 24),
-                SizedBox(
-                  height: 24,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount:
-                        match.events!.length > 3 ? 3 : match.events!.length,
-                    separatorBuilder: (context, index) => const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Text('•', style: TextStyle(color: Colors.grey)),
-                    ),
-                    itemBuilder: (context, index) {
-                      final event = match.events![index];
-                      IconData icon;
-
-                      switch (event.type) {
-                        case 'Goal':
-                          icon = Icons.sports_soccer;
-                          break;
-                        case 'Card':
-                          icon = Icons.credit_card;
-                          break;
-                        case 'Subst':
-                          icon = Icons.swap_horiz;
-                          break;
-                        default:
-                          icon = Icons.sports;
-                      }
-
-                      return Row(
-                        children: [
-                          Icon(icon,
-                              size: 16,
-                              color: Theme.of(context).colorScheme.secondary),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${event.time.elapsed}\' ${event.player.name}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
+              _buildMatchEvents(context),
             ],
           ),
         ),
       ),
     );
+  }  /// Builds match events section if available based on the fixture type
+  Widget _buildMatchEvents(BuildContext context) {
+    // Handle different match types
+    if (match is _FixtureDataDetailed) {
+      final detailedMatch = match as _FixtureDataDetailed;
+      final events = detailedMatch.events;
+      
+      if (events != null && events.isNotEmpty) {
+        return _buildEventsList(context, events);
+      }
+    } 
+    else if (match is _FixtureDataLive) {
+      final liveMatch = match as _FixtureDataLive;
+      final events = liveMatch.events;
+      
+      if (events.isNotEmpty) {
+        return _buildEventsList(context, events);
+      }
+    }
+    
+    return const SizedBox.shrink();
+  }
+  
+  /// Helper method to build the events list UI
+  Widget _buildEventsList(BuildContext context, List<Event> events) {
+    return Column(
+      children: [
+        const Divider(height: 24),
+        SizedBox(
+          height: 24,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: events.length > 3 ? 3 : events.length,
+            separatorBuilder: (context, index) => const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Text('•', style: TextStyle(color: Colors.grey)),
+            ),
+            itemBuilder: (context, index) {
+              final event = events[index];
+              IconData icon;
+
+              switch (event.type) {
+                case 'Goal':
+                  icon = Icons.sports_soccer;
+                  break;
+                case 'Card':
+                  icon = Icons.credit_card;
+                  break;
+                case 'Subst':
+                  icon = Icons.swap_horiz;
+                  break;
+                default:
+                  icon = Icons.sports;
+              }
+
+              return Row(
+                children: [
+                  Icon(icon,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.secondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${event.time.elapsed}\' ${event.player.name}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
   }
 }

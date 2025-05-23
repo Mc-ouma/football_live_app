@@ -9,6 +9,8 @@ import 'package:football_live_app/core/network/network_info.dart';
 import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/prediction_data_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/pages/splash_screen.dart';
 
@@ -50,6 +52,12 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<StandingsBloc>(
           create: (_) => di.sl<StandingsBloc>(),
+        ),
+        BlocProvider<PredictionBloc>(
+          create: (_) => di.sl<PredictionBloc>(),
+        ),
+        BlocProvider<PredictionDataBloc>(
+          create: (_) => di.sl<PredictionDataBloc>(),
         ),
       ],
       child: MaterialApp(
