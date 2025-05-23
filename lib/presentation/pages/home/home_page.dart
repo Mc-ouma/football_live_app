@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:football_live_app/core/di/injection.dart' as di;
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/pages/auth/login_page.dart';
-import 'package:football_live_app/presentation/pages/home/tabs/favorites_tab.dart';
+import 'package:football_live_app/presentation/pages/home/tabs/enhanced_profile_tab.dart';
 import 'package:football_live_app/presentation/pages/home/tabs/leagues_tab.dart';
 import 'package:football_live_app/presentation/pages/home/tabs/live_matches_tab.dart';
-import 'package:football_live_app/presentation/pages/home/tabs/profile_tab.dart';
+import 'package:football_live_app/presentation/pages/home/tabs/news_feed_tab.dart';
+import 'package:football_live_app/presentation/pages/home/tabs/predictions_tab.dart';
 import 'package:football_live_app/presentation/widgets/offline_banner.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,25 +21,36 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
-  final List<Widget> _tabs = [
-    const LiveMatchesTab(),
-    const LeaguesTab(),
-    const FavoritesTab(),
-    const ProfileTab(),
-  ];
+  bool _showLiveMatchesOnly = false;
+  late List<Widget> _tabs;
 
   final List<String> _tabTitles = [
-    'Live Matches',
+    'All Matches',
+    'Predictions',
     'Leagues',
-    'Favorites',
+    'News',
     'Profile',
   ];
 
   @override
   void initState() {
     super.initState();
+    _updateTabs();
     // Start live updates when app loads
     context.read<LiveMatchesBloc>().add(StartLiveUpdatesEvent());
+  }
+
+  void _updateTabs() {
+    _tabs = [
+      LiveMatchesTab(showLiveOnly: _showLiveMatchesOnly),
+      BlocProvider(
+        create: (context) => di.sl<PredictionBloc>(),
+        child: const PredictionsTab(),
+      ),
+      const LeaguesTab(),
+      const NewsFeedTab(),
+      const EnhancedProfileTab(),
+    ];
   }
 
   @override
@@ -82,8 +96,25 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_tabTitles[_currentIndex]),
+        title: _currentIndex == 0
+            ? Text(_showLiveMatchesOnly ? 'Live Matches' : 'All Matches')
+            : Text(_tabTitles[_currentIndex]),
         actions: [
+          // Only show toggle button on the first tab (All Matches/Live Matches)
+          if (_currentIndex == 0)
+            IconButton(
+              icon: Icon(_showLiveMatchesOnly
+                  ? Icons.filter_list_off
+                  : Icons.filter_list),
+              tooltip:
+                  _showLiveMatchesOnly ? 'Show all matches' : 'Show live only',
+              onPressed: () {
+                setState(() {
+                  _showLiveMatchesOnly = !_showLiveMatchesOnly;
+                  _updateTabs();
+                });
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -133,15 +164,19 @@ class _HomePageState extends State<HomePage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.sports_soccer),
-            label: 'Live',
+            label: 'Matches',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights),
+            label: 'Predictions',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.emoji_events),
             label: 'Leagues',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
+            icon: Icon(Icons.newspaper),
+            label: 'News',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

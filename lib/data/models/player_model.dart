@@ -26,6 +26,7 @@ class PlayerModel extends Player {
         );
 
   factory PlayerModel.fromJson(Map<String, dynamic> json) {
+    // Handle both direct player object and nested player object
     final player = json['player'] ?? json;
 
     return PlayerModel(
@@ -109,7 +110,21 @@ class PlayerStatisticsModel extends PlayerStatistics {
         );
 
   factory PlayerStatisticsModel.fromJson(Map<String, dynamic> json) {
-    final statistics = json['statistics'] ?? [];
+    // Handle response format where statistics is an array
+    final List<dynamic> statistics;
+
+    if (json.containsKey('response')) {
+      // Handle API response format from the example:
+      // {"get":"players", "response":[{"player":{...}, "statistics":[...]}]}
+      final responseData = json['response'];
+      if (responseData is List && responseData.isNotEmpty) {
+        statistics = responseData[0]['statistics'] ?? [];
+      } else {
+        statistics = [];
+      }
+    } else {
+      statistics = json['statistics'] ?? [];
+    }
 
     // Take the first statistics entry if available
     final stats = statistics.isNotEmpty ? statistics[0] : {};
@@ -224,11 +239,33 @@ class PlayerGamesModel extends PlayerGames {
         );
 
   factory PlayerGamesModel.fromJson(Map<String, dynamic> json) {
+    // Parse position as a string rather than a number
+    // In the example payload, position is "Attacker" not a number
+    int? positionInt;
+    if (json['position'] != null) {
+      if (json['position'] is int) {
+        positionInt = json['position'];
+      } else {
+        // Handle string position by converting to a code
+        final positionStr = json['position'].toString().toLowerCase();
+        if (positionStr.contains('attack')) {
+          positionInt = 4;
+        } else if (positionStr.contains('midfield')) {
+          positionInt = 3;
+        } else if (positionStr.contains('defend')) {
+          positionInt = 2;
+        } else if (positionStr.contains('goal') ||
+            positionStr.contains('keeper')) {
+          positionInt = 1;
+        }
+      }
+    }
+
     return PlayerGamesModel(
       appearences: json['appearences'],
       lineups: json['lineups'],
       minutes: json['minutes'],
-      position: json['position'],
+      position: positionInt,
       rating: json['rating'] != null
           ? double.tryParse(json['rating'].toString())
           : null,
@@ -482,7 +519,8 @@ class PlayerPenaltyModel extends PlayerPenalty {
   factory PlayerPenaltyModel.fromJson(Map<String, dynamic> json) {
     return PlayerPenaltyModel(
       won: json['won'],
-      committed: json['commited'],
+      // API has a typo 'commited' instead of 'committed'
+      committed: json['committed'] ?? json['commited'],
       scored: json['scored'],
       missed: json['missed'],
       saved: json['saved'],
@@ -492,7 +530,7 @@ class PlayerPenaltyModel extends PlayerPenalty {
   Map<String, dynamic> toJson() {
     return {
       'won': won,
-      'commited': committed,
+      'committed': committed, // Use the correct spelling in our code
       'scored': scored,
       'missed': missed,
       'saved': saved,

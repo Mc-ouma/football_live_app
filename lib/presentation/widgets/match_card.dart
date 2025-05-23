@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:football_live_app/domain/entities/match.dart';
+import 'package:football_live_app/presentation/widgets/prediction_badge.dart';
 
 class MatchCard extends StatelessWidget {
   final Match match;
@@ -26,7 +27,7 @@ class MatchCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Column(
             children: [
-              // League name and match time
+              // League name and match time/status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -58,9 +59,7 @@ class MatchCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
-
-                  // Match time/status
+                  ), // Match time/status
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -87,6 +86,17 @@ class MatchCard extends StatelessWidget {
                   ),
                 ],
               ),
+
+              // Show prediction badge for upcoming matches
+              if (match.prediction != null && match.status.short == "NS") ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    PredictionBadge(prediction: match.prediction!),
+                  ],
+                ),
+              ],
 
               const SizedBox(height: 16),
 
@@ -139,7 +149,7 @@ class MatchCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${match.score?.homeGoals} - ${match.score?.awayGoals}',
+                        '${match.score?.homeGoals ?? 0} - ${match.score?.awayGoals ?? 0}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 18,
@@ -208,7 +218,7 @@ class MatchCard extends StatelessWidget {
                         case 'Card':
                           icon = Icons.credit_card;
                           break;
-                        case 'Substitution':
+                        case 'Subst':
                           icon = Icons.swap_horiz;
                           break;
                         default:
@@ -222,7 +232,7 @@ class MatchCard extends StatelessWidget {
                               color: Theme.of(context).colorScheme.secondary),
                           const SizedBox(width: 4),
                           Text(
-                            '${event.minute}\' ${event.playerName}',
+                            '${event.time}\' ${event.player?.name ?? ""}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context)

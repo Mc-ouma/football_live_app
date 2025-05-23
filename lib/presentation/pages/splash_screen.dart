@@ -20,10 +20,35 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(const Duration(seconds: 2), () {
       _checkAuthStatus();
     });
+
+    // Add a timeout to ensure we don't hang indefinitely
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+        AppLogger.e('Auth check timeout - redirecting to login');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      }
+    });
   }
 
   void _checkAuthStatus() {
-    context.read<AuthBloc>().add(CheckAuthStatusEvent());
+    try {
+      if (context.read<AuthBloc>().state is! AuthLoading) {
+        context.read<AuthBloc>().add(CheckAuthStatusEvent());
+      } else {
+        AppLogger.i('Auth check already in progress, skipping duplicate call');
+      }
+    } catch (e) {
+      AppLogger.e('Error during auth status check: $e');
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -99,16 +124,16 @@ class _SplashScreenState extends State<SplashScreen> {
           Text(
             'Football Live',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 10),
           Text(
             'Real-time football scores & stats',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withOpacity(0.8),
-            ),
+                  color: Colors.white.withOpacity(0.8),
+                ),
           ),
           const SizedBox(height: 50),
           // Loading indicator

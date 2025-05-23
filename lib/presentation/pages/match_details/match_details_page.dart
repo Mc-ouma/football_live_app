@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:football_live_app/domain/entities/prediction.dart';
+import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
+import 'package:football_live_app/presentation/widgets/prediction_badge.dart';
 
 class MatchDetailsPage extends StatefulWidget {
   final int matchId;
@@ -20,6 +24,11 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+
+    // Fetch prediction for this match when the page loads
+    context
+        .read<PredictionBloc>()
+        .add(FetchMatchPredictionEvent(matchId: widget.matchId));
   }
 
   @override
@@ -270,30 +279,222 @@ class _SummaryTab extends StatelessWidget {
       },
     ];
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Match timeline
-        ...events.map((event) => _buildEventItem(context, event)).toList(),
+    return BlocBuilder<PredictionBloc, PredictionState>(
+      builder: (context, predictionState) {
+        // Trigger prediction fetch if not already done
+        if (predictionState is PredictionInitial) {
+          context
+              .read<PredictionBloc>()
+              .add(FetchMatchPredictionEvent(matchId: matchId));
+        }
 
-        const SizedBox(height: 20),
-
-        // Match commentary
-        Text(
-          'Commentary',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Match prediction section - show for upcoming matches
+            if (predictionState is PredictionLoaded) ...[
+              _buildPredictionCard(context, predictionState.prediction),
+              const SizedBox(height: 20),
+            ] else if (predictionState is PredictionLoading) ...[
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  child: CircularProgressIndicator(),
+                ),
               ),
-        ),
-        const SizedBox(height: 12),
-        const Card(
-          elevation: 2,
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Arsenal in complete control as we pass the 75-minute mark. Chelsea struggling to create any meaningful chances in the second half.',
+            ],
+
+            // Match timeline
+            ...events.map((event) => _buildEventItem(context, event)).toList(),
+
+            const SizedBox(height: 20),
+
+            // Match commentary
+            Text(
+              'Commentary',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-          ),
+            const SizedBox(height: 12),
+            const Card(
+              elevation: 2,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Arsenal in complete control as we pass the 75-minute mark. Chelsea struggling to create any meaningful chances in the second half.',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPredictionCard(BuildContext context, Prediction prediction) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side:
+            BorderSide(color: Theme.of(context).colorScheme.primary, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Match Prediction',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
+                PredictionBadge(prediction: prediction),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Team Win Probabilities',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+
+            // Team probabilities
+            _buildTeamProbabilityBar(
+              context: context,
+              teamName: 'Home Team',
+              probability: prediction.getHomeWinProbability(),
+              isHome: true,
+            ),
+            const SizedBox(height: 8),
+            _buildTeamProbabilityBar(
+              context: context,
+              teamName: 'Away Team',
+              probability: prediction.getAwayWinProbability(),
+              isHome: false,
+            ),
+            const SizedBox(height: 8),
+            _buildTeamProbabilityBar(
+              context: context,
+              teamName: 'Draw',
+              probability: prediction.getDrawProbability(),
+              isDraw: true,
+            ),
+
+            const SizedBox(height: 16),
+            if (prediction.goals['home'] != null &&
+                prediction.goals['away'] != null) ...[
+              Text(
+                'Predicted Score',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  prediction.getPredictedScore(),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Confidence: ${(prediction.getConfidenceScore() * 100).toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            // We no longer have updatedAt in the Prediction entity
+            // Instead, show advice if available
+            if (prediction.advice != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Advice: ${prediction.advice}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTeamProbabilityBar({
+    required BuildContext context,
+    required String teamName,
+    required double probability,
+    bool isHome = false,
+    bool isDraw = false,
+  }) {
+    Color barColor;
+    if (isDraw) {
+      barColor = Colors.amber;
+    } else if (isHome) {
+      barColor = Theme.of(context).colorScheme.primary;
+    } else {
+      barColor = Theme.of(context).colorScheme.secondary;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          teamName,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: probability,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                  valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                  minHeight: 12,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${(probability * 100).toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: barColor,
+              ),
+            ),
+          ],
         ),
       ],
     );

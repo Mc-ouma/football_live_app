@@ -1,44 +1,63 @@
 import 'package:equatable/equatable.dart';
 
 class MatchEvent extends Equatable {
-  final int id;
-  final int minute;
-  final int? extraMinute;
-  final String type; // 'Goal', 'Card', 'Substitution', etc.
+  final int time;
+  final int? extraTime;
+  final String type; // 'Goal', 'Card', 'Subst', 'Var', etc.
   final String? detail; // e.g. 'Normal Goal', 'Red Card', etc.
   final String? comments;
-  final String playerName;
-  final int? playerId;
-  final String? assistName;
-  final int? assistId;
-  final int teamId;
+  final EventTeam team;
+  final EventPlayer? player;
+  final EventPlayer? assist;
 
   const MatchEvent({
-    required this.id,
-    required this.minute,
-    this.extraMinute,
+    required this.time,
+    this.extraTime,
     required this.type,
     this.detail,
     this.comments,
-    required this.playerName,
-    this.playerId,
-    this.assistName,
-    this.assistId,
-    required this.teamId,
+    required this.team,
+    this.player,
+    this.assist,
   });
 
   @override
   List<Object?> get props => [
-        id,
-        minute,
-        extraMinute,
+        time,
+        extraTime,
         type,
         detail,
         comments,
-        playerName,
-        playerId,
-        assistName,
-        assistId,
-        teamId,
+        team,
+        player,
+        assist,
       ];
+}
+
+class EventTeam extends Equatable {
+  final int id;
+  final String name;
+  final String? logo;
+
+  const EventTeam({
+    required this.id,
+    required this.name,
+    this.logo,
+  });
+
+  @override
+  List<Object?> get props => [id, name, logo];
+}
+
+class EventPlayer extends Equatable {
+  final int? id;
+  final String? name;
+
+  const EventPlayer({
+    this.id,
+    this.name,
+  });
+
+  @override
+  List<Object?> get props => [id, name];
 }

@@ -11,11 +11,28 @@ class LeagueStandingModel extends LeagueStanding {
         );
 
   factory LeagueStandingModel.fromJson(Map<String, dynamic> json) {
-    final leagueData = json['league'] ?? {};
-    final List<dynamic> standingsData = leagueData['standings'] ?? [];
-    
+    // Handle both direct response and 'response' wrapped format
+    final Map<String, dynamic> leagueData;
+    final List<dynamic> standingsData;
+
+    if (json.containsKey('response')) {
+      // Handle API response format from the example:
+      // {"get":"standings", "response":[{"league":{...}}]}
+      final responseData = json['response'];
+      if (responseData is List && responseData.isNotEmpty) {
+        leagueData = responseData[0]['league'] ?? {};
+      } else {
+        leagueData = {};
+      }
+    } else {
+      // Handle direct format where 'league' is at the top level
+      leagueData = json['league'] ?? {};
+    }
+
+    standingsData = leagueData['standings'] ?? [];
+
     final List<List<StandingModel>> standings = [];
-    
+
     for (var standingGroupData in standingsData) {
       final List<StandingModel> standingGroup = [];
       for (var standingData in standingGroupData) {
@@ -23,7 +40,7 @@ class LeagueStandingModel extends LeagueStanding {
       }
       standings.add(standingGroup);
     }
-    
+
     return LeagueStandingModel(
       league: LeagueModel.fromJson(leagueData),
       standings: standings,
@@ -32,7 +49,7 @@ class LeagueStandingModel extends LeagueStanding {
 
   Map<String, dynamic> toJson() {
     final List<List<Map<String, dynamic>>> standingsJson = [];
-    
+
     for (var standingGroup in standings) {
       final List<Map<String, dynamic>> standingGroupJson = [];
       for (var standing in standingGroup) {
@@ -40,7 +57,7 @@ class LeagueStandingModel extends LeagueStanding {
       }
       standingsJson.add(standingGroupJson);
     }
-    
+
     return {
       'league': {
         ...(league as LeagueModel).toJson(),
@@ -84,12 +101,23 @@ class StandingModel extends Standing {
       points: json['points'] ?? 0,
       description: json['description'],
       form: json['form'],
-      all: json['all'] != null ? StandingStatsModel.fromJson(json['all']) : null,
-      home: json['home'] != null ? StandingStatsModel.fromJson(json['home']) : null,
-      away: json['away'] != null ? StandingStatsModel.fromJson(json['away']) : null,
+      all:
+          json['all'] != null ? StandingStatsModel.fromJson(json['all']) : null,
+      home: json['home'] != null
+          ? StandingStatsModel.fromJson(json['home'])
+          : null,
+      away: json['away'] != null
+          ? StandingStatsModel.fromJson(json['away'])
+          : null,
       goalsDiff: json['goalsDiff'] ?? 0,
       group: json['group'],
-      update: json['update'],
+      update: json['update'] != null
+          ? (json['update'] is int
+              ? json['update']
+              : DateTime.tryParse(json['update'].toString())
+                      ?.millisecondsSinceEpoch ??
+                  0)
+          : null,
     );
   }
 
@@ -145,12 +173,21 @@ class StandingStatsModel extends StandingStats {
         );
 
   factory StandingStatsModel.fromJson(Map<String, dynamic> json) {
+    // Handle both formats for goals:
+    // 1. Where 'goals' is an object with 'for' and 'against' properties
+    // 2. Where goals are directly at the top level as 'goals.for' and 'goals.against'
+    var forGoals = json['goals']?['for'];
+    var against = json['goals']?['against'];
+
     return StandingStatsModel(
       played: json['played'] ?? 0,
       win: json['win'] ?? 0,
       draw: json['draw'] ?? 0,
       lose: json['lose'] ?? 0,
-      goals: GoalsModel.fromJson(json['goals'] ?? {}),
+      goals: GoalsModel(
+        forGoals: forGoals,
+        against: against,
+      ),
     );
   }
 
@@ -175,8 +212,11 @@ class GoalsModel extends Goals {
         );
 
   factory GoalsModel.fromJson(Map<String, dynamic> json) {
+    // Handle different formats for 'for' field which can't be used as variable name directly
+    var forGoalsValue = json.containsKey('for') ? json['for'] : null;
+
     return GoalsModel(
-      forGoals: json['for'],
+      forGoals: forGoalsValue,
       against: json['against'],
     );
   }

@@ -34,6 +34,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckAuthStatusEvent event,
     Emitter<AuthState> emit,
   ) async {
+    logger.info('Checking auth status');
     emit(AuthLoading());
     try {
       final result = await getCurrentUser.call();
@@ -42,6 +43,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         logger.error('Authentication failure', error: failure);
         emit(AuthUnauthenticated());
       }, (user) {
+        logger.info(
+            'Auth check complete: ${user.isAuthenticated ? 'Authenticated' : 'Unauthenticated'}');
         if (user.isAuthenticated) {
           emit(AuthAuthenticated(user: user));
         } else {

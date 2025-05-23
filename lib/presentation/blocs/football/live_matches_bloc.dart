@@ -5,20 +5,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/domain/entities/match.dart';
 import 'package:football_live_app/domain/usecases/football/get_live_matches.dart';
+import 'package:football_live_app/domain/usecases/football/get_upcoming_fixtures.dart';
 
 part 'live_matches_event.dart';
 part 'live_matches_state.dart';
 
 class LiveMatchesBloc extends Bloc<LiveMatchesEvent, LiveMatchesState> {
   final GetLiveMatches getLiveMatches;
+  final GetUpcomingFixtures getUpcomingFixtures;
   final LoggerService logger;
   Timer? _refreshTimer;
 
   LiveMatchesBloc({
     required this.getLiveMatches,
+    required this.getUpcomingFixtures,
     required this.logger,
   }) : super(LiveMatchesInitial()) {
     on<FetchLiveMatchesEvent>(_onFetchLiveMatches);
+    on<FetchTodayMatchesEvent>(_onFetchTodayMatches);
     on<StartLiveUpdatesEvent>(_onStartLiveUpdates);
     on<StopLiveUpdatesEvent>(_onStopLiveUpdates);
   }
@@ -51,6 +55,42 @@ class LiveMatchesBloc extends Bloc<LiveMatchesEvent, LiveMatchesState> {
           error: e, stackTrace: stackTrace);
       emit(LiveMatchesError(
           message: 'Failed to load live matches: ${e.toString()}'));
+    }
+  }
+
+  void _onFetchTodayMatches(
+    FetchTodayMatchesEvent event,
+    Emitter<LiveMatchesState> emit,
+  ) async {
+    emit(LiveMatchesLoading());
+    try {
+      final params = UpcomingFixturesParams(
+        date: event.date,
+        limit: 50, // Get more matches to display
+      );
+
+      final result = await getUpcomingFixtures.call(params);
+
+      result.fold(
+        (failure) {
+          logger.error('Failure fetching today\'s matches', error: failure);
+          emit(LiveMatchesError(
+              message: 'Failed to load today\'s matches: ${failure.message}'));
+        },
+        (matches) {
+          if (matches.isEmpty) {
+            emit(const LiveMatchesEmpty(
+                message: 'No matches scheduled for today'));
+          } else {
+            emit(LiveMatchesLoaded(matches: matches));
+          }
+        },
+      );
+    } catch (e, stackTrace) {
+      logger.error('Error fetching today\'s matches',
+          error: e, stackTrace: stackTrace);
+      emit(LiveMatchesError(
+          message: 'Failed to load today\'s matches: ${e.toString()}'));
     }
   }
 

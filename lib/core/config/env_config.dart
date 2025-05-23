@@ -31,6 +31,8 @@ class EnvConfig {
   static const String standings = '/standings';
   static const String teams = '/teams';
   static const String players = '/players';
+  static const String predictions =
+      '/predictions'; // New endpoint for predictions
 
   // API Query Parameters
   static const String paramDate = 'date';

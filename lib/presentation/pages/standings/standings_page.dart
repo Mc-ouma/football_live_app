@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/core/di/injection.dart';
 import 'package:football_live_app/domain/entities/standing.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
+import 'package:football_live_app/presentation/pages/team_stats/team_stats_page.dart';
 import 'package:football_live_app/presentation/widgets/error_view.dart';
 
 class StandingsPage extends StatefulWidget {
@@ -114,6 +115,14 @@ class _StandingsPageState extends State<StandingsPage> {
           subtitle: Text(
               '${standing.all?.played ?? 0} matches, ${standing.points} pts'),
           trailing: Text('GD: ${standing.goalsDiff}'),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TeamStatsPage(team: standing.team),
+              ),
+            );
+          },
         );
       },
     );

@@ -4,6 +4,7 @@ import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/models/match_model.dart';
 import 'package:football_live_app/data/models/player_model.dart';
+import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:football_live_app/data/models/standing_model.dart';
 
 abstract class FootballRemoteDataSource {
@@ -61,6 +62,12 @@ abstract class FootballRemoteDataSource {
     int? season,
     bool current = true,
   });
+
+  /// Gets prediction for a specific match
+  Future<PredictionModel?> getMatchPrediction(int matchId);
+
+  /// Gets predictions for multiple matches
+  Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds);
 }
 
 class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
@@ -80,14 +87,16 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final response = await apiClient.get(EnvConfig.liveMatches);
 
       final responseBody = response.data;
-      
+
       // Check for API errors
-      if (responseBody['errors'] != null && responseBody['errors'] is Map && responseBody['errors'].isNotEmpty) {
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
         throw ServerException(
           message: 'API Error: ${responseBody['errors']}',
         );
       }
-      
+
       // Check if we have results
       if (responseBody['results'] == 0) {
         logger.info('No live matches found');
@@ -96,8 +105,9 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
 
       // Parse response data
       final List<dynamic> matchesData = responseBody['response'] ?? [];
-      final matches = matchesData.map((match) => MatchModel.fromJson(match)).toList();
-      
+      final matches =
+          matchesData.map((match) => MatchModel.fromJson(match)).toList();
+
       logger.info('Fetched ${matches.length} live matches');
       return matches;
     } catch (e) {
@@ -425,6 +435,62 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
           .toList();
     } catch (e) {
       logger.error('Error getting leagues', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<PredictionModel?> getMatchPrediction(int matchId) async {
+    try {
+      final response = await apiClient.get(
+        EnvConfig.predictions,
+        queryParameters: {'fixture': matchId},
+      );
+
+      final responseBody = response.data;
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
+      }
+
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        logger.info('No prediction found for match ID $matchId');
+        return null;
+      }
+
+      // Parse response data
+      final List<dynamic> predictionsData = responseBody['response'] ?? [];
+      if (predictionsData.isEmpty) {
+        return null;
+      }
+
+      return PredictionModel.fromJson(predictionsData[0]);
+    } catch (e) {
+      logger.error('Error getting match prediction', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds) async {
+    try {
+      // We'll fetch predictions one by one as the API might not support bulk operations
+      final List<PredictionModel> predictions = [];
+
+      for (final matchId in matchIds) {
+        final prediction = await getMatchPrediction(matchId);
+        if (prediction != null) {
+          predictions.add(prediction);
+        }
+      }
+
+      return predictions;
+    } catch (e) {
+      logger.error('Error getting match predictions', error: e);
       rethrow;
     }
   }

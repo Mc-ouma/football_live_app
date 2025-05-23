@@ -11,8 +11,10 @@ import 'package:football_live_app/data/datasources/remote/auth_remote_data_sourc
 import 'package:football_live_app/data/datasources/remote/auth_remote_data_source_factory.dart';
 import 'package:football_live_app/data/datasources/remote/football_remote_data_source.dart';
 import 'package:football_live_app/data/repositories/auth_repository_impl.dart';
+import 'package:football_live_app/data/repositories/football/prediction_repository_impl.dart';
 import 'package:football_live_app/data/repositories/football_repository_impl.dart';
 import 'package:football_live_app/domain/repositories/auth_repository.dart';
+import 'package:football_live_app/domain/repositories/football/prediction_repository.dart';
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 import 'package:football_live_app/domain/usecases/auth/get_current_user.dart';
 import 'package:football_live_app/domain/usecases/auth/sign_in_with_email.dart';
@@ -20,12 +22,15 @@ import 'package:football_live_app/domain/usecases/auth/sign_in_with_google.dart'
 import 'package:football_live_app/domain/usecases/auth/sign_out.dart';
 import 'package:football_live_app/domain/usecases/football/get_league_standings.dart';
 import 'package:football_live_app/domain/usecases/football/get_live_matches.dart';
+import 'package:football_live_app/domain/usecases/football/get_match_prediction.dart';
+import 'package:football_live_app/domain/usecases/football/get_match_predictions.dart';
 import 'package:football_live_app/domain/usecases/football/get_player_statistics.dart';
 import 'package:football_live_app/domain/usecases/football/get_team_information.dart';
 import 'package:football_live_app/domain/usecases/football/get_upcoming_fixtures.dart';
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/player_stats_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/team_info_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/upcoming_fixtures_bloc.dart';
@@ -100,6 +105,14 @@ Future<void> init() async {
     ),
   );
 
+  sl.registerLazySingleton<PredictionRepository>(
+    () => PredictionRepositoryImpl(
+      remoteDataSource: sl<FootballRemoteDataSource>(),
+      connectivity: sl<Connectivity>(),
+      logger: sl<LoggerService>(),
+    ),
+  );
+
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       remoteDataSource: sl<AuthRemoteDataSource>(),
@@ -114,6 +127,10 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetLeagueStandings(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetTeamInformation(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetPlayerStatistics(sl<FootballRepository>()));
+  sl.registerLazySingleton(
+      () => GetMatchPrediction(sl<PredictionRepository>()));
+  sl.registerLazySingleton(
+      () => GetMatchPredictions(sl<PredictionRepository>()));
 
   sl.registerLazySingleton(() => SignInWithEmail(sl<AuthRepository>()));
   sl.registerLazySingleton(() => SignInWithGoogle(sl<AuthRepository>()));
@@ -124,6 +141,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => LiveMatchesBloc(
       getLiveMatches: sl<GetLiveMatches>(),
+      getUpcomingFixtures: sl<GetUpcomingFixtures>(),
       logger: sl<LoggerService>(),
     ),
   );
@@ -152,6 +170,14 @@ Future<void> init() async {
   sl.registerFactory(
     () => PlayerStatsBloc(
       getPlayerStatistics: sl<GetPlayerStatistics>(),
+      logger: sl<LoggerService>(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => PredictionBloc(
+      getMatchPrediction: sl<GetMatchPrediction>(),
+      getMatchPredictions: sl<GetMatchPredictions>(),
       logger: sl<LoggerService>(),
     ),
   );
