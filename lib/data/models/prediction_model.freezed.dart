@@ -137,11 +137,11 @@ class __$$PredictionResponseImplCopyWithImpl<$Res>
           : get // ignore: cast_nullable_to_non_nullable
               as String,
       parameters: null == parameters
-          ? _value.parameters
+          ? _value._parameters
           : parameters // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
       errors: null == errors
-          ? _value.errors
+          ? _value._errors
           : errors // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
       results: null == results
@@ -149,7 +149,7 @@ class __$$PredictionResponseImplCopyWithImpl<$Res>
           : results // ignore: cast_nullable_to_non_nullable
               as int,
       response: null == response
-          ? _value.response
+          ? _value._response
           : response // ignore: cast_nullable_to_non_nullable
               as List<PredictionData>,
     ));
@@ -161,24 +161,44 @@ class __$$PredictionResponseImplCopyWithImpl<$Res>
 class _$PredictionResponseImpl implements _PredictionResponse {
   const _$PredictionResponseImpl(
       {required this.get,
-      required this.parameters,
-      required this.errors,
+      required final Map<String, dynamic> parameters,
+      required final Map<String, dynamic> errors,
       required this.results,
-      required this.response});
+      required final List<PredictionData> response})
+      : _parameters = parameters,
+        _errors = errors,
+        _response = response;
 
   factory _$PredictionResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$PredictionResponseImplFromJson(json);
 
   @override
   final String get;
+  final Map<String, dynamic> _parameters;
   @override
-  final Map<String, dynamic> parameters;
+  Map<String, dynamic> get parameters {
+    if (_parameters is EqualUnmodifiableMapView) return _parameters;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_parameters);
+  }
+
+  final Map<String, dynamic> _errors;
   @override
-  final Map<String, dynamic> errors;
+  Map<String, dynamic> get errors {
+    if (_errors is EqualUnmodifiableMapView) return _errors;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_errors);
+  }
+
   @override
   final int results;
+  final List<PredictionData> _response;
   @override
-  final List<PredictionData> response;
+  List<PredictionData> get response {
+    if (_response is EqualUnmodifiableListView) return _response;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_response);
+  }
 
   @override
   String toString() {
@@ -192,10 +212,10 @@ class _$PredictionResponseImpl implements _PredictionResponse {
             other is _$PredictionResponseImpl &&
             (identical(other.get, get) || other.get == get) &&
             const DeepCollectionEquality()
-                .equals(other.parameters, parameters) &&
-            const DeepCollectionEquality().equals(other.errors, errors) &&
+                .equals(other._parameters, _parameters) &&
+            const DeepCollectionEquality().equals(other._errors, _errors) &&
             (identical(other.results, results) || other.results == results) &&
-            const DeepCollectionEquality().equals(other.response, response));
+            const DeepCollectionEquality().equals(other._response, _response));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -203,10 +223,10 @@ class _$PredictionResponseImpl implements _PredictionResponse {
   int get hashCode => Object.hash(
       runtimeType,
       get,
-      const DeepCollectionEquality().hash(parameters),
-      const DeepCollectionEquality().hash(errors),
+      const DeepCollectionEquality().hash(_parameters),
+      const DeepCollectionEquality().hash(_errors),
       results,
-      const DeepCollectionEquality().hash(response));
+      const DeepCollectionEquality().hash(_response));
 
   /// Create a copy of PredictionResponse
   /// with the given fields replaced by the non-null parameter values.

@@ -5,8 +5,7 @@ part 'fixture_model.freezed.dart';
 part 'fixture_model.g.dart';
 
 /// Root response structure for fixture endpoints
-@Freezed(makeCollectionsUnmodifiable: false)
-@JsonSerializable(explicitToJson: true)
+@freezed
 class FixtureResponse with _$FixtureResponse {
   const factory FixtureResponse({
     required String get,
@@ -14,7 +13,7 @@ class FixtureResponse with _$FixtureResponse {
     required Map<String, dynamic> errors,
     required int results,
     required int paging,
-    required List<FixtureData> response,
+    required List<dynamic> response,
   }) = _FixtureResponse;
 
   factory FixtureResponse.fromJson(Map<String, dynamic> json) =>
@@ -22,8 +21,7 @@ class FixtureResponse with _$FixtureResponse {
 }
 
 /// Main fixture data model containing all fixture information
-@Freezed(makeCollectionsUnmodifiable: false)
-@JsonSerializable(explicitToJson: true)
+@freezed
 class FixtureData with _$FixtureData {
   /// Fixture data model with basic information
   const factory FixtureData({
@@ -91,7 +89,7 @@ class FixtureData with _$FixtureData {
 }
 
 /// Match event information (goals, cards, substitutions, etc.)
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Event with _$Event {
   const factory Event({
     required Time time,
@@ -107,7 +105,7 @@ class Event with _$Event {
 }
 
 /// Time information for events
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Time with _$Time {
   const factory Time({required int elapsed, int? extra}) = _Time;
 
@@ -115,7 +113,7 @@ class Time with _$Time {
 }
 
 /// Player information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Player with _$Player {
   const factory Player({int? id, required String name}) = _Player;
 
@@ -123,7 +121,7 @@ class Player with _$Player {
 }
 
 /// Lineup information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class LineupData with _$LineupData {
   const factory LineupData({
     required Team team,
@@ -138,7 +136,7 @@ class LineupData with _$LineupData {
 }
 
 /// Coach information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Coach with _$Coach {
   const factory Coach({int? id, required String name, String? photo}) = _Coach;
 
@@ -146,7 +144,7 @@ class Coach with _$Coach {
 }
 
 /// Player in lineup (starting or substitute)
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class StartXI with _$StartXI {
   const factory StartXI({required PlayerDetails player}) = _StartXI;
 
@@ -155,7 +153,7 @@ class StartXI with _$StartXI {
 }
 
 /// Detailed player information used in lineups
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class PlayerDetails with _$PlayerDetails {
   const factory PlayerDetails({
     required int id,
@@ -170,7 +168,7 @@ class PlayerDetails with _$PlayerDetails {
 }
 
 /// Match statistics
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Statistics with _$Statistics {
   const factory Statistics({
     List<TeamStatistics>? home,
@@ -182,7 +180,7 @@ class Statistics with _$Statistics {
 }
 
 /// Team statistics
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class TeamStatistics with _$TeamStatistics {
   const factory TeamStatistics({required String type, required dynamic value}) =
       _TeamStatistics;
@@ -192,7 +190,7 @@ class TeamStatistics with _$TeamStatistics {
 }
 
 /// Player statistics
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class PlayerStatistics with _$PlayerStatistics {
   const factory PlayerStatistics({
     required Team team,
@@ -204,7 +202,7 @@ class PlayerStatistics with _$PlayerStatistics {
 }
 
 /// Individual player statistics
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class PlayerStatDetail with _$PlayerStatDetail {
   const factory PlayerStatDetail({
     required PlayerDetails player,
@@ -216,7 +214,7 @@ class PlayerStatDetail with _$PlayerStatDetail {
 }
 
 /// Individual statistic for a player
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Statistic with _$Statistic {
   const factory Statistic({
     required Map<String, dynamic> games,

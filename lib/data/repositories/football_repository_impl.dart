@@ -6,7 +6,7 @@ import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/datasources/local/football_local_data_source.dart';
 import 'package:football_live_app/data/datasources/remote/football_remote_data_source.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
-import 'package:football_live_app/domain/entities/standing.dart';
+import 'package:football_live_app/data/models/shared_models.dart';
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 
 class FootballRepositoryImpl implements FootballRepository {
@@ -176,80 +176,20 @@ class FootballRepositoryImpl implements FootballRepository {
   }
 
   @override
-  Future<Either<Failure, LeagueStanding>> getLeagueStandings({
-    required int leagueId,
-    required int season,
-  }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final remoteStandings = await remoteDataSource.getLeagueStandings(
-          leagueId: leagueId,
-          season: season,
-        );
-        await localDataSource.cacheLeagueStandings(remoteStandings);
-        return Right(remoteStandings);
-      } on NotFoundException catch (e) {
-        return Left(NotFoundFailure(message: e.message));
-      } on RateLimitException catch (e) {
-        logger.warning('API rate limit hit, returning cached data', error: e);
-        try {
-          final localStandings = await localDataSource.getCachedLeagueStandings(
-            leagueId: leagueId,
-            season: season,
-          );
-          return Right(localStandings);
-        } on CacheException catch (e) {
-          return Left(CacheFailure(message: e.message));
-        }
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message, code: e.code));
-      }
-    } else {
-      logger.info('No internet connection, trying to fetch from local cache');
-      try {
-        final localStandings = await localDataSource.getCachedLeagueStandings(
-          leagueId: leagueId,
-          season: season,
-        );
-        return Right(localStandings);
-      } on CacheException catch (e) {
-        return Left(CacheFailure(message: e.message));
-      }
-    }
-  }
-
-  @override
   Future<Either<Failure, Team>> getTeamInformation(int teamId) async {
     if (await networkInfo.isConnected) {
       try {
         final remoteTeam = await remoteDataSource.getTeamInformation(teamId);
-        await localDataSource.cacheTeamInformation(remoteTeam);
         return Right(remoteTeam);
       } on NotFoundException catch (e) {
         return Left(NotFoundFailure(message: e.message));
       } on RateLimitException catch (e) {
-        logger.warning('API rate limit hit, returning cached data', error: e);
-        try {
-          final localTeam = await localDataSource.getCachedTeamInformation(
-            teamId,
-          );
-          return Right(localTeam);
-        } on CacheException catch (e) {
-          return Left(CacheFailure(message: e.message));
-        }
+        return Left(ServerFailure(message: 'Rate limit exceeded: ${e.message}'));
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message, code: e.code));
       }
     } else {
-      logger.info('No internet connection, trying to fetch from local cache');
-      try {
-        final localTeam = await localDataSource.getCachedTeamInformation(
-          teamId,
-        );
-        return Right(localTeam);
-      } on CacheException catch (e) {
-        return Left(CacheFailure(message: e.message));
-      }
+      return Left(NoInternetFailure(message: 'No internet connection'));
     }
   }
 
@@ -278,111 +218,11 @@ class FootballRepositoryImpl implements FootballRepository {
   }
 
   @override
-  Future<Either<Failure, Player>> getPlayerInformation(int playerId) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final remotePlayer = await remoteDataSource.getPlayerInformation(
-          playerId,
-        );
-        await localDataSource.cachePlayerInformation(remotePlayer);
-        return Right(remotePlayer);
-      } on NotFoundException catch (e) {
-        return Left(NotFoundFailure(message: e.message));
-      } on RateLimitException catch (e) {
-        logger.warning('API rate limit hit, returning cached data', error: e);
-        try {
-          final localPlayer = await localDataSource.getCachedPlayerInformation(
-            playerId,
-          );
-          return Right(localPlayer);
-        } on CacheException catch (e) {
-          return Left(CacheFailure(message: e.message));
-        }
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message, code: e.code));
-      }
-    } else {
-      logger.info('No internet connection, trying to fetch from local cache');
-      try {
-        final localPlayer = await localDataSource.getCachedPlayerInformation(
-          playerId,
-        );
-        return Right(localPlayer);
-      } on CacheException catch (e) {
-        return Left(CacheFailure(message: e.message));
-      }
-    }
-  }
-
-  @override
-  Future<Either<Failure, PlayerStatistics>> getPlayerStatistics({
-    required int playerId,
-    required int season,
-    int? leagueId,
-    int? teamId,
-  }) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final remoteStats = await remoteDataSource.getPlayerStatistics(
-          playerId: playerId,
-          season: season,
-          leagueId: leagueId,
-          teamId: teamId,
-        );
-        await localDataSource.cachePlayerStatistics(remoteStats);
-        return Right(remoteStats);
-      } on NotFoundException catch (e) {
-        return Left(NotFoundFailure(message: e.message));
-      } on RateLimitException catch (e) {
-        logger.warning('API rate limit hit, returning cached data', error: e);
-        try {
-          final localStats = await localDataSource.getCachedPlayerStatistics(
-            playerId: playerId,
-            season: season,
-            leagueId: leagueId,
-          );
-          return Right(localStats);
-        } on CacheException catch (e) {
-          return Left(CacheFailure(message: e.message));
-        }
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message, code: e.code));
-      }
-    } else {
-      logger.info('No internet connection, trying to fetch from local cache');
-      try {
-        final localStats = await localDataSource.getCachedPlayerStatistics(
-          playerId: playerId,
-          season: season,
-          leagueId: leagueId,
-        );
-        return Right(localStats);
-      } on CacheException catch (e) {
-        return Left(CacheFailure(message: e.message));
-      }
-    }
-  }
-
-  @override
   Future<Either<Failure, List<Team>>> searchTeams(String query) async {
     if (await networkInfo.isConnected) {
       try {
         final remoteTeams = await remoteDataSource.searchTeams(query);
         return Right(remoteTeams);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message, code: e.code));
-      }
-    } else {
-      return Left(NoInternetFailure(message: 'No internet connection'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<Player>>> searchPlayers(String query) async {
-    if (await networkInfo.isConnected) {
-      try {
-        final remotePlayers = await remoteDataSource.searchPlayers(query);
-        return Right(remotePlayers);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message, code: e.code));
       }

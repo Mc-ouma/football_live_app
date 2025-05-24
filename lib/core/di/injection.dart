@@ -29,22 +29,21 @@ import 'package:football_live_app/domain/usecases/football/get_match_prediction.
 import 'package:football_live_app/domain/usecases/football/get_match_predictions.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_prediction_data.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_predictions_data.dart';
-import 'package:football_live_app/domain/usecases/football/get_player_statistics.dart';
-import 'package:football_live_app/domain/usecases/football/get_team_information.dart';
 import 'package:football_live_app/domain/usecases/football/get_upcoming_fixtures.dart';
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/player_stats_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_data_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/team_info_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/upcoming_fixtures_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
+
+// Export sl as getIt for convenience
+final getIt = sl;
 
 Future<void> init() async {
   // External dependencies
@@ -140,8 +139,6 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetUpcomingFixtures(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetMatchDetails(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetLeagueStandings(sl<FootballRepository>()));
-  sl.registerLazySingleton(() => GetTeamInformation(sl<FootballRepository>()));
-  sl.registerLazySingleton(() => GetPlayerStatistics(sl<FootballRepository>()));
 
   // Auth Use Cases
   sl.registerLazySingleton(() => SignInWithEmail(sl<AuthRepository>()));
@@ -176,23 +173,8 @@ Future<void> init() async {
   );
 
   sl.registerFactory(
-    () => StandingsBloc(
-      getLeagueStandings: sl<GetLeagueStandings>(),
-      logger: sl<LoggerService>(),
-    ),
-  );
-
-  sl.registerFactory(
-    () => TeamInfoBloc(
-      getTeamInformation: sl<GetTeamInformation>(),
-      logger: sl<LoggerService>(),
-    ),
-  );
-
-  sl.registerFactory(
-    () => PlayerStatsBloc(
-      getPlayerStatistics: sl<GetPlayerStatistics>(),
-      logger: sl<LoggerService>(),
+    () => FixtureDetailsBloc(
+      getMatchDetails: sl<GetMatchDetails>(),
     ),
   );
 
@@ -221,4 +203,9 @@ Future<void> init() async {
       logger: sl<LoggerService>(),
     ),
   );
+}
+
+/// Configure all dependencies
+Future<void> configureDependencies() async {
+  await init();
 }

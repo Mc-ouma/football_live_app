@@ -605,7 +605,7 @@ class __$$TeamImplCopyWithImpl<$Res>
           : winner // ignore: cast_nullable_to_non_nullable
               as bool?,
       statistics: freezed == statistics
-          ? _value.statistics
+          ? _value._statistics
           : statistics // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
     ));
@@ -620,7 +620,8 @@ class _$TeamImpl implements _Team {
       required this.name,
       required this.logo,
       this.winner,
-      this.statistics});
+      final Map<String, dynamic>? statistics})
+      : _statistics = statistics;
 
   factory _$TeamImpl.fromJson(Map<String, dynamic> json) =>
       _$$TeamImplFromJson(json);
@@ -633,8 +634,15 @@ class _$TeamImpl implements _Team {
   final String logo;
   @override
   final bool? winner;
+  final Map<String, dynamic>? _statistics;
   @override
-  final Map<String, dynamic>? statistics;
+  Map<String, dynamic>? get statistics {
+    final value = _statistics;
+    if (value == null) return null;
+    if (_statistics is EqualUnmodifiableMapView) return _statistics;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
@@ -651,13 +659,13 @@ class _$TeamImpl implements _Team {
             (identical(other.logo, logo) || other.logo == logo) &&
             (identical(other.winner, winner) || other.winner == winner) &&
             const DeepCollectionEquality()
-                .equals(other.statistics, statistics));
+                .equals(other._statistics, _statistics));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, logo, winner,
-      const DeepCollectionEquality().hash(statistics));
+      const DeepCollectionEquality().hash(_statistics));
 
   /// Create a copy of Team
   /// with the given fields replaced by the non-null parameter values.

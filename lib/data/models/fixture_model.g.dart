@@ -6,45 +6,6 @@ part of 'fixture_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-FixtureResponse _$FixtureResponseFromJson(Map<String, dynamic> json) =>
-    FixtureResponse(
-      get: json['get'] as String,
-      parameters: json['parameters'] as Map<String, dynamic>,
-      errors: json['errors'] as Map<String, dynamic>,
-      results: (json['results'] as num).toInt(),
-      paging: (json['paging'] as num).toInt(),
-      response: (json['response'] as List<dynamic>)
-          .map((e) => FixtureData.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$FixtureResponseToJson(FixtureResponse instance) =>
-    <String, dynamic>{
-      'get': instance.get,
-      'parameters': instance.parameters,
-      'errors': instance.errors,
-      'results': instance.results,
-      'paging': instance.paging,
-      'response': instance.response.map((e) => e.toJson()).toList(),
-    };
-
-FixtureData _$FixtureDataFromJson(Map<String, dynamic> json) => FixtureData(
-      fixture: Fixture.fromJson(json['fixture'] as Map<String, dynamic>),
-      league: League.fromJson(json['league'] as Map<String, dynamic>),
-      teams: Teams.fromJson(json['teams'] as Map<String, dynamic>),
-      goals: Goals.fromJson(json['goals'] as Map<String, dynamic>),
-      score: Score.fromJson(json['score'] as Map<String, dynamic>),
-    );
-
-Map<String, dynamic> _$FixtureDataToJson(FixtureData instance) =>
-    <String, dynamic>{
-      'fixture': instance.fixture.toJson(),
-      'league': instance.league.toJson(),
-      'teams': instance.teams.toJson(),
-      'goals': instance.goals.toJson(),
-      'score': instance.score.toJson(),
-    };
-
 _$FixtureResponseImpl _$$FixtureResponseImplFromJson(
         Map<String, dynamic> json) =>
     _$FixtureResponseImpl(
@@ -53,9 +14,7 @@ _$FixtureResponseImpl _$$FixtureResponseImplFromJson(
       errors: json['errors'] as Map<String, dynamic>,
       results: (json['results'] as num).toInt(),
       paging: (json['paging'] as num).toInt(),
-      response: (json['response'] as List<dynamic>)
-          .map((e) => FixtureData.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      response: json['response'] as List<dynamic>,
     );
 
 Map<String, dynamic> _$$FixtureResponseImplToJson(
@@ -83,10 +42,10 @@ _$EventImpl _$$EventImplFromJson(Map<String, dynamic> json) => _$EventImpl(
 
 Map<String, dynamic> _$$EventImplToJson(_$EventImpl instance) =>
     <String, dynamic>{
-      'time': instance.time,
-      'team': instance.team,
-      'player': instance.player,
-      'assist': instance.assist,
+      'time': instance.time.toJson(),
+      'team': instance.team.toJson(),
+      'player': instance.player.toJson(),
+      'assist': instance.assist?.toJson(),
       'type': instance.type,
       'detail': instance.detail,
       'comments': instance.comments,
@@ -129,11 +88,11 @@ _$LineupDataImpl _$$LineupDataImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$LineupDataImplToJson(_$LineupDataImpl instance) =>
     <String, dynamic>{
-      'team': instance.team,
-      'coach': instance.coach,
+      'team': instance.team.toJson(),
+      'coach': instance.coach.toJson(),
       'formation': instance.formation,
-      'startXI': instance.startXI,
-      'substitutes': instance.substitutes,
+      'startXI': instance.startXI.map((e) => e.toJson()).toList(),
+      'substitutes': instance.substitutes.map((e) => e.toJson()).toList(),
     };
 
 _$CoachImpl _$$CoachImplFromJson(Map<String, dynamic> json) => _$CoachImpl(
@@ -156,7 +115,7 @@ _$StartXIImpl _$$StartXIImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$StartXIImplToJson(_$StartXIImpl instance) =>
     <String, dynamic>{
-      'player': instance.player,
+      'player': instance.player.toJson(),
     };
 
 _$PlayerDetailsImpl _$$PlayerDetailsImplFromJson(Map<String, dynamic> json) =>
@@ -189,8 +148,8 @@ _$StatisticsImpl _$$StatisticsImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$StatisticsImplToJson(_$StatisticsImpl instance) =>
     <String, dynamic>{
-      'home': instance.home,
-      'away': instance.away,
+      'home': instance.home?.map((e) => e.toJson()).toList(),
+      'away': instance.away?.map((e) => e.toJson()).toList(),
     };
 
 _$TeamStatisticsImpl _$$TeamStatisticsImplFromJson(Map<String, dynamic> json) =>
@@ -218,8 +177,8 @@ _$PlayerStatisticsImpl _$$PlayerStatisticsImplFromJson(
 Map<String, dynamic> _$$PlayerStatisticsImplToJson(
         _$PlayerStatisticsImpl instance) =>
     <String, dynamic>{
-      'team': instance.team,
-      'players': instance.players,
+      'team': instance.team.toJson(),
+      'players': instance.players.map((e) => e.toJson()).toList(),
     };
 
 _$PlayerStatDetailImpl _$$PlayerStatDetailImplFromJson(
@@ -234,8 +193,8 @@ _$PlayerStatDetailImpl _$$PlayerStatDetailImplFromJson(
 Map<String, dynamic> _$$PlayerStatDetailImplToJson(
         _$PlayerStatDetailImpl instance) =>
     <String, dynamic>{
-      'player': instance.player,
-      'statistics': instance.statistics,
+      'player': instance.player.toJson(),
+      'statistics': instance.statistics.map((e) => e.toJson()).toList(),
     };
 
 _$StatisticImpl _$$StatisticImplFromJson(Map<String, dynamic> json) =>

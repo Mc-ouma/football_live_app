@@ -3,9 +3,8 @@ import 'package:football_live_app/core/errors/exceptions.dart';
 import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
-import 'package:football_live_app/data/models/player_model.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
-import 'package:football_live_app/data/models/standing_model.dart';
+import 'package:football_live_app/data/models/shared_models.dart';
 
 abstract class FootballRemoteDataSource {
   /// Gets the current live matches
@@ -23,12 +22,6 @@ abstract class FootballRemoteDataSource {
   /// Gets match details by ID
   Future<FixtureData> getMatchDetails(int matchId);
 
-  /// Gets league standings
-  Future<LeagueStandingModel> getLeagueStandings({
-    required int leagueId,
-    required int season,
-  });
-
   /// Gets team information
   Future<Team> getTeamInformation(int teamId);
 
@@ -39,22 +32,8 @@ abstract class FootballRemoteDataSource {
     required int season,
   });
 
-  /// Gets player information
-  Future<PlayerModel> getPlayerInformation(int playerId);
-
-  /// Gets player statistics
-  Future<PlayerStatisticsModel> getPlayerStatistics({
-    required int playerId,
-    required int season,
-    int? leagueId,
-    int? teamId,
-  });
-
   /// Search for teams by name
   Future<List<Team>> searchTeams(String query);
-
-  /// Search for players by name
-  Future<List<PlayerModel>> searchPlayers(String query);
 
   /// Gets available leagues
   Future<List<League>> getLeagues({
@@ -62,12 +41,6 @@ abstract class FootballRemoteDataSource {
     int? season,
     bool current = true,
   });
-
-  /// Gets prediction for a specific match
-  Future<PredictionModel?> getMatchPrediction(int matchId);
-
-  /// Gets predictions for multiple matches
-  Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds);
 
   /// Gets prediction data for a specific match
   Future<PredictionData?> getMatchPredictionData(int matchId);
@@ -253,16 +226,6 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   }
 
   @override
-  Future<LeagueStandingModel> getLeagueStandings({
-    required int leagueId,
-    required int season,
-  }) async {
-    // This depends on the structure of your LeagueStandingModel
-    // Implementation would need to be adapted to your specific models
-    throw UnimplementedError('Not implemented yet');
-  }
-
-  @override
   Future<Team> getTeamInformation(int teamId) async {
     try {
       // Build the query parameters
@@ -293,11 +256,12 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
         );
       }
 
-      // Parse the team information - structure depends on your API
+      // Parse the team information
+      final teamData = responseBody['response'][0]['team'];
       final team = Team(
-        id: responseBody['response'][0]['team']['id'],
-        name: responseBody['response'][0]['team']['name'],
-        logo: responseBody['response'][0]['team']['logo'],
+        id: teamData['id'],
+        name: teamData['name'],
+        logo: teamData['logo'],
       );
 
       logger.info('Retrieved team information for team ID: $teamId');
@@ -320,23 +284,6 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
     required int season,
   }) async {
     // Implementation for team statistics
-    throw UnimplementedError('Not implemented yet');
-  }
-
-  @override
-  Future<PlayerModel> getPlayerInformation(int playerId) async {
-    // Implementation for player information
-    throw UnimplementedError('Not implemented yet');
-  }
-
-  @override
-  Future<PlayerStatisticsModel> getPlayerStatistics({
-    required int playerId,
-    required int season,
-    int? leagueId,
-    int? teamId,
-  }) async {
-    // Implementation for player statistics
     throw UnimplementedError('Not implemented yet');
   }
 
@@ -391,12 +338,6 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
         message: 'Failed to search teams: ${e.toString()}',
       );
     }
-  }
-
-  @override
-  Future<List<PlayerModel>> searchPlayers(String query) async {
-    // Implementation for player search
-    throw UnimplementedError('Not implemented yet');
   }
 
   @override
@@ -468,18 +409,6 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
         message: 'Failed to get leagues: ${e.toString()}',
       );
     }
-  }
-
-  @override
-  Future<PredictionModel?> getMatchPrediction(int matchId) async {
-    // Implementation for match prediction
-    throw UnimplementedError('Not implemented yet');
-  }
-
-  @override
-  Future<List<PredictionModel>> getMatchPredictions(List<int> matchIds) async {
-    // Implementation for match predictions
-    throw UnimplementedError('Not implemented yet');
   }
 
   @override

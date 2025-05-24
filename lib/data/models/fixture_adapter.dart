@@ -1,35 +1,37 @@
-import 'package:football_live_app/data/models/fixture_model.dart';
-import 'package:football_live_app/domain/entities/fixture.dart';
+import 'package:football_live_app/data/models/fixture_model.dart' as models;
+import 'package:football_live_app/data/models/shared_models.dart';
 
 /// Adapter class to help transition from MatchModel to FixtureModel
 /// This class provides helper methods to convert between the old Match structure
 /// and the new Fixture structure.
 class FixtureAdapter {
   /// Converts a FixtureData to what was previously expected as Match
-  static FixtureData toMatchFormat(FixtureData fixtureData) {
+  static models.FixtureData toMatchFormat(models.FixtureData fixtureData) {
     return fixtureData;
   }
 
   /// Converts a list of FixtureData to what was previously expected as List<Match>
-  static List<FixtureData> toMatchListFormat(List<FixtureData> fixtures) {
+  static List<models.FixtureData> toMatchListFormat(
+      List<models.FixtureData> fixtures) {
     return fixtures;
   }
 
   /// Creates a fixture response from raw JSON data
-  static FixtureResponse createFixtureResponseFromJson(
+  static models.FixtureResponse createFixtureResponseFromJson(
       Map<String, dynamic> json) {
-    return FixtureResponse.fromJson(json);
+    return models.FixtureResponse.fromJson(json);
   }
 
   /// Creates a fixture data entry from raw JSON data
-  static FixtureData createFixtureDataFromJson(Map<String, dynamic> json) {
-    return FixtureData.fromJson(json);
+  static models.FixtureData createFixtureDataFromJson(
+      Map<String, dynamic> json) {
+    return models.FixtureData.fromJson(json);
   }
 
   /// Converts database map to FixtureData format
-  static FixtureData fromDatabase(Map<String, dynamic> map) {
+  static models.FixtureData fromDatabase(Map<String, dynamic> map) {
     // Extract the base fixture information
-    final fixtureData = Fixture(
+    final fixture = Fixture(
       id: map['id'] as int,
       referee: map['referee'] as String?,
       timezone: map['timezone'] as String? ?? 'UTC',
@@ -106,9 +108,9 @@ class FixtureAdapter {
           : null,
     );
 
-    // Create the final FixtureData model
-    return FixtureData(
-      fixture: fixtureData,
+    // Create the final FixtureData model using the basic constructor
+    return models.FixtureData(
+      fixture: fixture,
       league: league,
       teams: Teams(home: homeTeam, away: awayTeam),
       goals: goals,
@@ -118,7 +120,7 @@ class FixtureAdapter {
   }
 
   /// Converts a FixtureData to a database map
-  static Map<String, dynamic> toDatabase(FixtureData fixtureData) {
+  static Map<String, dynamic> toDatabase(models.FixtureData fixtureData) {
     return {
       'id': fixtureData.fixture.id,
       'referee': fixtureData.fixture.referee,

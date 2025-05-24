@@ -1,17 +1,18 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:football_live_app/core/errors/failures.dart';
+import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 import 'package:football_live_app/domain/usecases/usecase.dart';
 
 class GetUpcomingFixtures
-    implements UseCase<List<Match>, UpcomingFixturesParams> {
+    implements UseCase<List<FixtureData>, UpcomingFixturesParams> {
   final FootballRepository repository;
 
   GetUpcomingFixtures(this.repository);
 
   @override
-  Future<Either<Failure, List<Match>>> call(
+  Future<Either<Failure, List<FixtureData>>> call(
     UpcomingFixturesParams params,
   ) async {
     return await repository.getUpcomingFixtures(

@@ -34,8 +34,8 @@ _$TeamsImpl _$$TeamsImplFromJson(Map<String, dynamic> json) => _$TeamsImpl(
 
 Map<String, dynamic> _$$TeamsImplToJson(_$TeamsImpl instance) =>
     <String, dynamic>{
-      'home': instance.home,
-      'away': instance.away,
+      'home': instance.home.toJson(),
+      'away': instance.away.toJson(),
     };
 
 _$TeamImpl _$$TeamImplFromJson(Map<String, dynamic> json) => _$TeamImpl(
@@ -79,10 +79,10 @@ _$ScoreImpl _$$ScoreImplFromJson(Map<String, dynamic> json) => _$ScoreImpl(
 
 Map<String, dynamic> _$$ScoreImplToJson(_$ScoreImpl instance) =>
     <String, dynamic>{
-      'halftime': instance.halftime,
-      'fulltime': instance.fulltime,
-      'extratime': instance.extratime,
-      'penalty': instance.penalty,
+      'halftime': instance.halftime.toJson(),
+      'fulltime': instance.fulltime.toJson(),
+      'extratime': instance.extratime?.toJson(),
+      'penalty': instance.penalty?.toJson(),
     };
 
 _$FixtureImpl _$$FixtureImplFromJson(Map<String, dynamic> json) =>
@@ -106,9 +106,9 @@ Map<String, dynamic> _$$FixtureImplToJson(_$FixtureImpl instance) =>
       'timezone': instance.timezone,
       'date': instance.date,
       'timestamp': instance.timestamp,
-      'periods': instance.periods,
-      'venue': instance.venue,
-      'status': instance.status,
+      'periods': instance.periods?.toJson(),
+      'venue': instance.venue.toJson(),
+      'status': instance.status.toJson(),
     };
 
 _$FixturePeriodsImpl _$$FixturePeriodsImplFromJson(Map<String, dynamic> json) =>

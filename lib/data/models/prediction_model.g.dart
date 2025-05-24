@@ -6,26 +6,6 @@ part of 'prediction_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-PredictionResponse _$PredictionResponseFromJson(Map<String, dynamic> json) =>
-    PredictionResponse(
-      get: json['get'] as String,
-      parameters: json['parameters'] as Map<String, dynamic>,
-      errors: json['errors'] as Map<String, dynamic>,
-      results: (json['results'] as num).toInt(),
-      response: (json['response'] as List<dynamic>)
-          .map((e) => PredictionData.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
-
-Map<String, dynamic> _$PredictionResponseToJson(PredictionResponse instance) =>
-    <String, dynamic>{
-      'get': instance.get,
-      'parameters': instance.parameters,
-      'errors': instance.errors,
-      'results': instance.results,
-      'response': instance.response.map((e) => e.toJson()).toList(),
-    };
-
 _$PredictionResponseImpl _$$PredictionResponseImplFromJson(
         Map<String, dynamic> json) =>
     _$PredictionResponseImpl(
@@ -45,7 +25,7 @@ Map<String, dynamic> _$$PredictionResponseImplToJson(
       'parameters': instance.parameters,
       'errors': instance.errors,
       'results': instance.results,
-      'response': instance.response,
+      'response': instance.response.map((e) => e.toJson()).toList(),
     };
 
 _$PredictionDataImpl _$$PredictionDataImplFromJson(Map<String, dynamic> json) =>
@@ -60,10 +40,10 @@ _$PredictionDataImpl _$$PredictionDataImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$PredictionDataImplToJson(
         _$PredictionDataImpl instance) =>
     <String, dynamic>{
-      'predictions': instance.predictions,
-      'league': instance.league,
-      'fixture': instance.fixture,
-      'teams': instance.teams,
+      'predictions': instance.predictions.toJson(),
+      'league': instance.league.toJson(),
+      'fixture': instance.fixture.toJson(),
+      'teams': instance.teams.toJson(),
     };
 
 _$PredictionsImpl _$$PredictionsImplFromJson(Map<String, dynamic> json) =>
@@ -80,7 +60,7 @@ _$PredictionsImpl _$$PredictionsImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$PredictionsImplToJson(_$PredictionsImpl instance) =>
     <String, dynamic>{
       'winner': instance.winner,
-      'winnerSide': instance.winnerSide,
+      'winnerSide': instance.winnerSide.toJson(),
       'underOver': instance.underOver,
       'goals': instance.goals,
       'advice': instance.advice,
@@ -116,12 +96,12 @@ _$ComparisonImpl _$$ComparisonImplFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$$ComparisonImplToJson(_$ComparisonImpl instance) =>
     <String, dynamic>{
-      'form': instance.form,
-      'att': instance.att,
-      'def': instance.def,
-      'poisson_distribution': instance.poisson_distribution,
-      'goals': instance.goals,
-      'total': instance.total,
+      'form': instance.form.toJson(),
+      'att': instance.att.toJson(),
+      'def': instance.def.toJson(),
+      'poisson_distribution': instance.poisson_distribution.toJson(),
+      'goals': instance.goals.toJson(),
+      'total': instance.total.toJson(),
     };
 
 _$FormComparisonImpl _$$FormComparisonImplFromJson(Map<String, dynamic> json) =>
@@ -216,9 +196,9 @@ _$H2HImpl _$$H2HImplFromJson(Map<String, dynamic> json) => _$H2HImpl(
     );
 
 Map<String, dynamic> _$$H2HImplToJson(_$H2HImpl instance) => <String, dynamic>{
-      'fixture': instance.fixture,
-      'league': instance.league,
-      'teams': instance.teams,
-      'goals': instance.goals,
-      'score': instance.score,
+      'fixture': instance.fixture.toJson(),
+      'league': instance.league.toJson(),
+      'teams': instance.teams.toJson(),
+      'goals': instance.goals.toJson(),
+      'score': instance.score.toJson(),
     };

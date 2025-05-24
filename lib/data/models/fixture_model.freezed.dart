@@ -25,7 +25,7 @@ mixin _$FixtureResponse {
   Map<String, dynamic> get errors => throw _privateConstructorUsedError;
   int get results => throw _privateConstructorUsedError;
   int get paging => throw _privateConstructorUsedError;
-  List<FixtureData> get response => throw _privateConstructorUsedError;
+  List<dynamic> get response => throw _privateConstructorUsedError;
 
   /// Serializes this FixtureResponse to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -49,7 +49,7 @@ abstract class $FixtureResponseCopyWith<$Res> {
       Map<String, dynamic> errors,
       int results,
       int paging,
-      List<FixtureData> response});
+      List<dynamic> response});
 }
 
 /// @nodoc
@@ -98,7 +98,7 @@ class _$FixtureResponseCopyWithImpl<$Res, $Val extends FixtureResponse>
       response: null == response
           ? _value.response
           : response // ignore: cast_nullable_to_non_nullable
-              as List<FixtureData>,
+              as List<dynamic>,
     ) as $Val);
   }
 }
@@ -117,7 +117,7 @@ abstract class _$$FixtureResponseImplCopyWith<$Res>
       Map<String, dynamic> errors,
       int results,
       int paging,
-      List<FixtureData> response});
+      List<dynamic> response});
 }
 
 /// @nodoc
@@ -146,11 +146,11 @@ class __$$FixtureResponseImplCopyWithImpl<$Res>
           : get // ignore: cast_nullable_to_non_nullable
               as String,
       parameters: null == parameters
-          ? _value.parameters
+          ? _value._parameters
           : parameters // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
       errors: null == errors
-          ? _value.errors
+          ? _value._errors
           : errors // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
       results: null == results
@@ -162,9 +162,9 @@ class __$$FixtureResponseImplCopyWithImpl<$Res>
           : paging // ignore: cast_nullable_to_non_nullable
               as int,
       response: null == response
-          ? _value.response
+          ? _value._response
           : response // ignore: cast_nullable_to_non_nullable
-              as List<FixtureData>,
+              as List<dynamic>,
     ));
   }
 }
@@ -174,27 +174,47 @@ class __$$FixtureResponseImplCopyWithImpl<$Res>
 class _$FixtureResponseImpl implements _FixtureResponse {
   const _$FixtureResponseImpl(
       {required this.get,
-      required this.parameters,
-      required this.errors,
+      required final Map<String, dynamic> parameters,
+      required final Map<String, dynamic> errors,
       required this.results,
       required this.paging,
-      required this.response});
+      required final List<dynamic> response})
+      : _parameters = parameters,
+        _errors = errors,
+        _response = response;
 
   factory _$FixtureResponseImpl.fromJson(Map<String, dynamic> json) =>
       _$$FixtureResponseImplFromJson(json);
 
   @override
   final String get;
+  final Map<String, dynamic> _parameters;
   @override
-  final Map<String, dynamic> parameters;
+  Map<String, dynamic> get parameters {
+    if (_parameters is EqualUnmodifiableMapView) return _parameters;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_parameters);
+  }
+
+  final Map<String, dynamic> _errors;
   @override
-  final Map<String, dynamic> errors;
+  Map<String, dynamic> get errors {
+    if (_errors is EqualUnmodifiableMapView) return _errors;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_errors);
+  }
+
   @override
   final int results;
   @override
   final int paging;
+  final List<dynamic> _response;
   @override
-  final List<FixtureData> response;
+  List<dynamic> get response {
+    if (_response is EqualUnmodifiableListView) return _response;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_response);
+  }
 
   @override
   String toString() {
@@ -208,11 +228,11 @@ class _$FixtureResponseImpl implements _FixtureResponse {
             other is _$FixtureResponseImpl &&
             (identical(other.get, get) || other.get == get) &&
             const DeepCollectionEquality()
-                .equals(other.parameters, parameters) &&
-            const DeepCollectionEquality().equals(other.errors, errors) &&
+                .equals(other._parameters, _parameters) &&
+            const DeepCollectionEquality().equals(other._errors, _errors) &&
             (identical(other.results, results) || other.results == results) &&
             (identical(other.paging, paging) || other.paging == paging) &&
-            const DeepCollectionEquality().equals(other.response, response));
+            const DeepCollectionEquality().equals(other._response, _response));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -220,11 +240,11 @@ class _$FixtureResponseImpl implements _FixtureResponse {
   int get hashCode => Object.hash(
       runtimeType,
       get,
-      const DeepCollectionEquality().hash(parameters),
-      const DeepCollectionEquality().hash(errors),
+      const DeepCollectionEquality().hash(_parameters),
+      const DeepCollectionEquality().hash(_errors),
       results,
       paging,
-      const DeepCollectionEquality().hash(response));
+      const DeepCollectionEquality().hash(_response));
 
   /// Create a copy of FixtureResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -250,7 +270,7 @@ abstract class _FixtureResponse implements FixtureResponse {
       required final Map<String, dynamic> errors,
       required final int results,
       required final int paging,
-      required final List<FixtureData> response}) = _$FixtureResponseImpl;
+      required final List<dynamic> response}) = _$FixtureResponseImpl;
 
   factory _FixtureResponse.fromJson(Map<String, dynamic> json) =
       _$FixtureResponseImpl.fromJson;
@@ -266,7 +286,7 @@ abstract class _FixtureResponse implements FixtureResponse {
   @override
   int get paging;
   @override
-  List<FixtureData> get response;
+  List<dynamic> get response;
 
   /// Create a copy of FixtureResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -821,11 +841,11 @@ class __$$FixtureDataDetailedImplCopyWithImpl<$Res>
           : score // ignore: cast_nullable_to_non_nullable
               as Score,
       events: freezed == events
-          ? _value.events
+          ? _value._events
           : events // ignore: cast_nullable_to_non_nullable
               as List<Event>?,
       lineups: freezed == lineups
-          ? _value.lineups
+          ? _value._lineups
           : lineups // ignore: cast_nullable_to_non_nullable
               as List<LineupData>?,
       statistics: freezed == statistics
@@ -833,7 +853,7 @@ class __$$FixtureDataDetailedImplCopyWithImpl<$Res>
           : statistics // ignore: cast_nullable_to_non_nullable
               as Statistics?,
       players: freezed == players
-          ? _value.players
+          ? _value._players
           : players // ignore: cast_nullable_to_non_nullable
               as List<PlayerStatistics>?,
     ));
@@ -863,10 +883,13 @@ class _$FixtureDataDetailedImpl implements _FixtureDataDetailed {
       required this.teams,
       required this.goals,
       required this.score,
-      this.events,
-      this.lineups,
+      final List<Event>? events,
+      final List<LineupData>? lineups,
       this.statistics,
-      this.players});
+      final List<PlayerStatistics>? players})
+      : _events = events,
+        _lineups = lineups,
+        _players = players;
 
   @override
   final Fixture fixture;
@@ -878,14 +901,37 @@ class _$FixtureDataDetailedImpl implements _FixtureDataDetailed {
   final Goals goals;
   @override
   final Score score;
+  final List<Event>? _events;
   @override
-  final List<Event>? events;
+  List<Event>? get events {
+    final value = _events;
+    if (value == null) return null;
+    if (_events is EqualUnmodifiableListView) return _events;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<LineupData>? _lineups;
   @override
-  final List<LineupData>? lineups;
+  List<LineupData>? get lineups {
+    final value = _lineups;
+    if (value == null) return null;
+    if (_lineups is EqualUnmodifiableListView) return _lineups;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   final Statistics? statistics;
+  final List<PlayerStatistics>? _players;
   @override
-  final List<PlayerStatistics>? players;
+  List<PlayerStatistics>? get players {
+    final value = _players;
+    if (value == null) return null;
+    if (_players is EqualUnmodifiableListView) return _players;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
@@ -902,11 +948,11 @@ class _$FixtureDataDetailedImpl implements _FixtureDataDetailed {
             (identical(other.teams, teams) || other.teams == teams) &&
             (identical(other.goals, goals) || other.goals == goals) &&
             (identical(other.score, score) || other.score == score) &&
-            const DeepCollectionEquality().equals(other.events, events) &&
-            const DeepCollectionEquality().equals(other.lineups, lineups) &&
+            const DeepCollectionEquality().equals(other._events, _events) &&
+            const DeepCollectionEquality().equals(other._lineups, _lineups) &&
             (identical(other.statistics, statistics) ||
                 other.statistics == statistics) &&
-            const DeepCollectionEquality().equals(other.players, players));
+            const DeepCollectionEquality().equals(other._players, _players));
   }
 
   @override
@@ -917,10 +963,10 @@ class _$FixtureDataDetailedImpl implements _FixtureDataDetailed {
       teams,
       goals,
       score,
-      const DeepCollectionEquality().hash(events),
-      const DeepCollectionEquality().hash(lineups),
+      const DeepCollectionEquality().hash(_events),
+      const DeepCollectionEquality().hash(_lineups),
       statistics,
-      const DeepCollectionEquality().hash(players));
+      const DeepCollectionEquality().hash(_players));
 
   /// Create a copy of FixtureData
   /// with the given fields replaced by the non-null parameter values.
@@ -1150,7 +1196,7 @@ class __$$FixtureDataLiveImplCopyWithImpl<$Res>
           : score // ignore: cast_nullable_to_non_nullable
               as Score,
       events: null == events
-          ? _value.events
+          ? _value._events
           : events // ignore: cast_nullable_to_non_nullable
               as List<Event>,
     ));
@@ -1166,7 +1212,8 @@ class _$FixtureDataLiveImpl implements _FixtureDataLive {
       required this.teams,
       required this.goals,
       required this.score,
-      required this.events});
+      required final List<Event> events})
+      : _events = events;
 
   @override
   final Fixture fixture;
@@ -1178,8 +1225,13 @@ class _$FixtureDataLiveImpl implements _FixtureDataLive {
   final Goals goals;
   @override
   final Score score;
+  final List<Event> _events;
   @override
-  final List<Event> events;
+  List<Event> get events {
+    if (_events is EqualUnmodifiableListView) return _events;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_events);
+  }
 
   @override
   String toString() {
@@ -1196,12 +1248,12 @@ class _$FixtureDataLiveImpl implements _FixtureDataLive {
             (identical(other.teams, teams) || other.teams == teams) &&
             (identical(other.goals, goals) || other.goals == goals) &&
             (identical(other.score, score) || other.score == score) &&
-            const DeepCollectionEquality().equals(other.events, events));
+            const DeepCollectionEquality().equals(other._events, _events));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, fixture, league, teams, goals,
-      score, const DeepCollectionEquality().hash(events));
+      score, const DeepCollectionEquality().hash(_events));
 
   /// Create a copy of FixtureData
   /// with the given fields replaced by the non-null parameter values.
@@ -2163,11 +2215,11 @@ class __$$LineupDataImplCopyWithImpl<$Res>
           : formation // ignore: cast_nullable_to_non_nullable
               as String,
       startXI: null == startXI
-          ? _value.startXI
+          ? _value._startXI
           : startXI // ignore: cast_nullable_to_non_nullable
               as List<StartXI>,
       substitutes: null == substitutes
-          ? _value.substitutes
+          ? _value._substitutes
           : substitutes // ignore: cast_nullable_to_non_nullable
               as List<StartXI>,
     ));
@@ -2181,8 +2233,10 @@ class _$LineupDataImpl implements _LineupData {
       {required this.team,
       required this.coach,
       required this.formation,
-      required this.startXI,
-      required this.substitutes});
+      required final List<StartXI> startXI,
+      required final List<StartXI> substitutes})
+      : _startXI = startXI,
+        _substitutes = substitutes;
 
   factory _$LineupDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$LineupDataImplFromJson(json);
@@ -2193,10 +2247,21 @@ class _$LineupDataImpl implements _LineupData {
   final Coach coach;
   @override
   final String formation;
+  final List<StartXI> _startXI;
   @override
-  final List<StartXI> startXI;
+  List<StartXI> get startXI {
+    if (_startXI is EqualUnmodifiableListView) return _startXI;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_startXI);
+  }
+
+  final List<StartXI> _substitutes;
   @override
-  final List<StartXI> substitutes;
+  List<StartXI> get substitutes {
+    if (_substitutes is EqualUnmodifiableListView) return _substitutes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_substitutes);
+  }
 
   @override
   String toString() {
@@ -2212,9 +2277,9 @@ class _$LineupDataImpl implements _LineupData {
             (identical(other.coach, coach) || other.coach == coach) &&
             (identical(other.formation, formation) ||
                 other.formation == formation) &&
-            const DeepCollectionEquality().equals(other.startXI, startXI) &&
+            const DeepCollectionEquality().equals(other._startXI, _startXI) &&
             const DeepCollectionEquality()
-                .equals(other.substitutes, substitutes));
+                .equals(other._substitutes, _substitutes));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2224,8 +2289,8 @@ class _$LineupDataImpl implements _LineupData {
       team,
       coach,
       formation,
-      const DeepCollectionEquality().hash(startXI),
-      const DeepCollectionEquality().hash(substitutes));
+      const DeepCollectionEquality().hash(_startXI),
+      const DeepCollectionEquality().hash(_substitutes));
 
   /// Create a copy of LineupData
   /// with the given fields replaced by the non-null parameter values.
@@ -2920,11 +2985,11 @@ class __$$StatisticsImplCopyWithImpl<$Res>
   }) {
     return _then(_$StatisticsImpl(
       home: freezed == home
-          ? _value.home
+          ? _value._home
           : home // ignore: cast_nullable_to_non_nullable
               as List<TeamStatistics>?,
       away: freezed == away
-          ? _value.away
+          ? _value._away
           : away // ignore: cast_nullable_to_non_nullable
               as List<TeamStatistics>?,
     ));
@@ -2934,15 +2999,33 @@ class __$$StatisticsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$StatisticsImpl implements _Statistics {
-  const _$StatisticsImpl({this.home, this.away});
+  const _$StatisticsImpl(
+      {final List<TeamStatistics>? home, final List<TeamStatistics>? away})
+      : _home = home,
+        _away = away;
 
   factory _$StatisticsImpl.fromJson(Map<String, dynamic> json) =>
       _$$StatisticsImplFromJson(json);
 
+  final List<TeamStatistics>? _home;
   @override
-  final List<TeamStatistics>? home;
+  List<TeamStatistics>? get home {
+    final value = _home;
+    if (value == null) return null;
+    if (_home is EqualUnmodifiableListView) return _home;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<TeamStatistics>? _away;
   @override
-  final List<TeamStatistics>? away;
+  List<TeamStatistics>? get away {
+    final value = _away;
+    if (value == null) return null;
+    if (_away is EqualUnmodifiableListView) return _away;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
@@ -2954,16 +3037,16 @@ class _$StatisticsImpl implements _Statistics {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$StatisticsImpl &&
-            const DeepCollectionEquality().equals(other.home, home) &&
-            const DeepCollectionEquality().equals(other.away, away));
+            const DeepCollectionEquality().equals(other._home, _home) &&
+            const DeepCollectionEquality().equals(other._away, _away));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
-      const DeepCollectionEquality().hash(home),
-      const DeepCollectionEquality().hash(away));
+      const DeepCollectionEquality().hash(_home),
+      const DeepCollectionEquality().hash(_away));
 
   /// Create a copy of Statistics
   /// with the given fields replaced by the non-null parameter values.
@@ -3278,7 +3361,7 @@ class __$$PlayerStatisticsImplCopyWithImpl<$Res>
           : team // ignore: cast_nullable_to_non_nullable
               as Team,
       players: null == players
-          ? _value.players
+          ? _value._players
           : players // ignore: cast_nullable_to_non_nullable
               as List<PlayerStatDetail>,
     ));
@@ -3288,15 +3371,22 @@ class __$$PlayerStatisticsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$PlayerStatisticsImpl implements _PlayerStatistics {
-  const _$PlayerStatisticsImpl({required this.team, required this.players});
+  const _$PlayerStatisticsImpl(
+      {required this.team, required final List<PlayerStatDetail> players})
+      : _players = players;
 
   factory _$PlayerStatisticsImpl.fromJson(Map<String, dynamic> json) =>
       _$$PlayerStatisticsImplFromJson(json);
 
   @override
   final Team team;
+  final List<PlayerStatDetail> _players;
   @override
-  final List<PlayerStatDetail> players;
+  List<PlayerStatDetail> get players {
+    if (_players is EqualUnmodifiableListView) return _players;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_players);
+  }
 
   @override
   String toString() {
@@ -3309,13 +3399,13 @@ class _$PlayerStatisticsImpl implements _PlayerStatistics {
         (other.runtimeType == runtimeType &&
             other is _$PlayerStatisticsImpl &&
             (identical(other.team, team) || other.team == team) &&
-            const DeepCollectionEquality().equals(other.players, players));
+            const DeepCollectionEquality().equals(other._players, _players));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, team, const DeepCollectionEquality().hash(players));
+      runtimeType, team, const DeepCollectionEquality().hash(_players));
 
   /// Create a copy of PlayerStatistics
   /// with the given fields replaced by the non-null parameter values.
@@ -3462,7 +3552,7 @@ class __$$PlayerStatDetailImplCopyWithImpl<$Res>
           : player // ignore: cast_nullable_to_non_nullable
               as PlayerDetails,
       statistics: null == statistics
-          ? _value.statistics
+          ? _value._statistics
           : statistics // ignore: cast_nullable_to_non_nullable
               as List<Statistic>,
     ));
@@ -3473,15 +3563,21 @@ class __$$PlayerStatDetailImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$PlayerStatDetailImpl implements _PlayerStatDetail {
   const _$PlayerStatDetailImpl(
-      {required this.player, required this.statistics});
+      {required this.player, required final List<Statistic> statistics})
+      : _statistics = statistics;
 
   factory _$PlayerStatDetailImpl.fromJson(Map<String, dynamic> json) =>
       _$$PlayerStatDetailImplFromJson(json);
 
   @override
   final PlayerDetails player;
+  final List<Statistic> _statistics;
   @override
-  final List<Statistic> statistics;
+  List<Statistic> get statistics {
+    if (_statistics is EqualUnmodifiableListView) return _statistics;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_statistics);
+  }
 
   @override
   String toString() {
@@ -3495,13 +3591,13 @@ class _$PlayerStatDetailImpl implements _PlayerStatDetail {
             other is _$PlayerStatDetailImpl &&
             (identical(other.player, player) || other.player == player) &&
             const DeepCollectionEquality()
-                .equals(other.statistics, statistics));
+                .equals(other._statistics, _statistics));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, player, const DeepCollectionEquality().hash(statistics));
+      runtimeType, player, const DeepCollectionEquality().hash(_statistics));
 
   /// Create a copy of PlayerStatDetail
   /// with the given fields replaced by the non-null parameter values.
@@ -3713,47 +3809,47 @@ class __$$StatisticImplCopyWithImpl<$Res>
   }) {
     return _then(_$StatisticImpl(
       games: null == games
-          ? _value.games
+          ? _value._games
           : games // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
       offsides: freezed == offsides
-          ? _value.offsides
+          ? _value._offsides
           : offsides // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       shots: freezed == shots
-          ? _value.shots
+          ? _value._shots
           : shots // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       goals: freezed == goals
-          ? _value.goals
+          ? _value._goals
           : goals // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       passes: freezed == passes
-          ? _value.passes
+          ? _value._passes
           : passes // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       tackles: freezed == tackles
-          ? _value.tackles
+          ? _value._tackles
           : tackles // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       duels: freezed == duels
-          ? _value.duels
+          ? _value._duels
           : duels // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       dribbles: freezed == dribbles
-          ? _value.dribbles
+          ? _value._dribbles
           : dribbles // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       fouls: freezed == fouls
-          ? _value.fouls
+          ? _value._fouls
           : fouls // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       cards: freezed == cards
-          ? _value.cards
+          ? _value._cards
           : cards // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
       penalty: freezed == penalty
-          ? _value.penalty
+          ? _value._penalty
           : penalty // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
     ));
@@ -3764,43 +3860,139 @@ class __$$StatisticImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$StatisticImpl implements _Statistic {
   const _$StatisticImpl(
-      {required this.games,
-      this.offsides,
-      this.shots,
-      this.goals,
-      this.passes,
-      this.tackles,
-      this.duels,
-      this.dribbles,
-      this.fouls,
-      this.cards,
-      this.penalty});
+      {required final Map<String, dynamic> games,
+      final Map<String, dynamic>? offsides,
+      final Map<String, dynamic>? shots,
+      final Map<String, dynamic>? goals,
+      final Map<String, dynamic>? passes,
+      final Map<String, dynamic>? tackles,
+      final Map<String, dynamic>? duels,
+      final Map<String, dynamic>? dribbles,
+      final Map<String, dynamic>? fouls,
+      final Map<String, dynamic>? cards,
+      final Map<String, dynamic>? penalty})
+      : _games = games,
+        _offsides = offsides,
+        _shots = shots,
+        _goals = goals,
+        _passes = passes,
+        _tackles = tackles,
+        _duels = duels,
+        _dribbles = dribbles,
+        _fouls = fouls,
+        _cards = cards,
+        _penalty = penalty;
 
   factory _$StatisticImpl.fromJson(Map<String, dynamic> json) =>
       _$$StatisticImplFromJson(json);
 
+  final Map<String, dynamic> _games;
   @override
-  final Map<String, dynamic> games;
+  Map<String, dynamic> get games {
+    if (_games is EqualUnmodifiableMapView) return _games;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_games);
+  }
+
+  final Map<String, dynamic>? _offsides;
   @override
-  final Map<String, dynamic>? offsides;
+  Map<String, dynamic>? get offsides {
+    final value = _offsides;
+    if (value == null) return null;
+    if (_offsides is EqualUnmodifiableMapView) return _offsides;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _shots;
   @override
-  final Map<String, dynamic>? shots;
+  Map<String, dynamic>? get shots {
+    final value = _shots;
+    if (value == null) return null;
+    if (_shots is EqualUnmodifiableMapView) return _shots;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _goals;
   @override
-  final Map<String, dynamic>? goals;
+  Map<String, dynamic>? get goals {
+    final value = _goals;
+    if (value == null) return null;
+    if (_goals is EqualUnmodifiableMapView) return _goals;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _passes;
   @override
-  final Map<String, dynamic>? passes;
+  Map<String, dynamic>? get passes {
+    final value = _passes;
+    if (value == null) return null;
+    if (_passes is EqualUnmodifiableMapView) return _passes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _tackles;
   @override
-  final Map<String, dynamic>? tackles;
+  Map<String, dynamic>? get tackles {
+    final value = _tackles;
+    if (value == null) return null;
+    if (_tackles is EqualUnmodifiableMapView) return _tackles;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _duels;
   @override
-  final Map<String, dynamic>? duels;
+  Map<String, dynamic>? get duels {
+    final value = _duels;
+    if (value == null) return null;
+    if (_duels is EqualUnmodifiableMapView) return _duels;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _dribbles;
   @override
-  final Map<String, dynamic>? dribbles;
+  Map<String, dynamic>? get dribbles {
+    final value = _dribbles;
+    if (value == null) return null;
+    if (_dribbles is EqualUnmodifiableMapView) return _dribbles;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _fouls;
   @override
-  final Map<String, dynamic>? fouls;
+  Map<String, dynamic>? get fouls {
+    final value = _fouls;
+    if (value == null) return null;
+    if (_fouls is EqualUnmodifiableMapView) return _fouls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _cards;
   @override
-  final Map<String, dynamic>? cards;
+  Map<String, dynamic>? get cards {
+    final value = _cards;
+    if (value == null) return null;
+    if (_cards is EqualUnmodifiableMapView) return _cards;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  final Map<String, dynamic>? _penalty;
   @override
-  final Map<String, dynamic>? penalty;
+  Map<String, dynamic>? get penalty {
+    final value = _penalty;
+    if (value == null) return null;
+    if (_penalty is EqualUnmodifiableMapView) return _penalty;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
@@ -3812,34 +4004,34 @@ class _$StatisticImpl implements _Statistic {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$StatisticImpl &&
-            const DeepCollectionEquality().equals(other.games, games) &&
-            const DeepCollectionEquality().equals(other.offsides, offsides) &&
-            const DeepCollectionEquality().equals(other.shots, shots) &&
-            const DeepCollectionEquality().equals(other.goals, goals) &&
-            const DeepCollectionEquality().equals(other.passes, passes) &&
-            const DeepCollectionEquality().equals(other.tackles, tackles) &&
-            const DeepCollectionEquality().equals(other.duels, duels) &&
-            const DeepCollectionEquality().equals(other.dribbles, dribbles) &&
-            const DeepCollectionEquality().equals(other.fouls, fouls) &&
-            const DeepCollectionEquality().equals(other.cards, cards) &&
-            const DeepCollectionEquality().equals(other.penalty, penalty));
+            const DeepCollectionEquality().equals(other._games, _games) &&
+            const DeepCollectionEquality().equals(other._offsides, _offsides) &&
+            const DeepCollectionEquality().equals(other._shots, _shots) &&
+            const DeepCollectionEquality().equals(other._goals, _goals) &&
+            const DeepCollectionEquality().equals(other._passes, _passes) &&
+            const DeepCollectionEquality().equals(other._tackles, _tackles) &&
+            const DeepCollectionEquality().equals(other._duels, _duels) &&
+            const DeepCollectionEquality().equals(other._dribbles, _dribbles) &&
+            const DeepCollectionEquality().equals(other._fouls, _fouls) &&
+            const DeepCollectionEquality().equals(other._cards, _cards) &&
+            const DeepCollectionEquality().equals(other._penalty, _penalty));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
-      const DeepCollectionEquality().hash(games),
-      const DeepCollectionEquality().hash(offsides),
-      const DeepCollectionEquality().hash(shots),
-      const DeepCollectionEquality().hash(goals),
-      const DeepCollectionEquality().hash(passes),
-      const DeepCollectionEquality().hash(tackles),
-      const DeepCollectionEquality().hash(duels),
-      const DeepCollectionEquality().hash(dribbles),
-      const DeepCollectionEquality().hash(fouls),
-      const DeepCollectionEquality().hash(cards),
-      const DeepCollectionEquality().hash(penalty));
+      const DeepCollectionEquality().hash(_games),
+      const DeepCollectionEquality().hash(_offsides),
+      const DeepCollectionEquality().hash(_shots),
+      const DeepCollectionEquality().hash(_goals),
+      const DeepCollectionEquality().hash(_passes),
+      const DeepCollectionEquality().hash(_tackles),
+      const DeepCollectionEquality().hash(_duels),
+      const DeepCollectionEquality().hash(_dribbles),
+      const DeepCollectionEquality().hash(_fouls),
+      const DeepCollectionEquality().hash(_cards),
+      const DeepCollectionEquality().hash(_penalty));
 
   /// Create a copy of Statistic
   /// with the given fields replaced by the non-null parameter values.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
+import 'package:football_live_app/data/models/shared_models.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/pages/match_details/match_details_page.dart';
@@ -21,7 +22,6 @@ class LiveMatchesTab extends StatefulWidget {
 
 class _LiveMatchesTabState extends State<LiveMatchesTab>
     with TickerProviderStateMixin {
-  final _refreshKey = GlobalKey<RefreshIndicatorState>();
   late TabController _tabController;
   late DateTime _selectedDate;
   late List<DateTime> _dateTabs;
@@ -103,7 +103,7 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MatchDetailsPage(matchId: match.fixture.id),
+        builder: (context) => MatchDetailsPage(fixture: match),
       ),
     );
   }
@@ -339,8 +339,9 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                   // Fetch predictions for upcoming matches
                   final matchIds = state.matches
                       .where((match) =>
-                          match.status.short == "NS") // Not Started matches
-                      .map((match) => match.id)
+                          match.fixture.status.short ==
+                          "NS") // Not Started matches
+                      .map((match) => match.fixture.id)
                       .toList();
 
                   if (matchIds.isNotEmpty) {
@@ -353,7 +354,7 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                   }
 
                   // Group matches by league
-                  final groupedMatches = <int, List<Match>>{};
+                  final groupedMatches = <int, List<FixtureData>>{};
                   for (final match in state.matches) {
                     if (!groupedMatches.containsKey(match.league.id)) {
                       groupedMatches[match.league.id] = [];
@@ -365,17 +366,18 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                   for (final leagueId in groupedMatches.keys) {
                     groupedMatches[leagueId]!.sort((a, b) {
                       // Put live matches first, then sort by start time
-                      final aIsLive = a.status.short == "1H" ||
-                          a.status.short == "2H" ||
-                          a.status.short == "HT";
-                      final bIsLive = b.status.short == "1H" ||
-                          b.status.short == "2H" ||
-                          b.status.short == "HT";
+                      final aIsLive = a.fixture.status.short == "1H" ||
+                          a.fixture.status.short == "2H" ||
+                          a.fixture.status.short == "HT";
+                      final bIsLive = b.fixture.status.short == "1H" ||
+                          b.fixture.status.short == "2H" ||
+                          b.fixture.status.short == "HT";
 
                       if (aIsLive && !bIsLive) return -1;
                       if (!aIsLive && bIsLive) return 1;
 
-                      return a.date.compareTo(b.date);
+                      return DateTime.parse(a.fixture.date)
+                          .compareTo(DateTime.parse(b.fixture.date));
                     });
                   }
 
@@ -420,7 +422,7 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                           // Matches in this league
                           ...leagueMatches.map((match) {
                             // Create a match with prediction if available
-                            if (match.status.short == "NS") {
+                            if (match.fixture.status.short == "NS") {
                               // Get prediction from BLoC if match is upcoming
                               return BlocBuilder<PredictionBloc,
                                   PredictionState>(
@@ -429,28 +431,15 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                                   if (state is MultiPredictionLoaded) {
                                     // Get prediction for this match
                                     final prediction =
-                                        state.getPredictionForMatch(match.id);
+                                        state.getPredictionForMatch(
+                                            match.fixture.id);
                                     if (prediction != null) {
-                                      // Create a new match with the prediction
-                                      final matchWithPrediction = Match(
-                                        id: match.id,
-                                        referee: match.referee,
-                                        timezone: match.timezone,
-                                        date: match.date,
-                                        timestamp: match.timestamp,
-                                        venue: match.venue,
-                                        status: match.status,
-                                        league: match.league,
-                                        homeTeam: match.homeTeam,
-                                        awayTeam: match.awayTeam,
-                                        score: match.score,
-                                        events: match.events,
-                                        prediction: prediction,
-                                      );
+                                      // TODO: Add prediction to FixtureData or pass separately
+                                      // For now, just pass the original match
                                       return MatchCard(
-                                        match: matchWithPrediction,
-                                        onTap: () => _navigateToMatchDetails(
-                                            matchWithPrediction),
+                                        match: match,
+                                        onTap: () =>
+                                            _navigateToMatchDetails(match),
                                       );
                                     }
                                   }
@@ -534,16 +523,14 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
             ),
             padding: const EdgeInsets.all(4),
             child: ClipOval(
-              child: league.logo != null
-                  ? Image.network(
-                      league.logo!,
-                      width: 28,
-                      height: 28,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.sports_soccer, size: 22),
-                    )
-                  : const Icon(Icons.sports_soccer, size: 22),
+              child: Image.network(
+                league.logo,
+                width: 28,
+                height: 28,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.sports_soccer, size: 22),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -561,34 +548,33 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (league.country != null)
-                  Row(
-                    children: [
-                      if (league.round != null)
-                        Text(
-                          league.round!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      if (league.round != null && league.country != null)
-                        Text(
-                          ' • ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
+                Row(
+                  children: [
+                    if (league.round != null)
                       Text(
-                        league.country!,
+                        league.round!,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade700,
                         ),
                       ),
-                    ],
-                  ),
+                    if (league.round != null)
+                      Text(
+                        ' • ',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    Text(
+                      league.country,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

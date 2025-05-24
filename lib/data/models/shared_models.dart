@@ -4,7 +4,7 @@ part 'shared_models.freezed.dart';
 part 'shared_models.g.dart';
 
 /// League information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class League with _$League {
   const factory League({
     required int id,
@@ -20,7 +20,7 @@ class League with _$League {
 }
 
 /// Teams information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Teams with _$Teams {
   const factory Teams({required Team home, required Team away}) = _Teams;
 
@@ -28,7 +28,7 @@ class Teams with _$Teams {
 }
 
 /// Team information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Team with _$Team {
   const factory Team({
     required int id,
@@ -42,7 +42,7 @@ class Team with _$Team {
 }
 
 /// Goals information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Goals with _$Goals {
   const factory Goals({int? home, int? away}) = _Goals;
 
@@ -50,7 +50,7 @@ class Goals with _$Goals {
 }
 
 /// Score information including halftime, fulltime, etc.
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Score with _$Score {
   const factory Score({
     required Goals halftime,
@@ -63,7 +63,7 @@ class Score with _$Score {
 }
 
 /// Core fixture information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class Fixture with _$Fixture {
   const factory Fixture({
     required int id,
@@ -81,7 +81,7 @@ class Fixture with _$Fixture {
 }
 
 /// Information about fixture periods (first/second half)
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class FixturePeriods with _$FixturePeriods {
   const factory FixturePeriods({int? first, int? second}) = _FixturePeriods;
 
@@ -90,7 +90,7 @@ class FixturePeriods with _$FixturePeriods {
 }
 
 /// Venue information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class FixtureVenue with _$FixtureVenue {
   const factory FixtureVenue({int? id, String? name, String? city}) =
       _FixtureVenue;
@@ -100,7 +100,7 @@ class FixtureVenue with _$FixtureVenue {
 }
 
 /// Fixture status information
-@Freezed(makeCollectionsUnmodifiable: false)
+@freezed
 class FixtureStatus with _$FixtureStatus {
   const factory FixtureStatus({
     required String long,
