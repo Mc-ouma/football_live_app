@@ -6,7 +6,6 @@ part 'prediction_model.g.dart';
 
 /// Root response structure for prediction endpoints
 @freezed
-
 class PredictionResponse with _$PredictionResponse {
   const factory PredictionResponse({
     required String get,
@@ -16,8 +15,55 @@ class PredictionResponse with _$PredictionResponse {
     required List<PredictionData> response,
   }) = _PredictionResponse;
 
-  factory PredictionResponse.fromJson(Map<String, dynamic> json) =>
-      _$PredictionResponseFromJson(json);
+  factory PredictionResponse.fromJson(Map<String, dynamic> json) {
+    try {
+      // Handle case where errors could be a List (from API) or a Map (for our model)
+      var errorsValue = <String, dynamic>{};
+      if (json['errors'] is List<dynamic>) {
+        // If API returns a list, convert to a map with indices as keys
+        final errorsList = json['errors'] as List<dynamic>;
+        for (var i = 0; i < errorsList.length; i++) {
+          errorsValue['$i'] = errorsList[i];
+        }
+      } else if (json['errors'] is Map<String, dynamic>) {
+        errorsValue = json['errors'] as Map<String, dynamic>;
+      }
+
+      // Handle parameters
+      Map<String, dynamic> parametersValue;
+      if (json['parameters'] is Map<String, dynamic>) {
+        parametersValue = json['parameters'] as Map<String, dynamic>;
+      } else {
+        parametersValue = <String, dynamic>{};
+      }
+
+      // Carefully process the response list to ensure proper type conversion
+      final responseList = json['response'] as List<dynamic>;
+      final typedResponseList = responseList
+          .map((item) => PredictionData.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      return PredictionResponse(
+        get: json['get'] as String,
+        parameters: parametersValue,
+        errors: errorsValue,
+        results: json['results'] is int
+            ? json['results'] as int
+            : (json['results'] as num).toInt(),
+        response: typedResponseList,
+      );
+    } catch (e) {
+      print('Error parsing PredictionResponse: $e');
+      // Return a default response with empty data in case of parsing error
+      return PredictionResponse(
+        get: json['get'] as String? ?? '',
+        parameters: <String, dynamic>{},
+        errors: <String, dynamic>{'parsing_error': e.toString()},
+        results: 0,
+        response: <PredictionData>[],
+      );
+    }
+  }
 }
 
 /// Main prediction data model containing all prediction information

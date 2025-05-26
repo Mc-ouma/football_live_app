@@ -7,6 +7,7 @@ import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/pages/home/home_page.dart';
+import 'package:football_live_app/presentation/pages/splash_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -22,36 +23,27 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // First provide all the application-wide providers at the root level
-    return MaterialApp(
-      title: 'Football Live App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    // Wrap the entire app with MultiProvider at the root level
+    return MultiProvider(
+      providers: [
+        // Provide NetworkInfo at the top level so it's available throughout the app
+        Provider<NetworkInfo>(create: (_) => getIt<NetworkInfo>()),
+        // BLoCs - provide them at the root level so they're available everywhere
+        BlocProvider<LiveMatchesBloc>(create: (_) => getIt<LiveMatchesBloc>()),
+        BlocProvider<PredictionBloc>(create: (_) => getIt<PredictionBloc>()),
+        BlocProvider<AuthBloc>(create: (_) => getIt<AuthBloc>()),
+      ],
+      child: MaterialApp(
+        title: 'Football Live App',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: const SplashScreen(),
+        routes: {
+          '/home': (context) => const HomePage(),
+        },
       ),
-      home: MultiProvider(
-        providers: [
-          // Provide NetworkInfo at the top level so it's available throughout the app
-          Provider<NetworkInfo>(create: (_) => getIt<NetworkInfo>()),
-          // BLoCs
-          BlocProvider(create: (_) => getIt<LiveMatchesBloc>()),
-          BlocProvider(create: (_) => getIt<PredictionBloc>()),
-          BlocProvider(create: (_) => getIt<AuthBloc>()),
-        ],
-        child: HomePage(),
-      ),
-      routes: {
-        '/home': (context) => MultiProvider(
-              providers: [
-                // Provide NetworkInfo in routes too
-                Provider<NetworkInfo>(create: (_) => getIt<NetworkInfo>()),
-                BlocProvider(create: (_) => getIt<LiveMatchesBloc>()),
-                BlocProvider(create: (_) => getIt<PredictionBloc>()),
-                BlocProvider(create: (_) => getIt<AuthBloc>()),
-              ],
-              child: HomePage(),
-            ),
-      },
     );
   }
 }

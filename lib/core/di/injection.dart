@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/network/network_info.dart';
 import 'package:football_live_app/core/utils/logger.dart';
+import 'package:football_live_app/core/utils/api_usage_monitor.dart';
 import 'package:football_live_app/data/datasources/local/app_database.dart';
 import 'package:football_live_app/data/datasources/local/auth_local_data_source.dart';
 import 'package:football_live_app/data/datasources/local/football_local_data_source.dart';
@@ -68,6 +69,13 @@ Future<void> init() async {
     ),
   );
 
+  sl.registerLazySingleton<ApiUsageMonitor>(
+    () => ApiUsageMonitor(
+      apiClient: sl<ApiClient>(),
+      logger: sl<LoggerService>(),
+    ),
+  );
+
   // Database
   sl.registerLazySingleton<AppDatabase>(
     () => AppDatabase(),
@@ -129,6 +137,7 @@ Future<void> init() async {
       remoteDataSource: sl<FootballRemoteDataSource>(),
       connectivity: sl<Connectivity>(),
       logger: sl<LoggerService>(),
+      apiUsageMonitor: sl<ApiUsageMonitor>(),
     ),
   );
 

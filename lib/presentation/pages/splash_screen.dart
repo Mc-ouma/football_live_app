@@ -16,8 +16,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    AppLogger.i('SplashScreen initialized');
+    
     // Add a slight delay for a smoother splash experience
     Future.delayed(const Duration(seconds: 2), () {
+      AppLogger.i('Starting auth status check');
       _checkAuthStatus();
     });
 
@@ -34,8 +37,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void _checkAuthStatus() {
     try {
-      if (context.read<AuthBloc>().state is! AuthLoading) {
-        context.read<AuthBloc>().add(CheckAuthStatusEvent());
+      final authBloc = context.read<AuthBloc>();
+      final currentState = authBloc.state;
+      AppLogger.i('Current AuthBloc state: ${currentState.runtimeType}');
+      
+      if (currentState is! AuthLoading) {
+        AppLogger.i('Dispatching CheckAuthStatusEvent');
+        authBloc.add(CheckAuthStatusEvent());
       } else {
         AppLogger.i('Auth check already in progress, skipping duplicate call');
       }
@@ -56,11 +64,15 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
+          AppLogger.i('AuthBloc state changed: ${state.runtimeType}');
+          
           if (state is AuthAuthenticated) {
+            AppLogger.i('User authenticated, navigating to HomePage');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const HomePage()),
             );
           } else if (state is AuthUnauthenticated) {
+            AppLogger.i('User not authenticated, navigating to LoginPage');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const LoginPage()),
             );
@@ -70,6 +82,7 @@ class _SplashScreenState extends State<SplashScreen> {
               SnackBar(content: Text('Error: ${state.message}')),
             );
             // Default to login page on error
+            AppLogger.i('Auth error occurred, navigating to LoginPage');
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const LoginPage()),
             );

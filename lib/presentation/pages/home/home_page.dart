@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:football_live_app/core/di/injection.dart' as di;
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/pages/auth/login_page.dart';
 import 'package:football_live_app/presentation/pages/home/tabs/enhanced_profile_tab.dart';
 import 'package:football_live_app/presentation/pages/home/tabs/leagues_tab.dart';
@@ -11,6 +9,7 @@ import 'package:football_live_app/presentation/pages/home/tabs/live_matches_tab.
 import 'package:football_live_app/presentation/pages/home/tabs/news_feed_tab.dart';
 import 'package:football_live_app/presentation/pages/home/tabs/predictions_tab.dart';
 import 'package:football_live_app/presentation/widgets/offline_banner.dart';
+import 'package:football_live_app/presentation/widgets/api_rate_limit_indicator.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -149,6 +148,9 @@ class _HomePageState extends State<HomePage> {
         children: [
           // Offline banner at the top of the screen
           const OfflineBanner(),
+
+          // API Rate Limit indicator (only shown when approaching or exceeding limits)
+          const ApiRateLimitIndicator(),
 
           // Main content area
           Expanded(child: _tabs[_currentIndex]),

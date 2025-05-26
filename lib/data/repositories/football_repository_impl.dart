@@ -3,6 +3,7 @@ import 'package:football_live_app/core/errors/exceptions.dart';
 import 'package:football_live_app/core/errors/failures.dart';
 import 'package:football_live_app/core/network/network_info.dart';
 import 'package:football_live_app/core/utils/logger.dart';
+import 'package:football_live_app/core/utils/cache_strategy.dart';
 import 'package:football_live_app/data/datasources/local/football_local_data_source.dart';
 import 'package:football_live_app/data/datasources/remote/football_remote_data_source.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
@@ -17,18 +18,62 @@ class FootballRepositoryImpl implements FootballRepository {
   final FootballLocalDataSource localDataSource;
   final NetworkInfo networkInfo;
   final LoggerService logger;
+  final CacheStrategy _cacheStrategy;
 
   FootballRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.networkInfo,
     required this.logger,
-  });
+    CacheStrategy? cacheStrategy,
+  }) : _cacheStrategy = cacheStrategy ?? CacheStrategy(logger: logger);
 
   @override
   Future<Either<Failure, List<FixtureData>>> getLiveMatches() async {
     if (await networkInfo.isConnected) {
       try {
+        // Check cache age to implement smart request strategy
+        Duration cacheAge = Duration.zero;
+        List<FixtureData> localMatches = [];
+        bool hasCachedData = false;
+
+        try {
+          final cacheTimeString =
+              await localDataSource.getLastCacheTime('live_matches');
+          // Convert the cache time string to a Duration
+          if (cacheTimeString.contains('minutes')) {
+            final minutes = int.tryParse(cacheTimeString.split(' ').first) ?? 0;
+            cacheAge = Duration(minutes: minutes);
+          } else if (cacheTimeString.contains('hours')) {
+            final hours = int.tryParse(cacheTimeString.split(' ').first) ?? 0;
+            cacheAge = Duration(hours: hours);
+          } else if (cacheTimeString.contains('days')) {
+            final days = int.tryParse(cacheTimeString.split(' ').first) ?? 0;
+            cacheAge = Duration(days: days);
+          }
+
+          localMatches = await localDataSource.getCachedLiveMatches();
+          hasCachedData = localMatches.isNotEmpty;
+        } on CacheException catch (_) {
+          // If there's no cache or cache error, we'll proceed with API call
+        }
+
+        // Live matches are high priority, but we still respect rate limits
+        final endpoint = '/fixtures?live=all';
+        final shouldFetch = _cacheStrategy.shouldMakeRequest(
+                endpoint, CacheDataType.liveMatch, cacheAge,
+                isHighPriority: true) &&
+            _shouldMakeRequest('live_matches', cacheAge, hasCachedData,
+                true // live matches are high priority
+                );
+
+        if (!shouldFetch && hasCachedData) {
+          logger.info(
+            'Using cached live matches from ${cacheAge.inMinutes} minutes ago (${localMatches.length} matches)',
+          );
+          return Right(localMatches);
+        }
+
         final remoteMatches = await remoteDataSource.getLiveMatches();
 
         // Cache the fresh data for offline use
@@ -326,9 +371,63 @@ class FootballRepositoryImpl implements FootballRepository {
       List<int> matchIds) async {
     if (await networkInfo.isConnected) {
       try {
+        // Check cache status before making API calls
+        Duration cacheAge = Duration.zero;
+        List<PredictionData> localPredictions = [];
+        bool hasCachedData = false;
+
+        try {
+          // We don't have a specific method for prediction cache time,
+          // so we'll just check if we have cached predictions
+          localPredictions =
+              await localDataSource.getCachedMatchPredictions(matchIds);
+          hasCachedData = localPredictions.isNotEmpty;
+
+          // If we have cached data, approximate the cache age
+          if (hasCachedData) {
+            final cacheTimeString =
+                await localDataSource.getLastCacheTime('predictions');
+            if (cacheTimeString.contains('minutes')) {
+              final minutes =
+                  int.tryParse(cacheTimeString.split(' ').first) ?? 0;
+              cacheAge = Duration(minutes: minutes);
+            } else if (cacheTimeString.contains('hours')) {
+              final hours = int.tryParse(cacheTimeString.split(' ').first) ?? 0;
+              cacheAge = Duration(hours: hours);
+            } else if (cacheTimeString.contains('days')) {
+              final days = int.tryParse(cacheTimeString.split(' ').first) ?? 0;
+              cacheAge = Duration(days: days);
+            }
+          }
+        } on CacheException catch (_) {
+          // No cache available, we'll need to make the API call
+        }
+
+        // Predictions are not as high priority as live scores
+        final endpoint = '/predictions';
+        final shouldFetch = _cacheStrategy.shouldMakeRequest(
+                endpoint, CacheDataType.prediction, cacheAge,
+                isHighPriority: false) &&
+            _shouldMakeRequest('predictions', cacheAge, hasCachedData,
+                false // predictions aren't high priority
+                );
+
+        // If we have cached data and shouldn't fetch new data, return cached
+        if (!shouldFetch && hasCachedData) {
+          logger.info(
+            'Using cached predictions (${localPredictions.length} predictions)',
+          );
+          return Right(localPredictions);
+        }
+
+        // We need fresh data, make the API call
         final remotePredictions =
             await remoteDataSource.getMatchPredictionsData(matchIds);
         await localDataSource.cacheMatchPredictions(remotePredictions);
+
+        logger.info(
+          'Successfully fetched ${remotePredictions.length} predictions from API',
+        );
         return Right(remotePredictions);
       } on RateLimitException catch (e) {
         logger.warning('API rate limit hit, returning cached data', error: e);
@@ -352,5 +451,61 @@ class FootballRepositoryImpl implements FootballRepository {
         return Left(CacheFailure(message: e.message));
       }
     }
+  }
+
+  /// Determines if a request should be made based on rate limiting status
+  /// Consider the importance of the feature, the remaining API calls,
+  /// and whether we have cached data
+  bool _shouldMakeRequest(
+    String endpointType,
+    Duration cacheAge,
+    bool hasCachedData,
+    bool isHighPriority,
+  ) {
+    // We'll allow these feature types to make API requests even when nearing limits
+    const highPriorityFeatures = ['live_matches', 'match_details'];
+
+    if (highPriorityFeatures.contains(endpointType) || isHighPriority) {
+      // High priority features get preferential treatment
+      return true;
+    }
+
+    // For lower priority features like predictions, standings, etc.,
+    // prefer cache when available and relatively fresh
+    if (hasCachedData) {
+      switch (endpointType) {
+        case 'predictions':
+          // Predictions don't change much over time
+          if (cacheAge.inHours < 12) {
+            return false; // Use cache if less than 12 hours old
+          }
+          break;
+        case 'standings':
+          // Standings update daily at most
+          if (cacheAge.inHours < 24) {
+            return false; // Use cache if less than 24 hours old
+          }
+          break;
+        case 'leagues':
+          // League data rarely changes
+          if (cacheAge.inDays < 7) {
+            return false; // Use cache if less than 7 days old
+          }
+          break;
+        case 'fixtures':
+          // Fixtures can be updated more frequently
+          if (cacheAge.inHours < 4) {
+            return false; // Use cache if less than 4 hours old
+          }
+          break;
+        default:
+          if (cacheAge.inHours < 1) {
+            return false; // Use cache if less than 1 hour old for other types
+          }
+      }
+    }
+
+    // If no cached data or stale cache, make the request
+    return true;
   }
 }

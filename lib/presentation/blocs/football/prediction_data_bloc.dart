@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:football_live_app/core/errors/failures.dart';
 import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_prediction_data.dart';
@@ -36,8 +37,14 @@ class PredictionDataBloc
         (failure) {
           logger.error('Failure fetching match prediction data',
               error: failure);
-          emit(PredictionDataError(
-              message: 'Failed to load prediction: ${failure.message}'));
+          if (failure is RateLimitFailure) {
+            emit(PredictionDataError(
+                message:
+                    'Rate limit exceeded: ${failure.message}. Try again later.'));
+          } else {
+            emit(PredictionDataError(
+                message: 'Failed to load prediction: ${failure.message}'));
+          }
         },
         (predictionData) {
           if (predictionData == null) {
@@ -69,8 +76,14 @@ class PredictionDataBloc
         (failure) {
           logger.error('Failure fetching multiple match predictions data',
               error: failure);
-          emit(PredictionDataError(
-              message: 'Failed to load predictions: ${failure.message}'));
+          if (failure is RateLimitFailure) {
+            emit(PredictionDataError(
+                message:
+                    'API rate limit reached: ${failure.message}. Try again later.'));
+          } else {
+            emit(PredictionDataError(
+                message: 'Failed to load predictions: ${failure.message}'));
+          }
         },
         (predictionsData) {
           if (predictionsData.isEmpty) {

@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dartz/dartz.dart';
 import 'package:football_live_app/core/errors/failures.dart';
 import 'package:football_live_app/core/utils/logger.dart';
+import 'package:football_live_app/core/utils/api_usage_monitor.dart';
 import 'package:football_live_app/data/datasources/remote/football_remote_data_source.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:football_live_app/domain/repositories/football/prediction_data_repository.dart';
@@ -10,11 +11,13 @@ class PredictionDataRepositoryImpl implements PredictionDataRepository {
   final FootballRemoteDataSource remoteDataSource;
   final Connectivity connectivity;
   final LoggerService logger;
+  final ApiUsageMonitor apiUsageMonitor;
 
   PredictionDataRepositoryImpl({
     required this.remoteDataSource,
     required this.connectivity,
     required this.logger,
+    required this.apiUsageMonitor,
   });
 
   @override
@@ -27,6 +30,22 @@ class PredictionDataRepositoryImpl implements PredictionDataRepository {
         logger.error('No internet connection available for prediction fetch');
         return Left(
           NoInternetFailure(message: 'No network connection available'),
+        );
+      }
+
+      // Check API usage status before making the request
+      final shouldProceed = apiUsageMonitor.shouldProceedWithRequest(
+        'prediction_data',
+        isEssential: true, // Single predictions are typically essential
+      );
+
+      if (!shouldProceed) {
+        logger.warning(
+            'API usage limit approaching/exceeded. Skipping prediction data request for match $matchId');
+        return Left(
+          RateLimitFailure(
+            message: 'API usage limit approaching. Try again later.',
+          ),
         );
       }
 
@@ -61,7 +80,24 @@ class PredictionDataRepositoryImpl implements PredictionDataRepository {
         );
       }
 
-      // Fetch predictions from remote data source
+      // Check API usage status before making requests
+      final shouldProceed = apiUsageMonitor.shouldProceedWithRequest(
+        'predictions_data',
+        isEssential:
+            matchIds.length <= 3, // Consider small batches as essential
+      );
+
+      if (!shouldProceed) {
+        logger.warning(
+            'API usage limit approaching/exceeded. Skipping prediction data request.');
+        return Left(
+          RateLimitFailure(
+            message: 'API usage limit approaching. Try again later.',
+          ),
+        );
+      }
+
+      // Fetch predictions from remote data source with rate limiting
       final predictionsData =
           await remoteDataSource.getMatchPredictionsData(matchIds);
 

@@ -1,3 +1,18 @@
+/*
+ * API Rate Limit Handling Strategy
+ *
+ * The API-Football service has strict rate limits (typically 100 requests per day for free tier).
+ * To handle these limits, this implementation includes:
+ *
+ * 1. Batched Processing: Breaks large requests into smaller batches
+ * 2. Sequential Execution: Processes requests sequentially within batches
+ * 3. Request Delays: Adds delays between individual requests and batches
+ * 4. Retry Mechanism: Implements exponential backoff for rate limit errors (429)
+ * 5. Cache Fallback: Uses cached data when rate limits are hit
+ *
+ * The API client also has rate limit detection that works with this implementation.
+ */
+
 import 'package:football_live_app/core/config/env_config.dart';
 import 'package:football_live_app/core/errors/exceptions.dart';
 import 'package:football_live_app/core/network/api_client.dart';
@@ -61,10 +76,82 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   final ApiClient apiClient;
   final LoggerService logger;
 
+  // Rate limiting configuration
+  static const int _defaultDelayBetweenRequestsMs = 200;
+  static const int _defaultDelayAfterRateLimitMs = 5000;
+
   FootballRemoteDataSourceImpl({
     required this.apiClient,
     required this.logger,
   });
+
+  /// Process a list of items with API requests in a rate-limited fashion
+  /// T is the type of the items to process
+  /// R is the return type of the processing function
+  Future<List<R>> fetchWithRateLimit<T, R>({
+    required List<T> items,
+    required Future<R?> Function(T item) processItem,
+    int batchSize = 3,
+    int delayBetweenRequestsMs = _defaultDelayBetweenRequestsMs,
+    int delayBetweenBatchesMs = 2000,
+  }) async {
+    final List<R> results = [];
+
+    // Process items in batches
+    for (var i = 0; i < items.length; i += batchSize) {
+      final endIndex =
+          (i + batchSize < items.length) ? i + batchSize : items.length;
+      final batch = items.sublist(i, endIndex);
+
+      logger.info(
+          'Processing batch ${i ~/ batchSize + 1} of ${(items.length / batchSize).ceil()}');
+
+      // Process each item in the batch sequentially
+      for (final item in batch) {
+        try {
+          final result = await processItem(item);
+          if (result != null) {
+            results.add(result);
+          }
+
+          // Add a delay between requests in the same batch (except after the last one)
+          if (item != batch.last) {
+            await Future.delayed(
+                Duration(milliseconds: delayBetweenRequestsMs));
+          }
+        } on ServerException catch (e) {
+          if (e.code == 429) {
+            // If rate limit hit, log and continue with a longer delay
+            logger.warning(
+                'Rate limit hit during batch processing, adding delay');
+            await Future.delayed(
+                Duration(milliseconds: _defaultDelayAfterRateLimitMs));
+            // Retry this item
+            try {
+              final result = await processItem(item);
+              if (result != null) {
+                results.add(result);
+              }
+            } catch (retryError) {
+              logger.error('Error on retry', error: retryError);
+              // Continue with next item
+            }
+          } else {
+            // For other errors, log and continue
+            logger.error('Error processing item', error: e);
+          }
+        }
+      }
+
+      // If this isn't the last batch, add a delay before processing the next batch
+      if (endIndex < items.length) {
+        logger.info('Delaying before next batch');
+        await Future.delayed(Duration(milliseconds: delayBetweenBatchesMs));
+      }
+    }
+
+    return results;
+  }
 
   @override
   Future<List<FixtureData>> getLiveMatches() async {
@@ -94,8 +181,8 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
       logger.info('Retrieved ${fixtureResponse.results} live matches');
 
-      // The response is already mapped to FixtureData in FixtureResponse.fromJson
-      return fixtureResponse.response as List<FixtureData>;
+      // Convert the EqualUnmodifiableListView to a List<FixtureData>
+      return fixtureResponse.response.toList().cast<FixtureData>();
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -144,6 +231,8 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       params['timezone'] =
           'Europe/London'; // Use UTC or your preferred timezone
 
+      // For upcoming fixtures, we can get multiple fixtures in a single API call
+      // This helps reduce the number of API calls
       final response = await apiClient.get(
         EnvConfig.fixtures,
         queryParameters: params,
@@ -170,8 +259,8 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
       logger.info('Retrieved ${fixtureResponse.results} upcoming fixtures');
 
-      // The response is already mapped to FixtureData in FixtureResponse.fromJson
-      final fixtures = fixtureResponse.response as List<FixtureData>;
+      // Convert the EqualUnmodifiableListView to a List<FixtureData>
+      final fixtures = fixtureResponse.response.toList().cast<FixtureData>();
 
       // Apply the limit if needed
       if (fixtures.length > limit) {
@@ -181,6 +270,23 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       return fixtures;
     } catch (e) {
       if (e is ServerException) {
+        // If we hit a rate limit, we might want to retry after a delay
+        if (e.code == 429) {
+          logger.warning(
+              'Rate limit hit when fetching fixtures, retrying after delay');
+          await Future.delayed(
+              Duration(milliseconds: _defaultDelayAfterRateLimitMs));
+
+          // Try again with fewer results requested to reduce data volume
+          final modifiedLimit = (limit / 2).ceil();
+          return getUpcomingFixtures(
+            date: date,
+            teamId: teamId,
+            leagueId: leagueId,
+            season: season,
+            limit: modifiedLimit,
+          );
+        }
         rethrow;
       }
       logger.error('Error fetching upcoming fixtures', error: e);
@@ -225,7 +331,9 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
       logger.info('Retrieved match details for match ID: $matchId');
 
-      return fixtureResponse.response.first;
+      // Convert to List<FixtureData> first for type safety
+      final fixtures = fixtureResponse.response.toList().cast<FixtureData>();
+      return fixtures.first;
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -461,7 +569,10 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final predictionResponse = PredictionResponse.fromJson(responseBody);
       logger.info('Retrieved prediction for match ID: $matchId');
 
-      return predictionResponse.response.first;
+      // Convert the response to a List<PredictionData> for type safety
+      final predictions =
+          predictionResponse.response.toList().cast<PredictionData>();
+      return predictions.isNotEmpty ? predictions.first : null;
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -528,22 +639,17 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   Future<List<PredictionData>> getMatchPredictionsData(
       List<int> matchIds) async {
     try {
-      final List<PredictionData> allPredictions = [];
+      // Use our rate-limited fetch utility
+      final predictions = await fetchWithRateLimit<int, PredictionData>(
+        items: matchIds,
+        processItem: (id) => getMatchPredictionData(id),
+        batchSize: 3,
+        delayBetweenBatchesMs: 2000,
+      );
 
-      // API-Football requires separate calls for each match ID
-      // We'll make parallel requests to speed things up
-      final futures = matchIds.map((id) => getMatchPredictionData(id));
-      final results = await Future.wait(futures);
-
-      // Filter out null results and collect predictions
-      for (final prediction in results) {
-        if (prediction != null) {
-          allPredictions.add(prediction);
-        }
-      }
-
-      logger.info('Retrieved ${allPredictions.length} predictions');
-      return allPredictions;
+      logger.info(
+          'Retrieved ${predictions.length} predictions out of ${matchIds.length} requested');
+      return predictions;
     } catch (e) {
       if (e is ServerException) {
         rethrow;

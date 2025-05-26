@@ -17,32 +17,74 @@ class FixtureResponse with _$FixtureResponse {
   }) = _FixtureResponse;
 
   factory FixtureResponse.fromJson(Map<String, dynamic> json) {
-    // Create directly without using generated code
-    
-    // Handle case where errors could be a List (from API) or a Map (for our model)
-    var errorsValue = <String, dynamic>{};
-    if (json['errors'] is List<dynamic>) {
-      // If API returns a list, convert to a map with indices as keys
-      final errorsList = json['errors'] as List<dynamic>;
-      for (var i = 0; i < errorsList.length; i++) {
-        errorsValue['$i'] = errorsList[i];
+    try {
+      // Handle case where errors could be a List (from API) or a Map (for our model)
+      var errorsValue = <String, dynamic>{};
+      if (json['errors'] is List<dynamic>) {
+        // If API returns a list, convert to a map with indices as keys
+        final errorsList = json['errors'] as List<dynamic>;
+        for (var i = 0; i < errorsList.length; i++) {
+          errorsValue['$i'] = errorsList[i];
+        }
+      } else if (json['errors'] is Map<String, dynamic>) {
+        errorsValue = json['errors'] as Map<String, dynamic>;
       }
-    } else if (json['errors'] is Map<String, dynamic>) {
-      errorsValue = json['errors'] as Map<String, dynamic>;
-    }
-    
-    return FixtureResponse(
-      get: json['get'] as String,
-      parameters: json['parameters'] is Map<String, dynamic>
-          ? json['parameters'] as Map<String, dynamic>
-          : <String, dynamic>{},
-      errors: errorsValue,
-      results: json['results'] as int,
-      paging: json['paging'] as int,
-      response: (json['response'] as List<dynamic>)
+
+      // Handle paging which can be an object or an integer in the API
+      int pagingValue;
+      if (json['paging'] is Map) {
+        // If paging is an object with structure {"current": 1, "total": 1}
+        final pagingMap = json['paging'] as Map<String, dynamic>;
+        pagingValue = pagingMap.containsKey('current')
+            ? (pagingMap['current'] is num
+                ? (pagingMap['current'] as num).toInt()
+                : 1)
+            : 1;
+      } else if (json['paging'] is int) {
+        pagingValue = json['paging'] as int;
+      } else if (json['paging'] is num) {
+        pagingValue = (json['paging'] as num).toInt();
+      } else {
+        // Default value if paging is not in expected format
+        pagingValue = 1;
+      }
+
+      // Handle parameters
+      Map<String, dynamic> parametersValue;
+      if (json['parameters'] is Map<String, dynamic>) {
+        parametersValue = json['parameters'] as Map<String, dynamic>;
+      } else {
+        parametersValue = <String, dynamic>{};
+      }
+
+      // Carefully process the response list to ensure proper type conversion
+      final responseList = json['response'] as List<dynamic>;
+      final typedResponseList = responseList
           .map((item) => FixtureData.fromJson(item as Map<String, dynamic>))
-          .toList(),
-    );
+          .toList();
+
+      return FixtureResponse(
+        get: json['get'] as String,
+        parameters: parametersValue,
+        errors: errorsValue,
+        results: json['results'] is int
+            ? json['results'] as int
+            : (json['results'] is num ? (json['results'] as num).toInt() : 0),
+        paging: pagingValue,
+        response: typedResponseList,
+      );
+    } catch (e) {
+      print('Error parsing FixtureResponse: $e');
+      // Return a default response with empty data in case of parsing error
+      return FixtureResponse(
+        get: json['get'] as String? ?? '',
+        parameters: <String, dynamic>{},
+        errors: <String, dynamic>{'parsing_error': e.toString()},
+        results: 0,
+        paging: 1,
+        response: <FixtureData>[],
+      );
+    }
   }
 }
 
