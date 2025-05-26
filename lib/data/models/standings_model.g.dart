@@ -6,6 +6,16 @@ part of 'standings_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$StandingsDataImpl _$$StandingsDataImplFromJson(Map<String, dynamic> json) =>
+    _$StandingsDataImpl(
+      league: StandingsLeague.fromJson(json['league'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$$StandingsDataImplToJson(_$StandingsDataImpl instance) =>
+    <String, dynamic>{
+      'league': instance.league.toJson(),
+    };
+
 _$StandingsResponseImpl _$$StandingsResponseImplFromJson(
         Map<String, dynamic> json) =>
     _$StandingsResponseImpl(
@@ -16,7 +26,7 @@ _$StandingsResponseImpl _$$StandingsResponseImplFromJson(
       results: (json['results'] as num).toInt(),
       paging: Paging.fromJson(json['paging'] as Map<String, dynamic>),
       response: (json['response'] as List<dynamic>)
-          .map((e) => LeagueResponse.fromJson(e as Map<String, dynamic>))
+          .map((e) => StandingsData.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 

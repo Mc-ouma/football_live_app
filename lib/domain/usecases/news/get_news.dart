@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:football_live_app/core/errors/failures.dart';
 import 'package:football_live_app/domain/entities/news_article.dart';
 import 'package:football_live_app/domain/repositories/news_repository.dart';
 import 'package:football_live_app/domain/usecases/usecase.dart';
@@ -8,11 +10,16 @@ class GetLatestNews implements UseCase<List<NewsArticle>, NewsParams> {
   GetLatestNews(this.repository);
 
   @override
-  Future<List<NewsArticle>> call(NewsParams params) {
-    return repository.getLatestNews(
-      page: params.page,
-      pageSize: params.pageSize,
-    );
+  Future<Either<Failure, List<NewsArticle>>> call(NewsParams params) async {
+    try {
+      final result = await repository.getLatestNews(
+        page: params.page,
+        pageSize: params.pageSize,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 }
 
@@ -23,12 +30,18 @@ class GetNewsByCategory
   GetNewsByCategory(this.repository);
 
   @override
-  Future<List<NewsArticle>> call(CategoryNewsParams params) {
-    return repository.getNewsByCategory(
-      params.category,
-      page: params.page,
-      pageSize: params.pageSize,
-    );
+  Future<Either<Failure, List<NewsArticle>>> call(
+      CategoryNewsParams params) async {
+    try {
+      final result = await repository.getNewsByCategory(
+        params.category,
+        page: params.page,
+        pageSize: params.pageSize,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 }
 
@@ -38,8 +51,13 @@ class GetNewsArticleById implements UseCase<NewsArticle?, NewsArticleParams> {
   GetNewsArticleById(this.repository);
 
   @override
-  Future<NewsArticle?> call(NewsArticleParams params) {
-    return repository.getNewsArticleById(params.id);
+  Future<Either<Failure, NewsArticle?>> call(NewsArticleParams params) async {
+    try {
+      final result = await repository.getNewsArticleById(params.id);
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 }
 
@@ -49,12 +67,18 @@ class SearchNews implements UseCase<List<NewsArticle>, SearchNewsParams> {
   SearchNews(this.repository);
 
   @override
-  Future<List<NewsArticle>> call(SearchNewsParams params) {
-    return repository.searchNews(
-      params.query,
-      page: params.page,
-      pageSize: params.pageSize,
-    );
+  Future<Either<Failure, List<NewsArticle>>> call(
+      SearchNewsParams params) async {
+    try {
+      final result = await repository.searchNews(
+        params.query,
+        page: params.page,
+        pageSize: params.pageSize,
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 }
 

@@ -83,9 +83,7 @@ Future<void> init() async {
 
   sl.registerLazySingleton<FootballLocalDataSource>(
     () => FootballLocalDataSourceImpl(
-      database: sl<AppDatabase>(),
       sharedPreferences: sl<SharedPreferences>(),
-      logger: sl<LoggerService>(),
     ),
   );
 
@@ -125,7 +123,7 @@ Future<void> init() async {
       logger: sl<LoggerService>(),
     ),
   );
-  
+
   sl.registerLazySingleton<PredictionDataRepository>(
     () => PredictionDataRepositoryImpl(
       remoteDataSource: sl<FootballRemoteDataSource>(),
@@ -185,7 +183,7 @@ Future<void> init() async {
       logger: sl<LoggerService>(),
     ),
   );
-  
+
   sl.registerFactory(
     () => PredictionDataBloc(
       getMatchPredictionData: sl<GetMatchPredictionData>(),

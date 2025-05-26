@@ -14,6 +14,171 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+StandingsData _$StandingsDataFromJson(Map<String, dynamic> json) {
+  return _StandingsData.fromJson(json);
+}
+
+/// @nodoc
+mixin _$StandingsData {
+  StandingsLeague get league => throw _privateConstructorUsedError;
+
+  /// Serializes this StandingsData to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of StandingsData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $StandingsDataCopyWith<StandingsData> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $StandingsDataCopyWith<$Res> {
+  factory $StandingsDataCopyWith(
+          StandingsData value, $Res Function(StandingsData) then) =
+      _$StandingsDataCopyWithImpl<$Res, StandingsData>;
+  @useResult
+  $Res call({StandingsLeague league});
+
+  $StandingsLeagueCopyWith<$Res> get league;
+}
+
+/// @nodoc
+class _$StandingsDataCopyWithImpl<$Res, $Val extends StandingsData>
+    implements $StandingsDataCopyWith<$Res> {
+  _$StandingsDataCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of StandingsData
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? league = null,
+  }) {
+    return _then(_value.copyWith(
+      league: null == league
+          ? _value.league
+          : league // ignore: cast_nullable_to_non_nullable
+              as StandingsLeague,
+    ) as $Val);
+  }
+
+  /// Create a copy of StandingsData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $StandingsLeagueCopyWith<$Res> get league {
+    return $StandingsLeagueCopyWith<$Res>(_value.league, (value) {
+      return _then(_value.copyWith(league: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$StandingsDataImplCopyWith<$Res>
+    implements $StandingsDataCopyWith<$Res> {
+  factory _$$StandingsDataImplCopyWith(
+          _$StandingsDataImpl value, $Res Function(_$StandingsDataImpl) then) =
+      __$$StandingsDataImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({StandingsLeague league});
+
+  @override
+  $StandingsLeagueCopyWith<$Res> get league;
+}
+
+/// @nodoc
+class __$$StandingsDataImplCopyWithImpl<$Res>
+    extends _$StandingsDataCopyWithImpl<$Res, _$StandingsDataImpl>
+    implements _$$StandingsDataImplCopyWith<$Res> {
+  __$$StandingsDataImplCopyWithImpl(
+      _$StandingsDataImpl _value, $Res Function(_$StandingsDataImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of StandingsData
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? league = null,
+  }) {
+    return _then(_$StandingsDataImpl(
+      league: null == league
+          ? _value.league
+          : league // ignore: cast_nullable_to_non_nullable
+              as StandingsLeague,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$StandingsDataImpl implements _StandingsData {
+  const _$StandingsDataImpl({required this.league});
+
+  factory _$StandingsDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$StandingsDataImplFromJson(json);
+
+  @override
+  final StandingsLeague league;
+
+  @override
+  String toString() {
+    return 'StandingsData(league: $league)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$StandingsDataImpl &&
+            (identical(other.league, league) || other.league == league));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, league);
+
+  /// Create a copy of StandingsData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$StandingsDataImplCopyWith<_$StandingsDataImpl> get copyWith =>
+      __$$StandingsDataImplCopyWithImpl<_$StandingsDataImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$StandingsDataImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _StandingsData implements StandingsData {
+  const factory _StandingsData({required final StandingsLeague league}) =
+      _$StandingsDataImpl;
+
+  factory _StandingsData.fromJson(Map<String, dynamic> json) =
+      _$StandingsDataImpl.fromJson;
+
+  @override
+  StandingsLeague get league;
+
+  /// Create a copy of StandingsData
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$StandingsDataImplCopyWith<_$StandingsDataImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 StandingsResponse _$StandingsResponseFromJson(Map<String, dynamic> json) {
   return _StandingsResponse.fromJson(json);
 }
@@ -25,7 +190,7 @@ mixin _$StandingsResponse {
   List<dynamic> get errors => throw _privateConstructorUsedError;
   int get results => throw _privateConstructorUsedError;
   Paging get paging => throw _privateConstructorUsedError;
-  List<LeagueResponse> get response => throw _privateConstructorUsedError;
+  List<StandingsData> get response => throw _privateConstructorUsedError;
 
   /// Serializes this StandingsResponse to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -49,7 +214,7 @@ abstract class $StandingsResponseCopyWith<$Res> {
       List<dynamic> errors,
       int results,
       Paging paging,
-      List<LeagueResponse> response});
+      List<StandingsData> response});
 
   $ParametersCopyWith<$Res> get parameters;
   $PagingCopyWith<$Res> get paging;
@@ -101,7 +266,7 @@ class _$StandingsResponseCopyWithImpl<$Res, $Val extends StandingsResponse>
       response: null == response
           ? _value.response
           : response // ignore: cast_nullable_to_non_nullable
-              as List<LeagueResponse>,
+              as List<StandingsData>,
     ) as $Val);
   }
 
@@ -140,7 +305,7 @@ abstract class _$$StandingsResponseImplCopyWith<$Res>
       List<dynamic> errors,
       int results,
       Paging paging,
-      List<LeagueResponse> response});
+      List<StandingsData> response});
 
   @override
   $ParametersCopyWith<$Res> get parameters;
@@ -192,7 +357,7 @@ class __$$StandingsResponseImplCopyWithImpl<$Res>
       response: null == response
           ? _value._response
           : response // ignore: cast_nullable_to_non_nullable
-              as List<LeagueResponse>,
+              as List<StandingsData>,
     ));
   }
 }
@@ -206,7 +371,7 @@ class _$StandingsResponseImpl implements _StandingsResponse {
       required final List<dynamic> errors,
       required this.results,
       required this.paging,
-      required final List<LeagueResponse> response})
+      required final List<StandingsData> response})
       : _errors = errors,
         _response = response;
 
@@ -229,9 +394,9 @@ class _$StandingsResponseImpl implements _StandingsResponse {
   final int results;
   @override
   final Paging paging;
-  final List<LeagueResponse> _response;
+  final List<StandingsData> _response;
   @override
-  List<LeagueResponse> get response {
+  List<StandingsData> get response {
     if (_response is EqualUnmodifiableListView) return _response;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_response);
@@ -291,7 +456,7 @@ abstract class _StandingsResponse implements StandingsResponse {
       required final List<dynamic> errors,
       required final int results,
       required final Paging paging,
-      required final List<LeagueResponse> response}) = _$StandingsResponseImpl;
+      required final List<StandingsData> response}) = _$StandingsResponseImpl;
 
   factory _StandingsResponse.fromJson(Map<String, dynamic> json) =
       _$StandingsResponseImpl.fromJson;
@@ -307,7 +472,7 @@ abstract class _StandingsResponse implements StandingsResponse {
   @override
   Paging get paging;
   @override
-  List<LeagueResponse> get response;
+  List<StandingsData> get response;
 
   /// Create a copy of StandingsResponse
   /// with the given fields replaced by the non-null parameter values.

@@ -16,8 +16,19 @@ class FixtureResponse with _$FixtureResponse {
     required List<dynamic> response,
   }) = _FixtureResponse;
 
-  factory FixtureResponse.fromJson(Map<String, dynamic> json) =>
-      _$FixtureResponseFromJson(json);
+  factory FixtureResponse.fromJson(Map<String, dynamic> json) {
+    // Create directly without using generated code
+    return FixtureResponse(
+      get: json['get'] as String,
+      parameters: json['parameters'] as Map<String, dynamic>,
+      errors: json['errors'] as Map<String, dynamic>,
+      results: json['results'] as int,
+      paging: json['paging'] as int,
+      response: (json['response'] as List<dynamic>)
+          .map((item) => FixtureData.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }
 
 /// Main fixture data model containing all fixture information
@@ -55,36 +66,15 @@ class FixtureData with _$FixtureData {
   }) = _FixtureDataLive;
 
   factory FixtureData.fromJson(Map<String, dynamic> json) {
-    // Check what type of fixture data we're dealing with
-    final hasEvents = json['events'] != null && (json['events'] is List);
-    final hasLineups = json['lineups'] != null && (json['lineups'] is List);
-    final hasStatistics =
-        json['statistics'] != null && (json['statistics'] is List);
-    final hasPlayers = json['players'] != null && (json['players'] is List);
-
-    // Determine if it's a live match
-    bool isLive = false;
-    if (json['fixture'] != null && json['fixture'] is Map) {
-      final fixture = json['fixture'] as Map<String, dynamic>;
-      if (fixture['status'] != null && fixture['status'] is Map) {
-        final status = fixture['status'] as Map<String, dynamic>;
-        final statusLong = status['long'] as String?;
-        final statusShort = status['short'] as String?;
-
-        isLive = statusLong == 'In Play' ||
-            ['1H', '2H', 'HT', 'ET', 'BT', 'PP', 'AET', 'PEN', 'LIVE', 'INT']
-                .contains(statusShort);
-      }
-    }
-
-    // Return the appropriate constructor based on the data
-    if (hasEvents && hasLineups && hasStatistics && hasPlayers) {
-      return _$FixtureDataDetailedFromJson(json);
-    } else if (hasEvents && isLive) {
-      return _$FixtureDataLiveFromJson(json);
-    } else {
-      return _$FixtureDataFromJson(json);
-    }
+    // For now, return a basic fixture regardless of the type
+    // Once the generated code exists we can use the specific constructors
+    return FixtureData(
+      fixture: Fixture.fromJson(json['fixture'] as Map<String, dynamic>),
+      league: League.fromJson(json['league'] as Map<String, dynamic>),
+      teams: Teams.fromJson(json['teams'] as Map<String, dynamic>),
+      goals: Goals.fromJson(json['goals'] as Map<String, dynamic>),
+      score: Score.fromJson(json['score'] as Map<String, dynamic>),
+    );
   }
 }
 

@@ -6,10 +6,9 @@ import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/datasources/local/football_local_data_source.dart';
 import 'package:football_live_app/data/datasources/remote/football_remote_data_source.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
+import 'package:football_live_app/data/models/shared_models.dart' as shared;
+import 'package:football_live_app/data/models/standings_model.dart' as standings;
 import 'package:football_live_app/data/models/prediction_model.dart';
-import 'package:football_live_app/data/models/shared_models.dart'; // Use Team from shared_models
-import 'package:football_live_app/data/models/standings_model.dart'
-    hide Team; // Hide Team from standings_model
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 
 class FootballRepositoryImpl implements FootballRepository {
@@ -179,7 +178,7 @@ class FootballRepositoryImpl implements FootballRepository {
   }
 
   @override
-  Future<Either<Failure, Team>> getTeamInformation(int teamId) async {
+  Future<Either<Failure, shared.Team>> getTeamInformation(int teamId) async {
     if (await networkInfo.isConnected) {
       try {
         final remoteTeam = await remoteDataSource.getTeamInformation(teamId);
@@ -222,23 +221,11 @@ class FootballRepositoryImpl implements FootballRepository {
   }
 
   @override
-  Future<Either<Failure, List<Team>>> searchTeams(String query) async {
+  Future<Either<Failure, List<shared.Team>>> searchTeams(String query) async {
     if (await networkInfo.isConnected) {
       try {
         final remoteTeams = await remoteDataSource.searchTeams(query);
-        // Convert from shared_models.Team to standings_model.Team if needed
-        final convertedTeams = remoteTeams
-            .map((sharedTeam) =>
-                // Create a new Team instance from standings_model.dart
-                Team(
-                  id: sharedTeam.id,
-                  name: sharedTeam.name,
-                  logo: sharedTeam.logo,
-                  // Add any other required fields from standings_model.Team
-                ))
-            .toList();
-
-        return Right(convertedTeams);
+        return Right(remoteTeams);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message, code: e.code));
       }
@@ -248,7 +235,7 @@ class FootballRepositoryImpl implements FootballRepository {
   }
 
   @override
-  Future<Either<Failure, List<League>>> getLeagues({
+  Future<Either<Failure, List<shared.League>>> getLeagues({
     String? country,
     int? season,
     bool current = true,
@@ -285,7 +272,7 @@ class FootballRepositoryImpl implements FootballRepository {
   }
 
   @override
-  Future<Either<Failure, List<StandingsData>>> getStandings({
+  Future<Either<Failure, List<standings.StandingsData>>> getStandings({
     required int leagueId,
     required int season,
   }) async {

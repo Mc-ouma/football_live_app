@@ -4,6 +4,8 @@ import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
+import 'package:football_live_app/data/models/standings_model.dart'
+    as standings_models;
 import 'package:football_live_app/data/models/shared_models.dart';
 
 abstract class FootballRemoteDataSource {
@@ -40,6 +42,12 @@ abstract class FootballRemoteDataSource {
     String? country,
     int? season,
     bool current = true,
+  });
+
+  /// Gets standings for a league and season
+  Future<List<standings_models.StandingsData>> getStandings({
+    required int leagueId,
+    required int season,
   });
 
   /// Gets prediction data for a specific match
@@ -86,7 +94,7 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
       logger.info('Retrieved ${fixtureResponse.results} live matches');
 
-      return fixtureResponse.response;
+      return fixtureResponse.response.cast<FixtureData>();
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -162,11 +170,12 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       logger.info('Retrieved ${fixtureResponse.results} upcoming fixtures');
 
       // Apply the limit if needed
-      if (fixtureResponse.response.length > limit) {
-        return fixtureResponse.response.sublist(0, limit);
+      final fixtures = fixtureResponse.response.cast<FixtureData>();
+      if (fixtures.length > limit) {
+        return fixtures.sublist(0, limit);
       }
 
-      return fixtureResponse.response;
+      return fixtures;
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -262,6 +271,8 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
         id: teamData['id'],
         name: teamData['name'],
         logo: teamData['logo'],
+        winner: null, // Not applicable in this context
+        statistics: null, // Not applicable in this context
       );
 
       logger.info('Retrieved team information for team ID: $teamId');
@@ -387,15 +398,17 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       // Parse the leagues information
       final List<League> leagues = [];
       for (final leagueData in responseBody['response']) {
-        leagues.add(League(
-          id: leagueData['league']['id'],
-          name: leagueData['league']['name'],
-          country: leagueData['country']['name'],
-          logo: leagueData['league']['logo'],
-          flag: leagueData['country']['flag'],
-          season: leagueData['seasons'][0]['year'],
-          round: leagueData['seasons'][0]['current'] ? 'Current' : null,
-        ));
+        leagues.add(
+          League(
+            id: leagueData['league']['id'],
+            name: leagueData['league']['name'],
+            country: leagueData['country']['name'],
+            logo: leagueData['league']['logo'],
+            flag: leagueData['country']['flag'],
+            season: leagueData['seasons'][0]['year'],
+            round: leagueData['seasons'][0]['current'] ? 'Current' : null,
+          ),
+        );
       }
 
       logger.info('Found ${leagues.length} leagues');
@@ -453,6 +466,57 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       logger.error('Error fetching match prediction data', error: e);
       throw ServerException(
         message: 'Failed to get match prediction data: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<List<standings_models.StandingsData>> getStandings({
+    required int leagueId,
+    required int season,
+  }) async {
+    try {
+      // Build the query parameters
+      final Map<String, dynamic> params = {
+        'league': leagueId.toString(),
+        'season': season.toString(),
+      };
+
+      final response = await apiClient.get(
+        EnvConfig.standings,
+        queryParameters: params,
+      );
+
+      final responseBody = response.data;
+
+      // Check for API errors
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
+      }
+
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        logger.info('No standings found');
+        return [];
+      }
+
+      // Parse the standings
+      final standingsResponse =
+          standings_models.StandingsResponse.fromJson(responseBody);
+      logger.info('Retrieved standings for league ID: $leagueId');
+
+      return standingsResponse.response;
+    } catch (e) {
+      if (e is ServerException) {
+        rethrow;
+      }
+      logger.error('Error fetching standings', error: e);
+      throw ServerException(
+        message: 'Failed to get standings: ${e.toString()}',
       );
     }
   }

@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-FixtureResponse _$FixtureResponseFromJson(Map<String, dynamic> json) {
-  return _FixtureResponse.fromJson(json);
-}
-
 /// @nodoc
 mixin _$FixtureResponse {
   String get get => throw _privateConstructorUsedError;
@@ -26,9 +22,6 @@ mixin _$FixtureResponse {
   int get results => throw _privateConstructorUsedError;
   int get paging => throw _privateConstructorUsedError;
   List<dynamic> get response => throw _privateConstructorUsedError;
-
-  /// Serializes this FixtureResponse to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of FixtureResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -170,7 +163,7 @@ class __$$FixtureResponseImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$FixtureResponseImpl implements _FixtureResponse {
   const _$FixtureResponseImpl(
       {required this.get,
@@ -182,9 +175,6 @@ class _$FixtureResponseImpl implements _FixtureResponse {
       : _parameters = parameters,
         _errors = errors,
         _response = response;
-
-  factory _$FixtureResponseImpl.fromJson(Map<String, dynamic> json) =>
-      _$$FixtureResponseImplFromJson(json);
 
   @override
   final String get;
@@ -235,7 +225,6 @@ class _$FixtureResponseImpl implements _FixtureResponse {
             const DeepCollectionEquality().equals(other._response, _response));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -254,13 +243,6 @@ class _$FixtureResponseImpl implements _FixtureResponse {
   _$$FixtureResponseImplCopyWith<_$FixtureResponseImpl> get copyWith =>
       __$$FixtureResponseImplCopyWithImpl<_$FixtureResponseImpl>(
           this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$FixtureResponseImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _FixtureResponse implements FixtureResponse {
@@ -271,9 +253,6 @@ abstract class _FixtureResponse implements FixtureResponse {
       required final int results,
       required final int paging,
       required final List<dynamic> response}) = _$FixtureResponseImpl;
-
-  factory _FixtureResponse.fromJson(Map<String, dynamic> json) =
-      _$FixtureResponseImpl.fromJson;
 
   @override
   String get get;

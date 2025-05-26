@@ -20,20 +20,35 @@ class UpcomingFixturesBloc
   }
 
   void _onFetchUpcomingFixtures(
-    FetchUpcomingFixturesEvent event,
+    UpcomingFixturesEvent event,
     Emitter<UpcomingFixturesState> emit,
   ) async {
     emit(UpcomingFixturesLoading());
     try {
-      final result = await getUpcomingFixtures.call(
-        UpcomingFixturesParams(
+      late final UpcomingFixturesParams params;
+
+      if (event is FetchUpcomingFixturesEvent) {
+        params = UpcomingFixturesParams(
           date: event.date,
+          limit: event.limit,
+        );
+      } else if (event is FetchTeamFixturesEvent) {
+        params = UpcomingFixturesParams(
           teamId: event.teamId,
+          season: event.season,
+          limit: event.limit,
+        );
+      } else if (event is FetchLeagueFixturesEvent) {
+        params = UpcomingFixturesParams(
           leagueId: event.leagueId,
           season: event.season,
           limit: event.limit,
-        ),
-      );
+        );
+      } else {
+        params = UpcomingFixturesParams();
+      }
+
+      final result = await getUpcomingFixtures.call(params);
 
       result.fold(
         (failure) {

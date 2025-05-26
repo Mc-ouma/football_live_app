@@ -1,8 +1,18 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:json_annotation/json_annotation.dart';
+// freezed_annotation already includes json_annotation
 
 part 'standings_model.freezed.dart';
 part 'standings_model.g.dart';
+
+@freezed
+class StandingsData with _$StandingsData {
+  const factory StandingsData({
+    required StandingsLeague league,
+  }) = _StandingsData;
+
+  factory StandingsData.fromJson(Map<String, dynamic> json) =>
+      _$StandingsDataFromJson(json);
+}
 
 @freezed
 class StandingsResponse with _$StandingsResponse {
@@ -12,7 +22,7 @@ class StandingsResponse with _$StandingsResponse {
     required List<dynamic> errors,
     required int results,
     required Paging paging,
-    required List<LeagueResponse> response,
+    required List<StandingsData> response,
   }) = _StandingsResponse;
 
   factory StandingsResponse.fromJson(Map<String, dynamic> json) =>

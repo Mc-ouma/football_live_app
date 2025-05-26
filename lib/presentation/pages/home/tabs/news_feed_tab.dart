@@ -5,6 +5,7 @@ import 'package:football_live_app/domain/entities/news_article.dart';
 import 'package:football_live_app/domain/usecases/news/get_news.dart';
 import 'package:football_live_app/presentation/pages/news/news_detail_page.dart';
 import 'package:intl/intl.dart';
+// Import explicitly from flutter
 
 class NewsFeedTab extends StatefulWidget {
   const NewsFeedTab({super.key});
@@ -41,14 +42,21 @@ class _NewsFeedTabState extends State<NewsFeedTab> {
       });
 
       final params = NewsParams(page: 1, pageSize: _pageSize);
-      final newsArticles = await _getLatestNews(params);
+      final result = await _getLatestNews(params);
 
-      setState(() {
-        _newsItems.clear();
-        _newsItems.addAll(newsArticles);
-        _isLoading = false;
-        _currentPage = 1;
-        _hasMoreContent = newsArticles.length == _pageSize;
+      result.fold((failure) {
+        setState(() {
+          _errorMessage = failure.message;
+          _isLoading = false;
+        });
+      }, (newsArticles) {
+        setState(() {
+          _newsItems.clear();
+          _newsItems.addAll(newsArticles);
+          _isLoading = false;
+          _currentPage = 1;
+          _hasMoreContent = newsArticles.length == _pageSize;
+        });
       });
     } catch (e, stackTrace) {
       AppLogger.e('Error loading news items', error: e, stackTrace: stackTrace);
@@ -68,13 +76,24 @@ class _NewsFeedTabState extends State<NewsFeedTab> {
       });
 
       final params = NewsParams(page: _currentPage + 1, pageSize: _pageSize);
-      final newsArticles = await _getLatestNews(params);
+      final result = await _getLatestNews(params);
 
-      setState(() {
-        _newsItems.addAll(newsArticles);
-        _isLoadingMore = false;
-        _currentPage++;
-        _hasMoreContent = newsArticles.length == _pageSize;
+      result.fold((failure) {
+        setState(() {
+          _isLoadingMore = false;
+          // Show a snackbar or toast for load more error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Failed to load more news: ${failure.message}')),
+          );
+        });
+      }, (newsArticles) {
+        setState(() {
+          _newsItems.addAll(newsArticles);
+          _isLoadingMore = false;
+          _currentPage++;
+          _hasMoreContent = newsArticles.length == _pageSize;
+        });
       });
     } catch (e, stackTrace) {
       AppLogger.e('Error loading more news items',

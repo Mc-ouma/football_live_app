@@ -6,28 +6,6 @@ part of 'fixture_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$FixtureResponseImpl _$$FixtureResponseImplFromJson(
-        Map<String, dynamic> json) =>
-    _$FixtureResponseImpl(
-      get: json['get'] as String,
-      parameters: json['parameters'] as Map<String, dynamic>,
-      errors: json['errors'] as Map<String, dynamic>,
-      results: (json['results'] as num).toInt(),
-      paging: (json['paging'] as num).toInt(),
-      response: json['response'] as List<dynamic>,
-    );
-
-Map<String, dynamic> _$$FixtureResponseImplToJson(
-        _$FixtureResponseImpl instance) =>
-    <String, dynamic>{
-      'get': instance.get,
-      'parameters': instance.parameters,
-      'errors': instance.errors,
-      'results': instance.results,
-      'paging': instance.paging,
-      'response': instance.response,
-    };
-
 _$EventImpl _$$EventImplFromJson(Map<String, dynamic> json) => _$EventImpl(
       time: Time.fromJson(json['time'] as Map<String, dynamic>),
       team: Team.fromJson(json['team'] as Map<String, dynamic>),
