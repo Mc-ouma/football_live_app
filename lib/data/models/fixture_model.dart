@@ -18,14 +18,25 @@ class FixtureResponse with _$FixtureResponse {
 
   factory FixtureResponse.fromJson(Map<String, dynamic> json) {
     // Create directly without using generated code
+    
+    // Handle case where errors could be a List (from API) or a Map (for our model)
+    var errorsValue = <String, dynamic>{};
+    if (json['errors'] is List<dynamic>) {
+      // If API returns a list, convert to a map with indices as keys
+      final errorsList = json['errors'] as List<dynamic>;
+      for (var i = 0; i < errorsList.length; i++) {
+        errorsValue['$i'] = errorsList[i];
+      }
+    } else if (json['errors'] is Map<String, dynamic>) {
+      errorsValue = json['errors'] as Map<String, dynamic>;
+    }
+    
     return FixtureResponse(
       get: json['get'] as String,
-      parameters: json['parameters'] as Map<String, dynamic>
-          ? json['parameters']
+      parameters: json['parameters'] is Map<String, dynamic>
+          ? json['parameters'] as Map<String, dynamic>
           : <String, dynamic>{},
-      errors: json['errors'] is Map
-          ? json['errors'] as Map<String, dynamic>
-          : <String, dynamic>{},
+      errors: errorsValue,
       results: json['results'] as int,
       paging: json['paging'] as int,
       response: (json['response'] as List<dynamic>)
