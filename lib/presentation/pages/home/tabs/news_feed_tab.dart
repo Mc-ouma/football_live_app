@@ -17,6 +17,7 @@ class NewsFeedTab extends StatefulWidget {
 class _NewsFeedTabState extends State<NewsFeedTab> {
   final _newsRepository = MockNewsRepository();
   late final GetLatestNews _getLatestNews;
+  final ScrollController _scrollController = ScrollController();
 
   final List<NewsArticle> _newsItems = [];
   bool _isLoading = true;
@@ -31,6 +32,26 @@ class _NewsFeedTabState extends State<NewsFeedTab> {
     super.initState();
     _getLatestNews = GetLatestNews(_newsRepository);
     _loadNewsItems();
+
+    // Add scroll listener for infinite scrolling
+    _scrollController.addListener(_scrollListener);
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoading &&
+        !_isLoadingMore &&
+        _hasMoreContent) {
+      _loadMoreNewsItems();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadNewsItems() async {
@@ -143,11 +164,25 @@ class _NewsFeedTabState extends State<NewsFeedTab> {
         await _loadNewsItems();
       },
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.all(8),
-        itemCount: _newsItems.length,
+        itemCount: _newsItems.length + (_isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          final item = _newsItems[index];
-          return NewsCard(newsItem: item);
+          if (index == _newsItems.length && _isLoadingMore) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          if (index < _newsItems.length) {
+            final item = _newsItems[index];
+            return NewsCard(newsItem: item);
+          }
+
+          return null;
         },
       ),
     );

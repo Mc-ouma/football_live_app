@@ -30,7 +30,7 @@ class StandingsBloc extends Bloc<StandingsEvent, StandingsState> {
           season: event.season,
         ),
       );
-      
+
       // GetStandings already handles the Either internally
       if (standings.isEmpty) {
         emit(const StandingsEmpty(
