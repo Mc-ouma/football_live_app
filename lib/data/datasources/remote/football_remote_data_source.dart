@@ -94,7 +94,8 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
       logger.info('Retrieved ${fixtureResponse.results} live matches');
 
-      return fixtureResponse.response.cast<FixtureData>();
+      // The response is already mapped to FixtureData in FixtureResponse.fromJson
+      return fixtureResponse.response as List<FixtureData>;
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -169,8 +170,10 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
       logger.info('Retrieved ${fixtureResponse.results} upcoming fixtures');
 
+      // The response is already mapped to FixtureData in FixtureResponse.fromJson
+      final fixtures = fixtureResponse.response as List<FixtureData>;
+
       // Apply the limit if needed
-      final fixtures = fixtureResponse.response.cast<FixtureData>();
       if (fixtures.length > limit) {
         return fixtures.sublist(0, limit);
       }

@@ -59,7 +59,12 @@ class PredictionBloc extends Bloc<PredictionEvent, PredictionState> {
   ) async {
     emit(PredictionLoading());
     try {
-      final params = GetMatchPredictionsParams(matchIds: event.matchIds);
+      // If no match IDs provided, use a default list or load from a service
+      final matchIds = event.matchIds.isEmpty
+          ? [123, 456, 789] // Default matches for demo/testing
+          : event.matchIds;
+
+      final params = GetMatchPredictionsParams(matchIds: matchIds);
       final result = await getMatchPredictions.call(params);
 
       result.fold(

@@ -43,10 +43,7 @@ class _HomePageState extends State<HomePage> {
   void _updateTabs() {
     _tabs = [
       LiveMatchesTab(showLiveOnly: _showLiveMatchesOnly),
-      BlocProvider(
-        create: (context) => di.sl<PredictionBloc>(),
-        child: const PredictionsTab(),
-      ),
+      const PredictionsTab(), // Use the existing PredictionBloc from the parent provider
       const LeaguesTab(),
       const NewsFeedTab(),
       const EnhancedProfileTab(),

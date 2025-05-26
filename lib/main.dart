@@ -22,36 +22,36 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        // Provide NetworkInfo at the top level
-        Provider<NetworkInfo>(create: (_) => getIt<NetworkInfo>()),
-      ],
-      child: MaterialApp(
-        title: 'Football Live App',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider(create: (_) => getIt<LiveMatchesBloc>()),
-            BlocProvider(create: (_) => getIt<PredictionBloc>()),
-            BlocProvider(create: (_) => getIt<AuthBloc>()),
-          ],
-          child: HomePage(),
-        ),
-        routes: {
-          '/home': (context) => MultiBlocProvider(
-                providers: [
-                  BlocProvider(create: (_) => getIt<LiveMatchesBloc>()),
-                  BlocProvider(create: (_) => getIt<PredictionBloc>()),
-                  BlocProvider(create: (_) => getIt<AuthBloc>()),
-                ],
-                child: HomePage(),
-              ),
-        },
+    // First provide all the application-wide providers at the root level
+    return MaterialApp(
+      title: 'Football Live App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      home: MultiProvider(
+        providers: [
+          // Provide NetworkInfo at the top level so it's available throughout the app
+          Provider<NetworkInfo>(create: (_) => getIt<NetworkInfo>()),
+          // BLoCs
+          BlocProvider(create: (_) => getIt<LiveMatchesBloc>()),
+          BlocProvider(create: (_) => getIt<PredictionBloc>()),
+          BlocProvider(create: (_) => getIt<AuthBloc>()),
+        ],
+        child: HomePage(),
+      ),
+      routes: {
+        '/home': (context) => MultiProvider(
+              providers: [
+                // Provide NetworkInfo in routes too
+                Provider<NetworkInfo>(create: (_) => getIt<NetworkInfo>()),
+                BlocProvider(create: (_) => getIt<LiveMatchesBloc>()),
+                BlocProvider(create: (_) => getIt<PredictionBloc>()),
+                BlocProvider(create: (_) => getIt<AuthBloc>()),
+              ],
+              child: HomePage(),
+            ),
+      },
     );
   }
 }

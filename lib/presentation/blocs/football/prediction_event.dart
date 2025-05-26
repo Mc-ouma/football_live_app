@@ -19,7 +19,8 @@ class FetchMatchPredictionEvent extends PredictionEvent {
 class FetchMultipleMatchPredictionsEvent extends PredictionEvent {
   final List<int> matchIds;
 
-  const FetchMultipleMatchPredictionsEvent({required this.matchIds});
+  // Default constructor with empty list for cases where we're getting general predictions
+  const FetchMultipleMatchPredictionsEvent({this.matchIds = const []});
 
   @override
   List<Object?> get props => [matchIds];
