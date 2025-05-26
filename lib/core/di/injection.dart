@@ -205,5 +205,11 @@ Future<void> init() async {
 
 /// Configure all dependencies
 Future<void> configureDependencies() async {
-  await init();
+  try {
+    await init();
+  } catch (e, stackTrace) {
+    print('ERROR during dependency injection: $e');
+    print('Stack trace: $stackTrace');
+    rethrow; // Rethrow to make the error visible
+  }
 }

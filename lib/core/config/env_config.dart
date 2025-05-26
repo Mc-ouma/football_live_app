@@ -10,18 +10,33 @@ class EnvConfig {
   static void initialize() {
     if (_initialized) return;
 
-    // In a real app, you might load these from secure storage or environment variables
-    apiFootballKey = const String.fromEnvironment(
-      'API_FOOTBALL_KEY',
-      defaultValue: '0880f79a66438c6e30f16c8ff7f6fe2d',
-    );
+    try {
+      // In a real app, you might load these from secure storage or environment variables
+      apiFootballKey = const String.fromEnvironment(
+        'API_FOOTBALL_KEY',
+        defaultValue: '0880f79a66438c6e30f16c8ff7f6fe2d',
+      );
 
-    if (kDebugMode && apiFootballKey == '0880f79a66438c6e30f16c8ff7f6fe2d') {
-      print(
-          'WARNING: Using default API key. Set the actual API key for production.');
+      if (kDebugMode) {
+        print(
+            'API Football Key: ${apiFootballKey.substring(0, 4)}...${apiFootballKey.substring(apiFootballKey.length - 4)}');
+
+        if (apiFootballKey == '0880f79a66438c6e30f16c8ff7f6fe2d') {
+          print(
+              'WARNING: Using default API key. Set the actual API key for production.');
+        }
+      }
+
+      _initialized = true;
+    } catch (e) {
+      // Ensure the API key is set even if there's an error
+      apiFootballKey = '0880f79a66438c6e30f16c8ff7f6fe2d'; // Default fallback
+      if (kDebugMode) {
+        print('ERROR initializing environment config: $e');
+        print('Using fallback API key');
+      }
+      _initialized = true;
     }
-
-    _initialized = true;
   }
 
   // API endpoints
