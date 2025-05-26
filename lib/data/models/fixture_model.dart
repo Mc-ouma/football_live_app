@@ -13,15 +13,19 @@ class FixtureResponse with _$FixtureResponse {
     required Map<String, dynamic> errors,
     required int results,
     required int paging,
-    required List<dynamic> response,
+    required List<FixtureData> response,
   }) = _FixtureResponse;
 
   factory FixtureResponse.fromJson(Map<String, dynamic> json) {
     // Create directly without using generated code
     return FixtureResponse(
       get: json['get'] as String,
-      parameters: json['parameters'] as Map<String, dynamic>,
-      errors: json['errors'] as Map<String, dynamic>,
+      parameters: json['parameters'] as Map<String, dynamic>
+          ? json['parameters']
+          : <String, dynamic>{},
+      errors: json['errors'] is Map
+          ? json['errors'] as Map<String, dynamic>
+          : <String, dynamic>{},
       results: json['results'] as int,
       paging: json['paging'] as int,
       response: (json['response'] as List<dynamic>)

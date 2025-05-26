@@ -61,9 +61,9 @@ class _PredictionsTabState extends State<PredictionsTab> {
             message: state.message,
             onRetry: _loadPredictions,
           );
-        } else if (state is PredictionLoaded && state.prediction != null) {
+        } else if (state is PredictionLoaded) {
           // Single prediction case
-          return _buildPredictionList([state.prediction!]);
+          return _buildPredictionList([state.prediction]);
         } else if (state is MultiPredictionLoaded) {
           // Multiple predictions case
           return _buildPredictionList(state.predictions);
