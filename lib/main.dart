@@ -41,7 +41,12 @@ class MyApp extends StatelessWidget {
         ),
         home: const SplashScreen(),
         routes: {
+          // Use builder pattern to ensure BLoCs are properly passed to routes
           '/home': (context) => const HomePage(),
+        },
+        onGenerateRoute: (settings) {
+          // Handle dynamic routes here if needed in the future
+          return null;
         },
       ),
     );

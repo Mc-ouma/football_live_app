@@ -24,16 +24,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-
-    // Fetch fixture details
-    context.read<FixtureDetailsBloc>().add(
-          LoadFixtureDetails(widget.fixture.fixture.id),
-        );
-
-    // Fetch predictions
-    context.read<PredictionBloc>().add(
-          FetchMatchPredictionEvent(matchId: widget.fixture.fixture.id),
-        );
   }
 
   @override
@@ -44,8 +34,18 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<FixtureDetailsBloc>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => getIt<FixtureDetailsBloc>()
+            ..add(LoadFixtureDetails(widget.fixture.fixture.id)),
+        ),
+        BlocProvider(
+          create: (_) => getIt<PredictionBloc>()
+            ..add(
+                FetchMatchPredictionEvent(matchId: widget.fixture.fixture.id)),
+        ),
+      ],
       child: Scaffold(
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
