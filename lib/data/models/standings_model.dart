@@ -62,14 +62,14 @@ class Standing with _$Standing {
     required Team team,
     required int points,
     required int goalsDiff,
-    required String group,
-    required String form,
-    required String status,
-    required String description,
+    String? group,
+    String? form,
+    String? status,
+    String? description,
     required MatchStats all,
     required MatchStats home,
     required MatchStats away,
-    required String update,
+    String? update,
   }) = _Standing;
 
   factory Standing.fromJson(Map<String, dynamic> json) =>

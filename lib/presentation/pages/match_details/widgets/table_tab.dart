@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:football_live_app/data/models/fixture_model.dart' as fixture_model;
+import 'package:football_live_app/data/models/fixture_model.dart'
+    as fixture_model;
 import 'package:football_live_app/data/models/standings_model.dart' hide Team;
-import 'package:football_live_app/domain/repositories/football_repository.dart';
-import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
-import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
@@ -25,7 +22,7 @@ class TableTab extends StatelessWidget {
         if (state is StandingsLoading) {
           return LoadingWidget(message: 'Loading league table...');
         }
-        
+
         // Check for errors
         if (state is StandingsError) {
           return ErrorDisplayWidget(
@@ -40,7 +37,7 @@ class TableTab extends StatelessWidget {
             },
           );
         }
-        
+
         // Check for empty state
         if (state is StandingsEmpty) {
           return Center(
@@ -62,15 +59,30 @@ class TableTab extends StatelessWidget {
             ),
           );
         }
-        
+
         // Use real standings data if available, otherwise use mock data
         List<Map<String, dynamic>> leagueTableData;
+        StandingsLeague? leagueInfo;
+
         if (state is StandingsLoaded) {
           leagueTableData = _convertStandingsToTableData(state.standings);
+          if (state.standings.isNotEmpty) {
+            leagueInfo = state.standings[0].league;
+          }
         } else {
           // Fallback to mock data for demonstration
           leagueTableData = _getMockLeagueTable();
         }
+
+        // Create a default league info if not available from standings
+        leagueInfo ??= StandingsLeague(
+            id: fixture.league.id,
+            name: fixture.league.name,
+            country: fixture.league.country,
+            logo: fixture.league.logo,
+            flag: '',
+            season: fixture.league.season,
+            standings: []);
 
         return SingleChildScrollView(
           padding: ResponsiveHelper.getPadding(context),
@@ -79,86 +91,56 @@ class TableTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // League info
-              _buildLeagueHeader(context, fixture.league),
-              
+              _buildLeagueHeader(context, leagueInfo),
+
               SizedBox(height: 24),
-              
+
               // Table visualization
               Card(
                 elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
                     // Table header
                     _buildTableHeader(context),
-                    
+
                     // Table content
                     ListView.separated(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
-                      separatorBuilder: (context, index) => Divider(height: 1, thickness: 0.5),
+                      separatorBuilder: (context, index) =>
+                          Divider(height: 1, thickness: 0.5),
                       itemCount: leagueTableData.length,
                       itemBuilder: (context, index) {
                         final team = leagueTableData[index];
                         return _buildTableRow(
-                          context, 
-                          team['position'], 
-                          team['team'], 
-                          team['played'], 
-                          team['won'], 
-                          team['drawn'], 
-                          team['lost'], 
-                          team['goalsFor'], 
-                          team['goalsAgainst'], 
-                          team['points'],
-                          highlight: team['team'] == fixture.teams.home.name || team['team'] == fixture.teams.away.name,
-                          homeTeam: team['team'] == fixture.teams.home.name,
-                          awayTeam: team['team'] == fixture.teams.away.name,
-                          teamLogo: team['logo'],
-                          form: team['form']
-                        );
+                            context,
+                            team['position'],
+                            team['team'],
+                            team['played'],
+                            team['won'],
+                            team['drawn'],
+                            team['lost'],
+                            team['goalsFor'],
+                            team['goalsAgainst'],
+                            team['points'],
+                            highlight:
+                                team['team'] == fixture.teams.home.name ||
+                                    team['team'] == fixture.teams.away.name,
+                            homeTeam: team['team'] == fixture.teams.home.name,
+                            awayTeam: team['team'] == fixture.teams.away.name,
+                            teamLogo: team['logo']);
                       },
                     ),
-                    
+
                     // Legend
                     _buildTableLegend(context),
                   ],
                 ),
               ),
-              
-              SizedBox(height: 20),
-              
-              // Recent Form Legend
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Recent Form:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                    SizedBox(height: 4),
-                    Row(
-                      children: [
-                        _formIndicator('W', Colors.green),
-                        SizedBox(width: 8),
-                        Text('Win'),
-                        SizedBox(width: 16),
-                        _formIndicator('D', Colors.amber[700]!),
-                        SizedBox(width: 8),
-                        Text('Draw'),
-                        SizedBox(width: 16),
-                        _formIndicator('L', Colors.red),
-                        SizedBox(width: 8),
-                        Text('Loss'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              
+
               SizedBox(height: 20),
             ],
           ),
@@ -166,8 +148,8 @@ class TableTab extends StatelessWidget {
       },
     );
   }
-  
-  Widget _buildLeagueHeader(BuildContext context, fixture_model.League league) {
+
+  Widget _buildLeagueHeader(BuildContext context, StandingsLeague league) {
     return Row(
       children: [
         Image.network(
@@ -206,31 +188,45 @@ class TableTab extends StatelessWidget {
   Widget _buildTableHeader(BuildContext context) {
     final isSmallScreen = ResponsiveHelper.isMobile(context);
     final headerStyle = TextStyle(
-      fontWeight: FontWeight.bold, 
+      fontWeight: FontWeight.bold,
       fontSize: isSmallScreen ? 11 : 13,
     );
-    
+
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 12, horizontal: isSmallScreen ? 4 : 8),
+      padding:
+          EdgeInsets.symmetric(vertical: 12, horizontal: isSmallScreen ? 4 : 8),
       color: Colors.grey[100],
       child: Row(
         children: [
-          SizedBox(width: 30, child: Center(child: Text('#', style: headerStyle))),
+          SizedBox(
+              width: 30, child: Center(child: Text('#', style: headerStyle))),
           Expanded(
             flex: 4,
             child: Text('Team', style: headerStyle),
           ),
-          if (!isSmallScreen) SizedBox(width: 30, child: Center(child: Text('P', style: headerStyle))),
-          SizedBox(width: 30, child: Center(child: Text('W', style: headerStyle))),
-          SizedBox(width: 30, child: Center(child: Text('D', style: headerStyle))),
-          SizedBox(width: 30, child: Center(child: Text('L', style: headerStyle))),
+          if (!isSmallScreen)
+            SizedBox(
+                width: 30, child: Center(child: Text('P', style: headerStyle))),
+          SizedBox(
+              width: 30, child: Center(child: Text('W', style: headerStyle))),
+          SizedBox(
+              width: 30, child: Center(child: Text('D', style: headerStyle))),
+          SizedBox(
+              width: 30, child: Center(child: Text('L', style: headerStyle))),
           if (!isSmallScreen) ...[
-            SizedBox(width: 35, child: Center(child: Text('GF', style: headerStyle))),
-            SizedBox(width: 35, child: Center(child: Text('GA', style: headerStyle))),
-            SizedBox(width: 35, child: Center(child: Text('GD', style: headerStyle))),
+            SizedBox(
+                width: 35,
+                child: Center(child: Text('GF', style: headerStyle))),
+            SizedBox(
+                width: 35,
+                child: Center(child: Text('GA', style: headerStyle))),
+            SizedBox(
+                width: 35,
+                child: Center(child: Text('GD', style: headerStyle))),
           ],
-          SizedBox(width: isSmallScreen ? 35 : 40, child: Center(child: Text('Pts', style: headerStyle))),
-          SizedBox(width: 70, child: Center(child: Text('Form', style: headerStyle))),
+          SizedBox(
+              width: isSmallScreen ? 35 : 40,
+              child: Center(child: Text('Pts', style: headerStyle))),
         ],
       ),
     );
@@ -251,12 +247,11 @@ class TableTab extends StatelessWidget {
     bool homeTeam = false,
     bool awayTeam = false,
     String? teamLogo,
-    List<String>? form,
   }) {
     final isSmallScreen = ResponsiveHelper.isMobile(context);
     final positionColor = _getPositionColor(position);
     final goalDifference = goalsFor - goalsAgainst;
-    
+
     Color? rowColor;
     if (homeTeam) {
       rowColor = AppTheme.homeTeamColor.withOpacity(0.1);
@@ -265,15 +260,14 @@ class TableTab extends StatelessWidget {
     } else if (highlight) {
       rowColor = Colors.grey[50];
     }
-    
+
     return AnimatedContainer(
       duration: Duration(milliseconds: 300),
       color: rowColor,
       child: Padding(
         padding: EdgeInsets.symmetric(
-          vertical: isSmallScreen ? 8 : 10, 
-          horizontal: isSmallScreen ? 4 : 8
-        ),
+            vertical: isSmallScreen ? 8 : 10,
+            horizontal: isSmallScreen ? 4 : 8),
         child: Row(
           children: [
             // Position
@@ -300,7 +294,7 @@ class TableTab extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Team
             Expanded(
               flex: 4,
@@ -318,7 +312,8 @@ class TableTab extends StatelessWidget {
                     child: Text(
                       team,
                       style: TextStyle(
-                        fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            highlight ? FontWeight.bold : FontWeight.normal,
                         fontSize: isSmallScreen ? 12 : 14,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -327,37 +322,37 @@ class TableTab extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Stats
             if (!isSmallScreen)
               SizedBox(width: 30, child: Center(child: Text('$played'))),
             SizedBox(width: 30, child: Center(child: Text('$won'))),
             SizedBox(width: 30, child: Center(child: Text('$drawn'))),
             SizedBox(width: 30, child: Center(child: Text('$lost'))),
-            
+
             if (!isSmallScreen) ...[
               SizedBox(width: 35, child: Center(child: Text('$goalsFor'))),
               SizedBox(width: 35, child: Center(child: Text('$goalsAgainst'))),
               SizedBox(
-                width: 35, 
+                width: 35,
                 child: Center(
                   child: Text(
                     goalDifference > 0 ? '+$goalDifference' : '$goalDifference',
                     style: TextStyle(
-                      color: goalDifference > 0 
-                        ? Colors.green[700]
-                        : goalDifference < 0 
-                          ? Colors.red[700]
-                          : null,
+                      color: goalDifference > 0
+                          ? Colors.green[700]
+                          : goalDifference < 0
+                              ? Colors.red[700]
+                              : null,
                     ),
                   ),
                 ),
               ),
             ],
-            
+
             // Points
             SizedBox(
-              width: isSmallScreen ? 35 : 40, 
+              width: isSmallScreen ? 35 : 40,
               child: Center(
                 child: Text(
                   '$points',
@@ -365,52 +360,14 @@ class TableTab extends StatelessWidget {
                 ),
               ),
             ),
-            
-            // Form
-            SizedBox(
-              width: 70,
-              child: form != null
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: form.map((result) => _formIndicator(
-                      result, 
-                      result == 'W' 
-                        ? Colors.green
-                        : result == 'D' 
-                          ? Colors.amber[700]!
-                          : Colors.red,
-                    )).toList(),
-                  )
-                : SizedBox(),
-            ),
           ],
         ),
       ),
     );
   }
-  
-  Widget _formIndicator(String letter, Color color) {
-    return Container(
-      width: 16,
-      height: 16,
-      margin: EdgeInsets.only(right: 2),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(2),
-      ),
-      child: Center(
-        child: Text(
-          letter,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
-          ),
-        ),
-      ),
-    );
-  }
-  
+
+
+
   Widget _buildTableLegend(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(16),
@@ -464,7 +421,7 @@ class TableTab extends StatelessWidget {
       ),
     );
   }
-  
+
   Color? _getPositionColor(int position) {
     if (position <= 4) {
       return Colors.green;
@@ -475,28 +432,23 @@ class TableTab extends StatelessWidget {
     }
     return null;
   }
-  
+
   // Convert the real standings data from the API to our table format
-  List<Map<String, dynamic>> _convertStandingsToTableData(List<StandingsData> standingsData) {
+  List<Map<String, dynamic>> _convertStandingsToTableData(
+      List<StandingsData> standingsData) {
     if (standingsData.isEmpty) {
       return [];
     }
-    
+
     final result = <Map<String, dynamic>>[];
-    
+
     // Get the first standings data (assuming we only have one league)
     final leagueData = standingsData.first;
-    
+
     // Handle nested standings array (API returns array of arrays)
     if (leagueData.league.standings.isNotEmpty) {
       for (final standingGroup in leagueData.league.standings) {
         for (final standing in standingGroup) {
-          // Convert form string to list (e.g. "WDLWW" -> ["W", "D", "L", "W", "W"])
-          List<String>? form;
-          if (standing.form.isNotEmpty) {
-            form = standing.form.split('').take(5).toList();
-          }
-          
           result.add({
             'position': standing.rank,
             'team': standing.team.name,
@@ -508,15 +460,14 @@ class TableTab extends StatelessWidget {
             'goalsFor': standing.all.goals.forGoals ?? 0,
             'goalsAgainst': standing.all.goals.against ?? 0,
             'points': standing.points,
-            'form': form,
           });
         }
       }
     }
-    
+
     return result;
   }
-  
+
   List<Map<String, dynamic>> _getMockLeagueTable() {
     // Return sample league table data
     return [
@@ -531,7 +482,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 95,
         'goalsAgainst': 26,
         'points': 95,
-        'form': ['W', 'W', 'D', 'W', 'W'],
       },
       {
         'position': 2,
@@ -544,7 +494,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 92,
         'goalsAgainst': 29,
         'points': 90,
-        'form': ['W', 'W', 'W', 'D', 'W'],
       },
       {
         'position': 3,
@@ -557,7 +506,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 76,
         'goalsAgainst': 31,
         'points': 83,
-        'form': ['W', 'D', 'D', 'W', 'W'],
       },
       {
         'position': 4,
@@ -570,7 +518,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 71,
         'goalsAgainst': 35,
         'points': 70,
-        'form': ['L', 'W', 'W', 'D', 'W'],
       },
       {
         'position': 5,
@@ -583,7 +530,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 62,
         'goalsAgainst': 47,
         'points': 59,
-        'form': ['D', 'W', 'L', 'W', 'D'],
       },
       {
         'position': 6,
@@ -596,7 +542,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 57,
         'goalsAgainst': 46,
         'points': 59,
-        'form': ['W', 'D', 'L', 'W', 'W'],
       },
       {
         'position': 17,
@@ -609,7 +554,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 40,
         'goalsAgainst': 65,
         'points': 36,
-        'form': ['L', 'D', 'L', 'L', 'W'],
       },
       {
         'position': 18,
@@ -622,7 +566,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 30,
         'goalsAgainst': 51,
         'points': 36,
-        'form': ['L', 'D', 'L', 'L', 'D'],
       },
       {
         'position': 19,
@@ -635,7 +578,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 34,
         'goalsAgainst': 65,
         'points': 33,
-        'form': ['L', 'L', 'D', 'L', 'L'],
       },
       {
         'position': 20,
@@ -648,7 +590,6 @@ class TableTab extends StatelessWidget {
         'goalsFor': 29,
         'goalsAgainst': 66,
         'points': 30,
-        'form': ['L', 'L', 'L', 'D', 'L'],
       },
     ];
   }

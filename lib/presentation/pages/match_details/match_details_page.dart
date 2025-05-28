@@ -43,6 +43,9 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
     _tabController.addListener(_handleTabChange);
   }
 
+  // Store this to access bloc safely
+  BuildContext? _providerContext;
+
   void _handleTabChange() {
     // Only trigger when the tab actually changes
     if (!_tabController.indexIsChanging) {
@@ -62,31 +65,43 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
 
     // Use Future.delayed to give time for the tab transition animation
     Future.delayed(Duration(milliseconds: 100), () {
-      // For now, we're using the same event for all tabs
-      // In a real application, you would have specific events for each tab type
+      if (!mounted) return;
 
-      // Refresh data depending on which tab we're viewing
-      if (_tabController.index >= 2) {
-        context.read<FixtureDetailsBloc>().add(
-              RefreshFixtureDetails(fixtureId),
-            );
-      }
+      try {
+        // Refresh data depending on which tab we're viewing
+        if (_tabController.index >= 2 && _providerContext != null) {
+          try {
+            final bloc = BlocProvider.of<FixtureDetailsBloc>(_providerContext!);
+            bloc.add(RefreshFixtureDetails(fixtureId));
+          } catch (e) {
+            print('Error accessing FixtureDetailsBloc: $e');
+          }
+        }
 
-      // Load standings data when on the table tab
-      if (_tabController.index == 5) {
-        context.read<StandingsBloc>().add(
-              FetchStandingsEvent(
-                leagueId: leagueId,
-                season: season,
-              ),
-            );
-      }
+        // Load standings data when on the table tab
+        if (_tabController.index == 5 && _providerContext != null) {
+          try {
+            final bloc = BlocProvider.of<StandingsBloc>(_providerContext!);
+            bloc.add(FetchStandingsEvent(
+              leagueId: leagueId,
+              season: season,
+            ));
+          } catch (e) {
+            print('Error accessing StandingsBloc: $e');
+          }
+        }
 
-      // Specifically load prediction data when on that tab
-      if (_tabController.index == 6) {
-        context.read<PredictionBloc>().add(
-              FetchMatchPredictionEvent(matchId: fixtureId),
-            );
+        // Specifically load prediction data when on that tab
+        if (_tabController.index == 6 && _providerContext != null) {
+          try {
+            final bloc = BlocProvider.of<PredictionBloc>(_providerContext!);
+            bloc.add(FetchMatchPredictionEvent(matchId: fixtureId));
+          } catch (e) {
+            print('Error accessing PredictionBloc: $e');
+          }
+        }
+      } catch (e) {
+        print('Error in tab change handler: $e');
       }
 
       if (mounted) {
@@ -121,250 +136,259 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
           create: (_) => getIt<StandingsBloc>(),
         ),
       ],
-      child: Scaffold(
-        body: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              SliverAppBar(
-                expandedHeight: 300.0,
-                floating: false,
-                pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  background:
-                      BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
-                    builder: (context, state) {
-                      if (state is FixtureDetailsLoaded && state.hasFixtures) {
-                        // Use the getter that returns the first fixture
-                        return MatchScoreHeader(fixture: state.fixture!);
-                      }
-                      return MatchScoreHeader(fixture: widget.fixture);
-                    },
-                  ),
-                ),
-                bottom: TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  labelStyle: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: ResponsiveHelper.isMobile(context) ? 13 : 14,
-                  ),
-                  unselectedLabelStyle: TextStyle(
-                    fontWeight: FontWeight.normal,
-                    fontSize: ResponsiveHelper.isMobile(context) ? 13 : 14,
-                  ),
-                  indicator: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 3.0,
+      child: Builder(
+        builder: (context) {
+          // Save the provider context for use in tab changes
+          _providerContext = context;
+
+          return Scaffold(
+            body: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                return [
+                  SliverAppBar(
+                    expandedHeight: 300.0,
+                    floating: false,
+                    pinned: true,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background:
+                          BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
+                        builder: (context, state) {
+                          if (state is FixtureDetailsLoaded &&
+                              state.hasFixtures) {
+                            // Use the getter that returns the first fixture
+                            return MatchScoreHeader(fixture: state.fixture!);
+                          }
+                          return MatchScoreHeader(fixture: widget.fixture);
+                        },
                       ),
                     ),
+                    bottom: TabBar(
+                      controller: _tabController,
+                      isScrollable: true,
+                      labelStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: ResponsiveHelper.isMobile(context) ? 13 : 14,
+                      ),
+                      unselectedLabelStyle: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        fontSize: ResponsiveHelper.isMobile(context) ? 13 : 14,
+                      ),
+                      indicator: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 3.0,
+                          ),
+                        ),
+                      ),
+                      indicatorSize: TabBarIndicatorSize.label,
+                      labelColor: AppTheme.primaryColor,
+                      unselectedLabelColor: Colors.grey[600],
+                      labelPadding: EdgeInsets.symmetric(
+                        horizontal:
+                            ResponsiveHelper.isMobile(context) ? 12 : 16,
+                        vertical: 12,
+                      ),
+                      tabs: [
+                        Tab(text: 'Summary'),
+                        Tab(text: 'Events'),
+                        Tab(text: 'Lineups'),
+                        Tab(text: 'Stats'),
+                        Tab(text: 'H2H'),
+                        Tab(text: 'Table'),
+                        Tab(text: 'Predictions'),
+                      ],
+                    ),
                   ),
-                  indicatorSize: TabBarIndicatorSize.label,
-                  labelColor: AppTheme.primaryColor,
-                  unselectedLabelColor: Colors.grey[600],
-                  labelPadding: EdgeInsets.symmetric(
-                    horizontal: ResponsiveHelper.isMobile(context) ? 12 : 16,
-                    vertical: 12,
-                  ),
-                  tabs: [
-                    Tab(text: 'Summary'),
-                    Tab(text: 'Events'),
-                    Tab(text: 'Lineups'),
-                    Tab(text: 'Stats'),
-                    Tab(text: 'H2H'),
-                    Tab(text: 'Table'),
-                    Tab(text: 'Predictions'),
-                  ],
-                ),
-              ),
-            ];
-          },
-          body: BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
-            builder: (context, state) {
-              if (state is FixtureDetailsLoading) {
-                return LoadingWidget(
-                  message: 'Loading match details...',
-                );
-              }
+                ];
+              },
+              body: BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
+                builder: (context, state) {
+                  if (state is FixtureDetailsLoading) {
+                    return LoadingWidget(
+                      message: 'Loading match details...',
+                    );
+                  }
 
-              if (state is FixtureDetailsError) {
-                return ErrorDisplayWidget(
-                  message: 'Error loading match details: ${state.message}',
-                  onRetry: () {
-                    context.read<FixtureDetailsBloc>().add(
-                          RefreshFixtureDetails(widget.fixture.fixture.id),
-                        );
-                  },
-                );
-              }
+                  if (state is FixtureDetailsError) {
+                    return ErrorDisplayWidget(
+                      message: 'Error loading match details: ${state.message}',
+                      onRetry: () {
+                        context.read<FixtureDetailsBloc>().add(
+                              RefreshFixtureDetails(widget.fixture.fixture.id),
+                            );
+                      },
+                    );
+                  }
 
-              // Use loaded fixture if available, otherwise fall back to the widget fixture
-              final fixtureToUse =
-                  (state is FixtureDetailsLoaded && state.hasFixtures)
-                      ? state.fixture!
-                      : widget.fixture;
+                  // Use loaded fixture if available, otherwise fall back to the widget fixture
+                  final fixtureToUse =
+                      (state is FixtureDetailsLoaded && state.hasFixtures)
+                          ? state.fixture!
+                          : widget.fixture;
 
-              // Create widgets for each tab to avoid the "method not defined" compiler error
-              final summaryWidget =
-                  SummaryTab(key: ValueKey('summary'), fixture: fixtureToUse);
-              final eventsWidget =
-                  EventsTab(key: ValueKey('events'), fixture: fixtureToUse);
-              final lineupWidget =
-                  LineupTab(key: ValueKey('lineup'), fixture: fixtureToUse);
-              final statsWidget =
-                  StatsTab(key: ValueKey('stats'), fixture: fixtureToUse);
-              final h2hWidget =
-                  H2HTab(key: ValueKey('h2h'), fixture: fixtureToUse);
-              final tableWidget =
-                  TableTab(key: ValueKey('table'), fixture: fixtureToUse);
-              final predictionsWidget = PredictionsTab(
-                  key: ValueKey('predictions'),
-                  fixtureId: fixtureToUse.fixture.id);
+                  // Create widgets for each tab to avoid the "method not defined" compiler error
+                  final summaryWidget = SummaryTab(
+                      key: ValueKey('summary'), fixture: fixtureToUse);
+                  final eventsWidget =
+                      EventsTab(key: ValueKey('events'), fixture: fixtureToUse);
+                  final lineupWidget =
+                      LineupTab(key: ValueKey('lineup'), fixture: fixtureToUse);
+                  final statsWidget =
+                      StatsTab(key: ValueKey('stats'), fixture: fixtureToUse);
+                  final h2hWidget =
+                      H2HTab(key: ValueKey('h2h'), fixture: fixtureToUse);
+                  final tableWidget =
+                      TableTab(key: ValueKey('table'), fixture: fixtureToUse);
+                  final predictionsWidget = PredictionsTab(
+                      key: ValueKey('predictions'),
+                      fixtureId: fixtureToUse.fixture.id);
 
-              return Stack(
-                children: [
-                  TabBarView(
-                    controller: _tabController,
-                    physics:
-                        const BouncingScrollPhysics(), // Smoother scrolling between tabs
+                  return Stack(
                     children: [
-                      // Wrap tabs in AnimatedSwitcher for smoother transitions
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: summaryWidget,
+                      TabBarView(
+                        controller: _tabController,
+                        physics:
+                            const BouncingScrollPhysics(), // Smoother scrolling between tabs
+                        children: [
+                          // Wrap tabs in AnimatedSwitcher for smoother transitions
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 400),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: summaryWidget,
+                          ),
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 400),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: eventsWidget,
+                          ),
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 400),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: lineupWidget,
+                          ),
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 400),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: statsWidget,
+                          ),
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 400),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: h2hWidget,
+                          ),
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 400),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: tableWidget,
+                          ),
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 400),
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.05, 0.0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: predictionsWidget,
+                          ),
+                        ],
                       ),
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: eventsWidget,
-                      ),
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: lineupWidget,
-                      ),
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: statsWidget,
-                      ),
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: h2hWidget,
-                      ),
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: tableWidget,
-                      ),
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 400),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.05, 0.0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: predictionsWidget,
-                      ),
-                    ],
-                  ),
 
-                  // Show loading indicator when transitioning between tabs
-                  if (_isLoadingTabData)
-                    Container(
-                      color: Colors.black.withOpacity(0.1),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
+                      // Show loading indicator when transitioning between tabs
+                      if (_isLoadingTabData)
+                        Container(
+                          color: Colors.black.withOpacity(0.1),
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          );
+        },
       ),
     );
   }

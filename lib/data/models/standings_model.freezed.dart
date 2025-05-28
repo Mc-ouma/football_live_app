@@ -940,14 +940,14 @@ mixin _$Standing {
   Team get team => throw _privateConstructorUsedError;
   int get points => throw _privateConstructorUsedError;
   int get goalsDiff => throw _privateConstructorUsedError;
-  String get group => throw _privateConstructorUsedError;
-  String get form => throw _privateConstructorUsedError;
-  String get status => throw _privateConstructorUsedError;
-  String get description => throw _privateConstructorUsedError;
+  String? get group => throw _privateConstructorUsedError;
+  String? get form => throw _privateConstructorUsedError;
+  String? get status => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
   MatchStats get all => throw _privateConstructorUsedError;
   MatchStats get home => throw _privateConstructorUsedError;
   MatchStats get away => throw _privateConstructorUsedError;
-  String get update => throw _privateConstructorUsedError;
+  String? get update => throw _privateConstructorUsedError;
 
   /// Serializes this Standing to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -969,14 +969,14 @@ abstract class $StandingCopyWith<$Res> {
       Team team,
       int points,
       int goalsDiff,
-      String group,
-      String form,
-      String status,
-      String description,
+      String? group,
+      String? form,
+      String? status,
+      String? description,
       MatchStats all,
       MatchStats home,
       MatchStats away,
-      String update});
+      String? update});
 
   $TeamCopyWith<$Res> get team;
   $MatchStatsCopyWith<$Res> get all;
@@ -1003,14 +1003,14 @@ class _$StandingCopyWithImpl<$Res, $Val extends Standing>
     Object? team = null,
     Object? points = null,
     Object? goalsDiff = null,
-    Object? group = null,
-    Object? form = null,
-    Object? status = null,
-    Object? description = null,
+    Object? group = freezed,
+    Object? form = freezed,
+    Object? status = freezed,
+    Object? description = freezed,
     Object? all = null,
     Object? home = null,
     Object? away = null,
-    Object? update = null,
+    Object? update = freezed,
   }) {
     return _then(_value.copyWith(
       rank: null == rank
@@ -1029,22 +1029,22 @@ class _$StandingCopyWithImpl<$Res, $Val extends Standing>
           ? _value.goalsDiff
           : goalsDiff // ignore: cast_nullable_to_non_nullable
               as int,
-      group: null == group
+      group: freezed == group
           ? _value.group
           : group // ignore: cast_nullable_to_non_nullable
-              as String,
-      form: null == form
+              as String?,
+      form: freezed == form
           ? _value.form
           : form // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
+              as String?,
+      status: freezed == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
-              as String,
-      description: null == description
+              as String?,
+      description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       all: null == all
           ? _value.all
           : all // ignore: cast_nullable_to_non_nullable
@@ -1057,10 +1057,10 @@ class _$StandingCopyWithImpl<$Res, $Val extends Standing>
           ? _value.away
           : away // ignore: cast_nullable_to_non_nullable
               as MatchStats,
-      update: null == update
+      update: freezed == update
           ? _value.update
           : update // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ) as $Val);
   }
 
@@ -1118,14 +1118,14 @@ abstract class _$$StandingImplCopyWith<$Res>
       Team team,
       int points,
       int goalsDiff,
-      String group,
-      String form,
-      String status,
-      String description,
+      String? group,
+      String? form,
+      String? status,
+      String? description,
       MatchStats all,
       MatchStats home,
       MatchStats away,
-      String update});
+      String? update});
 
   @override
   $TeamCopyWith<$Res> get team;
@@ -1154,14 +1154,14 @@ class __$$StandingImplCopyWithImpl<$Res>
     Object? team = null,
     Object? points = null,
     Object? goalsDiff = null,
-    Object? group = null,
-    Object? form = null,
-    Object? status = null,
-    Object? description = null,
+    Object? group = freezed,
+    Object? form = freezed,
+    Object? status = freezed,
+    Object? description = freezed,
     Object? all = null,
     Object? home = null,
     Object? away = null,
-    Object? update = null,
+    Object? update = freezed,
   }) {
     return _then(_$StandingImpl(
       rank: null == rank
@@ -1180,22 +1180,22 @@ class __$$StandingImplCopyWithImpl<$Res>
           ? _value.goalsDiff
           : goalsDiff // ignore: cast_nullable_to_non_nullable
               as int,
-      group: null == group
+      group: freezed == group
           ? _value.group
           : group // ignore: cast_nullable_to_non_nullable
-              as String,
-      form: null == form
+              as String?,
+      form: freezed == form
           ? _value.form
           : form // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
+              as String?,
+      status: freezed == status
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
-              as String,
-      description: null == description
+              as String?,
+      description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       all: null == all
           ? _value.all
           : all // ignore: cast_nullable_to_non_nullable
@@ -1208,10 +1208,10 @@ class __$$StandingImplCopyWithImpl<$Res>
           ? _value.away
           : away // ignore: cast_nullable_to_non_nullable
               as MatchStats,
-      update: null == update
+      update: freezed == update
           ? _value.update
           : update // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -1224,14 +1224,14 @@ class _$StandingImpl implements _Standing {
       required this.team,
       required this.points,
       required this.goalsDiff,
-      required this.group,
-      required this.form,
-      required this.status,
-      required this.description,
+      this.group,
+      this.form,
+      this.status,
+      this.description,
       required this.all,
       required this.home,
       required this.away,
-      required this.update});
+      this.update});
 
   factory _$StandingImpl.fromJson(Map<String, dynamic> json) =>
       _$$StandingImplFromJson(json);
@@ -1245,13 +1245,13 @@ class _$StandingImpl implements _Standing {
   @override
   final int goalsDiff;
   @override
-  final String group;
+  final String? group;
   @override
-  final String form;
+  final String? form;
   @override
-  final String status;
+  final String? status;
   @override
-  final String description;
+  final String? description;
   @override
   final MatchStats all;
   @override
@@ -1259,7 +1259,7 @@ class _$StandingImpl implements _Standing {
   @override
   final MatchStats away;
   @override
-  final String update;
+  final String? update;
 
   @override
   String toString() {
@@ -1314,14 +1314,14 @@ abstract class _Standing implements Standing {
       required final Team team,
       required final int points,
       required final int goalsDiff,
-      required final String group,
-      required final String form,
-      required final String status,
-      required final String description,
+      final String? group,
+      final String? form,
+      final String? status,
+      final String? description,
       required final MatchStats all,
       required final MatchStats home,
       required final MatchStats away,
-      required final String update}) = _$StandingImpl;
+      final String? update}) = _$StandingImpl;
 
   factory _Standing.fromJson(Map<String, dynamic> json) =
       _$StandingImpl.fromJson;
@@ -1335,13 +1335,13 @@ abstract class _Standing implements Standing {
   @override
   int get goalsDiff;
   @override
-  String get group;
+  String? get group;
   @override
-  String get form;
+  String? get form;
   @override
-  String get status;
+  String? get status;
   @override
-  String get description;
+  String? get description;
   @override
   MatchStats get all;
   @override
@@ -1349,7 +1349,7 @@ abstract class _Standing implements Standing {
   @override
   MatchStats get away;
   @override
-  String get update;
+  String? get update;
 
   /// Create a copy of Standing
   /// with the given fields replaced by the non-null parameter values.

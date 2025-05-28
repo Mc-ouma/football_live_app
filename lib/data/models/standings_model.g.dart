@@ -88,14 +88,14 @@ _$StandingImpl _$$StandingImplFromJson(Map<String, dynamic> json) =>
       team: Team.fromJson(json['team'] as Map<String, dynamic>),
       points: (json['points'] as num).toInt(),
       goalsDiff: (json['goalsDiff'] as num).toInt(),
-      group: json['group'] as String,
-      form: json['form'] as String,
-      status: json['status'] as String,
-      description: json['description'] as String,
+      group: json['group'] as String?,
+      form: json['form'] as String?,
+      status: json['status'] as String?,
+      description: json['description'] as String?,
       all: MatchStats.fromJson(json['all'] as Map<String, dynamic>),
       home: MatchStats.fromJson(json['home'] as Map<String, dynamic>),
       away: MatchStats.fromJson(json['away'] as Map<String, dynamic>),
-      update: json['update'] as String,
+      update: json['update'] as String?,
     );
 
 Map<String, dynamic> _$$StandingImplToJson(_$StandingImpl instance) =>
