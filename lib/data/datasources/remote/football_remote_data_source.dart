@@ -17,6 +17,7 @@ import 'package:football_live_app/core/config/env_config.dart';
 import 'package:football_live_app/core/errors/exceptions.dart';
 import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/utils/logger.dart';
+import 'package:football_live_app/data/datasources/remote/direct_prediction_service_fixed.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:football_live_app/data/models/standings_model.dart'
@@ -80,10 +81,17 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   static const int _defaultDelayBetweenRequestsMs = 200;
   static const int _defaultDelayAfterRateLimitMs = 5000;
 
+  // Direct prediction service for handling the new API format
+  late final DirectPredictionService _predictionService;
+
   FootballRemoteDataSourceImpl({
     required this.apiClient,
     required this.logger,
-  });
+  }) {
+    // Initialize prediction service
+    _predictionService =
+        DirectPredictionService(apiClient: apiClient, logger: logger);
+  }
 
   /// Process a list of items with API requests in a rate-limited fashion
   /// T is the type of the items to process
@@ -538,49 +546,22 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   @override
   Future<PredictionData?> getMatchPredictionData(int matchId) async {
     try {
-      // Build the query parameters
-      final Map<String, dynamic> params = {
-        'fixture': matchId.toString(),
-      };
+      // Use direct prediction service to handle the new API format
+      final prediction =
+          await _predictionService.getMatchPredictionData(matchId);
 
-      final response = await apiClient.get(
-        EnvConfig.predictions,
-        queryParameters: params,
-      );
-
-      final responseBody = response.data;
-
-      // Check for API errors
-      if (responseBody['errors'] != null &&
-          responseBody['errors'] is Map &&
-          responseBody['errors'].isNotEmpty) {
-        throw ServerException(
-          message: 'API Error: ${responseBody['errors']}',
-        );
+      if (prediction != null) {
+        logger.info(
+            'Retrieved prediction for match ID: $matchId using DirectPredictionService');
+      } else {
+        logger.warning('No prediction found for match ID: $matchId');
       }
 
-      // Check if we have results
-      if (responseBody['results'] == 0) {
-        logger.info('No prediction found for match ID: $matchId');
-        return null;
-      }
-
-      // Parse response using the prediction model
-      final predictionResponse = PredictionResponse.fromJson(responseBody);
-      logger.info('Retrieved prediction for match ID: $matchId');
-
-      // Convert the response to a List<PredictionData> for type safety
-      final predictions =
-          predictionResponse.response.toList().cast<PredictionData>();
-      return predictions.isNotEmpty ? predictions.first : null;
+      return prediction;
     } catch (e) {
-      if (e is ServerException) {
-        rethrow;
-      }
-      logger.error('Error fetching match prediction data', error: e);
-      throw ServerException(
-        message: 'Failed to get match prediction data: ${e.toString()}',
-      );
+      logger.error('Error fetching match prediction data for ID $matchId',
+          error: e);
+      return null; // Return null to make app more resilient, instead of propagating the exception
     }
   }
 
@@ -639,13 +620,44 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   Future<List<PredictionData>> getMatchPredictionsData(
       List<int> matchIds) async {
     try {
-      // Use our rate-limited fetch utility
-      final predictions = await fetchWithRateLimit<int, PredictionData>(
-        items: matchIds,
-        processItem: (id) => getMatchPredictionData(id),
-        batchSize: 3,
-        delayBetweenBatchesMs: 2000,
-      );
+      // Validate the input
+      if (matchIds.isEmpty) {
+        logger.warning('No match IDs provided for predictions');
+        return [];
+      }
+
+      // Use our rate-limited fetch utility with additional error handling
+      final List<PredictionData> predictions = [];
+
+      try {
+        // Use our rate-limited fetch utility
+        final fetchedPredictions =
+            await fetchWithRateLimit<int, PredictionData?>(
+          items: matchIds,
+          processItem: (id) async {
+            try {
+              return await getMatchPredictionData(id);
+            } catch (e) {
+              logger.error('Error fetching prediction for match ID $id',
+                  error: e);
+              // Return null for this specific match, rather than failing the whole batch
+              return null;
+            }
+          },
+          batchSize: 3,
+          delayBetweenBatchesMs: 2000,
+        );
+
+        // Filter out nulls and add valid predictions to our result list
+        for (final prediction in fetchedPredictions) {
+          if (prediction != null) {
+            predictions.add(prediction);
+          }
+        }
+      } catch (e) {
+        logger.error('Error in batch processing of predictions', error: e);
+        // Continue execution - we'll return whatever predictions we did manage to get
+      }
 
       logger.info(
           'Retrieved ${predictions.length} predictions out of ${matchIds.length} requested');

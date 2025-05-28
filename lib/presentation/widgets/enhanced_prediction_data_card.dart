@@ -42,7 +42,12 @@ class EnhancedPredictionDataCard extends StatelessWidget {
 
   // Get the predicted winner
   WinnerType getPredictedWinner() {
-    final winnerStr = predictionData.predictions.winner.toLowerCase();
+    // Check if the winner is null or name is null
+    if (predictionData.predictions.winner?.name == null) {
+      return WinnerType.none;
+    }
+
+    final winnerStr = predictionData.predictions.winner!.name!.toLowerCase();
 
     if (winnerStr.contains('home')) {
       return WinnerType.home;
@@ -58,15 +63,19 @@ class EnhancedPredictionDataCard extends StatelessWidget {
   // Get the confidence score from percentages
   double getConfidenceScore() {
     final winnerType = getPredictedWinner();
-    final percentages = predictionData.predictions.winnerSide;
+
+    // Use the percent object from our new model
+    if (predictionData.predictions.percent == null) {
+      return 0.0;
+    }
 
     switch (winnerType) {
       case WinnerType.home:
-        return _parsePercentage(percentages.home);
+        return _parsePercentage(predictionData.predictions.percent!.home);
       case WinnerType.away:
-        return _parsePercentage(percentages.away);
+        return _parsePercentage(predictionData.predictions.percent!.away);
       case WinnerType.draw:
-        return _parsePercentage(percentages.draw);
+        return _parsePercentage(predictionData.predictions.percent!.draw);
       default:
         return 0.0;
     }
@@ -85,12 +94,17 @@ class EnhancedPredictionDataCard extends StatelessWidget {
   // Helper to get predicted score (if available)
   String getPredictedScore() {
     // If goals prediction is not available, return 'N/A'
-    if (!predictionData.predictions.goals) {
+    if (predictionData.predictions.goals == null) {
       return 'N/A';
     }
 
-    // In the freezed model, we don't have direct access to predicted goals
-    // We could attempt to derive this from other prediction fields if available
+    final homeGoals = predictionData.predictions.goals?.home;
+    final awayGoals = predictionData.predictions.goals?.away;
+
+    if (homeGoals != null && awayGoals != null) {
+      return '$homeGoals - $awayGoals';
+    }
+
     return 'Score prediction unavailable';
   }
 
@@ -164,9 +178,10 @@ class EnhancedPredictionDataCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        if (predictionData.predictions.advice)
+        // Display advice if it's not empty
+        if (predictionData.predictions.advice.isNotEmpty)
           Text(
-            'Advice: ${predictionData.predictions.winner}',
+            'Advice: ${predictionData.predictions.advice}',
             style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
           ),
       ],

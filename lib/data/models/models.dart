@@ -2,4 +2,3 @@
 
 export 'shared_models.dart';
 export 'fixture_model.dart';
-export 'prediction_model.dart';

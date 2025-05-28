@@ -1,4 +1,8 @@
-import 'package:football_live_app/data/models/shared_models.dart' as shared;
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'shared_models.dart' as shared;
+
+part 'prediction_model.freezed.dart';
+part 'prediction_model.g.dart';
 
 class PredictionResponse {
   final String get;
@@ -20,20 +24,18 @@ class PredictionResponse {
   factory PredictionResponse.fromJson(Map<String, dynamic> json) {
     try {
       final String getString = json['get'] as String? ?? '';
-      final Map<String, dynamic> parametersValue =
-          json['parameters'] as Map<String, dynamic>? ?? {};
+      final Map<String, dynamic> parametersValue = json['parameters'] as Map<String, dynamic>? ?? {};
       final List<dynamic> errorsList = json['errors'] as List<dynamic>? ?? [];
       final int resultsValue = json['results'] as int? ?? 0;
-      final Map<String, dynamic> pagingValue =
-          json['paging'] as Map<String, dynamic>? ?? {};
-
+      final Map<String, dynamic> pagingValue = json['paging'] as Map<String, dynamic>? ?? {};
+      
       final responseList = json['response'] as List<dynamic>? ?? [];
       final List<PredictionData> typedResponseList = responseList
-          .map((dynamic item) => item is Map<String, dynamic>
-              ? PredictionData.safeFromJson(item)
+          .map((dynamic item) => item is Map<String, dynamic> 
+              ? PredictionData.safeFromJson(item) 
               : PredictionData.safeFromJson({}))
           .toList();
-
+          
       return PredictionResponse(
         get: getString,
         parameters: parametersValue,
@@ -55,15 +57,15 @@ class PredictionResponse {
       );
     }
   }
-
+  
   Map<String, dynamic> toJson() => {
-        'get': get,
-        'parameters': parameters,
-        'errors': errors,
-        'results': results,
-        'paging': paging,
-        'response': response.map((data) => data.toJson()).toList(),
-      };
+    'get': get,
+    'parameters': parameters,
+    'errors': errors,
+    'results': results,
+    'paging': paging,
+    'response': response.map((data) => data.toJson()).toList(),
+  };
 }
 
 class PredictionData {
@@ -91,9 +93,7 @@ class PredictionData {
         league: shared.League.fromJson(json['league'] ?? {}),
         teams: shared.Teams.fromJson(json['teams'] ?? {}),
         fixture: shared.Fixture.fromJson(json['fixture'] ?? {}),
-        comparison: json['comparison'] != null
-            ? Comparison.fromJson(json['comparison'])
-            : null,
+        comparison: json['comparison'] != null ? Comparison.fromJson(json['comparison']) : null,
         h2h: json['h2h'] != null && json['h2h'] is List
             ? (json['h2h'] as List)
                 .where((e) => e is Map<String, dynamic>)
@@ -106,13 +106,23 @@ class PredictionData {
       throw e; // Re-throw to be caught by safeFromJson
     }
   }
+  
+  // toJson method for serialization
+  Map<String, dynamic> toJson() => {
+    'predictions': predictions.toJson(),
+    'league': league.toJson(),
+    'teams': teams.toJson(), 
+    'fixture': fixture.toJson(),
+    'comparison': comparison?.toJson(),
+    'h2h': h2h?.map((item) => item.toJson()).toList(),
+  };
 
   // Provide a static method to create from a JSON map with fallbacks
   static PredictionData safeFromJson(Map<String, dynamic> json) {
     try {
       // Create a safe copy of the JSON to work with
       final processedJson = Map<String, dynamic>.from(json);
-
+      
       // Handle predictions
       if (processedJson['predictions'] == null) {
         processedJson['predictions'] = {
@@ -134,40 +144,31 @@ class PredictionData {
         };
       } else {
         // Ensure all required nested objects exist in predictions
-        final predictions =
-            processedJson['predictions'] as Map<String, dynamic>;
-
+        final predictions = processedJson['predictions'] as Map<String, dynamic>;
+        
         // Handle winner object
-        if (predictions['winner'] == null ||
-            predictions['winner'] is! Map<String, dynamic>) {
+        if (predictions['winner'] == null || predictions['winner'] is! Map<String, dynamic>) {
           predictions['winner'] = {'id': null, 'name': null, 'comment': null};
         }
-
+        
         // Handle goals object
-        if (predictions['goals'] == null ||
-            predictions['goals'] is! Map<String, dynamic>) {
+        if (predictions['goals'] == null || predictions['goals'] is! Map<String, dynamic>) {
           predictions['goals'] = {'home': null, 'away': null};
         }
-
+        
         // Handle percent object
-        if (predictions['percent'] == null ||
-            predictions['percent'] is! Map<String, dynamic>) {
-          predictions['percent'] = {
-            'home': '33%',
-            'draw': '33%',
-            'away': '33%'
-          };
+        if (predictions['percent'] == null || predictions['percent'] is! Map<String, dynamic>) {
+          predictions['percent'] = {'home': '33%', 'draw': '33%', 'away': '33%'};
         }
-
+        
         // Ensure advice has a default value if missing
         if (predictions['advice'] == null) {
           predictions['advice'] = 'No predictions available';
         }
       }
-
+      
       // Handle league
-      if (processedJson['league'] == null ||
-          processedJson['league'] is! Map<String, dynamic>) {
+      if (processedJson['league'] == null || processedJson['league'] is! Map<String, dynamic>) {
         processedJson['league'] = {
           'id': 0,
           'name': 'Unknown',
@@ -176,10 +177,9 @@ class PredictionData {
           'season': 0
         };
       }
-
+      
       // Handle fixture
-      if (processedJson['fixture'] == null ||
-          processedJson['fixture'] is! Map<String, dynamic>) {
+      if (processedJson['fixture'] == null || processedJson['fixture'] is! Map<String, dynamic>) {
         processedJson['fixture'] = {
           'id': 0,
           'timezone': 'UTC',
@@ -189,30 +189,24 @@ class PredictionData {
           'status': {'long': 'Not Started', 'short': 'NS'}
         };
       }
-
+      
       // Handle teams
-      if (processedJson['teams'] == null ||
-          processedJson['teams'] is! Map<String, dynamic>) {
+      if (processedJson['teams'] == null || processedJson['teams'] is! Map<String, dynamic>) {
         processedJson['teams'] = {
           'home': {'id': 0, 'name': 'Home Team', 'logo': ''},
           'away': {'id': 0, 'name': 'Away Team', 'logo': ''}
         };
       }
-
+      
       // Instead of using the generated fromJson method which might be causing issues,
       // manually create the PredictionData object
       return PredictionData(
-        predictions: Predictions.fromJson(
-            processedJson['predictions'] as Map<String, dynamic>),
-        league: shared.League.fromJson(
-            processedJson['league'] as Map<String, dynamic>),
-        teams: shared.Teams.fromJson(
-            processedJson['teams'] as Map<String, dynamic>),
-        fixture: shared.Fixture.fromJson(
-            processedJson['fixture'] as Map<String, dynamic>),
-        comparison: processedJson['comparison'] != null
-            ? Comparison.fromJson(
-                processedJson['comparison'] as Map<String, dynamic>)
+        predictions: Predictions.fromJson(processedJson['predictions'] as Map<String, dynamic>),
+        league: shared.League.fromJson(processedJson['league'] as Map<String, dynamic>),
+        teams: shared.Teams.fromJson(processedJson['teams'] as Map<String, dynamic>),
+        fixture: shared.Fixture.fromJson(processedJson['fixture'] as Map<String, dynamic>),
+        comparison: processedJson['comparison'] != null 
+            ? Comparison.fromJson(processedJson['comparison'] as Map<String, dynamic>)
             : null,
         h2h: processedJson['h2h'] != null && processedJson['h2h'] is List
             ? (processedJson['h2h'] as List)
@@ -222,7 +216,7 @@ class PredictionData {
             : null,
       );
     } catch (e) {
-      print('Error in PredictionData.safeFromJson: $e');
+      print('Error in PredictionData.fromJson: $e');
       // Instead of throwing, provide a default instance
       return PredictionData(
         predictions: Predictions(
@@ -249,29 +243,20 @@ class PredictionData {
           timezone: 'UTC',
           date: DateTime.now().toString(),
           timestamp: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          venue: shared.FixtureVenue(name: 'Unknown'),
-          status: shared.FixtureStatus(long: 'Not Started', short: 'NS'),
+          venue: shared.Venue(name: 'Unknown', city: 'Unknown'),
+          status: shared.Status(long: 'Not Started', short: 'NS'),
         ),
       );
     }
   }
-
-  // toJson method for serialization
-  Map<String, dynamic> toJson() => {
-        'predictions': predictions.toJson(),
-        'league': league.toJson(),
-        'teams': teams.toJson(),
-        'fixture': fixture.toJson(),
-        'comparison': comparison?.toJson(),
-        'h2h': h2h?.map((item) => item.toJson()).toList(),
-      };
 }
 
+// Renamed Goals class to PredictionGoals to avoid conflicts
 // Renamed from Goals to PredictionGoals to avoid conflicts
 class PredictionGoals {
   final int? home;
   final int? away;
-
+  
   const PredictionGoals({
     this.home,
     this.away,
@@ -288,12 +273,12 @@ class PredictionGoals {
       return const PredictionGoals(home: null, away: null);
     }
   }
-
+  
   // Manual toJson to ensure correct serialization
   Map<String, dynamic> toJson() => {
-        'home': home,
-        'away': away,
-      };
+    'home': home,
+    'away': away,
+  };
 }
 
 class Winner {
@@ -319,12 +304,12 @@ class Winner {
       return const Winner(id: null, name: null, comment: null);
     }
   }
-
+  
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'comment': comment,
-      };
+    'id': id,
+    'name': name,
+    'comment': comment,
+  };
 }
 
 class Percent {
@@ -368,10 +353,11 @@ class Percent {
 
   // Manual toJson to ensure correct serialization
   Map<String, dynamic> toJson() => {
-        'home': home,
-        'draw': draw,
-        'away': away,
-      };
+    'home': home,
+    'draw': draw,
+    'away': away,
+  };
+}
 }
 
 class Predictions {
@@ -397,31 +383,26 @@ class Predictions {
       final processedJson = Map<String, dynamic>.from(json);
 
       // Handle advice - ensure it's a String
-      final String adviceString = processedJson['advice'] is String
-          ? processedJson['advice']
+      final String adviceString = processedJson['advice'] is String 
+          ? processedJson['advice'] 
           : processedJson['advice']?.toString() ?? 'No advice available';
 
       // Process and convert nested objects
-      final Winner? winnerObj = processedJson['winner'] != null &&
-              processedJson['winner'] is Map<String, dynamic>
+      final Winner? winnerObj = processedJson['winner'] != null && processedJson['winner'] is Map<String, dynamic>
           ? Winner.fromJson(processedJson['winner'])
           : null;
-
-      final PredictionGoals? goalsObj = processedJson['goals'] != null &&
-              processedJson['goals'] is Map<String, dynamic>
+          
+      final PredictionGoals? goalsObj = processedJson['goals'] != null && processedJson['goals'] is Map<String, dynamic>
           ? PredictionGoals.fromJson(processedJson['goals'])
           : null;
-
-      final Percent? percentObj = processedJson['percent'] != null &&
-              processedJson['percent'] is Map<String, dynamic>
+          
+      final Percent? percentObj = processedJson['percent'] != null && processedJson['percent'] is Map<String, dynamic>
           ? Percent.fromJson(processedJson['percent'])
           : null;
 
       return Predictions(
         winner: winnerObj,
-        winOrDraw: processedJson['win_or_draw'] is bool
-            ? processedJson['win_or_draw']
-            : false,
+        winOrDraw: processedJson['win_or_draw'] is bool ? processedJson['win_or_draw'] : false,
         underOver: processedJson['under_over'],
         goals: goalsObj,
         advice: adviceString,
@@ -443,13 +424,13 @@ class Predictions {
 
   // Manual toJson to ensure correct serialization
   Map<String, dynamic> toJson() => {
-        'winner': winner?.toJson(),
-        'win_or_draw': winOrDraw,
-        'under_over': underOver,
-        'goals': goals?.toJson(),
-        'advice': advice,
-        'percent': percent?.toJson(),
-      };
+    'winner': winner?.toJson(),
+    'win_or_draw': winOrDraw,
+    'under_over': underOver,
+    'goals': goals?.toJson(),
+    'advice': advice,
+    'percent': percent?.toJson(),
+  };
 }
 
 class Comparison {
@@ -477,7 +458,7 @@ class Comparison {
       Map<String, String> safeStringMap(dynamic value) {
         if (value == null) return {};
         if (value is! Map) return {};
-
+        
         final result = <String, String>{};
         value.forEach((key, val) {
           if (key is String) {
@@ -509,18 +490,39 @@ class Comparison {
       );
     }
   }
-
+  
   Map<String, dynamic> toJson() => {
-        'form': form,
-        'att': att,
-        'def': def,
-        'poisson_distribution': poissonDistribution,
-        'h2h': headToHead,
-        'goals': goals,
-        'total': total,
-      };
+    'form': form,
+    'att': att,
+    'def': def,
+    'poisson_distribution': poissonDistribution,
+    'h2h': headToHead,
+    'goals': goals,
+    'total': total,
+  };
+        att: safeStringMap(json['att']),
+        def: safeStringMap(json['def']),
+        poissonDistribution: safeStringMap(json['poisson_distribution']),
+        headToHead: safeStringMap(json['h2h']),
+        goals: safeStringMap(json['goals']),
+        total: safeStringMap(json['total']),
+      );
+    } catch (e) {
+      print('Error in Comparison.fromJson: $e');
+      return Comparison(
+        form: {},
+        att: {},
+        def: {},
+        poissonDistribution: {},
+        headToHead: {},
+        goals: {},
+        total: {},
+      );
+    }
+  }
 }
 
+// Use the renamed PredictionGoals instead of Goals
 class H2H {
   final shared.Fixture fixture;
   final shared.League league;
@@ -554,8 +556,8 @@ class H2H {
           timezone: 'UTC',
           date: '',
           timestamp: 0,
-          venue: shared.FixtureVenue(name: ''),
-          status: shared.FixtureStatus(long: '', short: ''),
+          venue: shared.FixtureVenue(name: ''),  // Using FixtureVenue instead of Venue
+          status: shared.FixtureStatus(long: '', short: ''),  // Using FixtureStatus instead of Status
         ),
         league: shared.League(
           id: 0,
@@ -576,14 +578,14 @@ class H2H {
       );
     }
   }
-
+  
   Map<String, dynamic> toJson() => {
-        'fixture': fixture.toJson(),
-        'league': league.toJson(),
-        'teams': teams.toJson(),
-        'goals': goals.toJson(),
-        'score': score.toJson(),
-      };
+    'fixture': fixture,
+    'league': league,
+    'teams': teams,
+    'goals': goals.toJson(),
+    'score': score,
+  };
 }
 
 class Score {
@@ -604,12 +606,8 @@ class Score {
       return Score(
         halftime: ScoreDetails.fromJson(json['halftime'] ?? {}),
         fulltime: ScoreDetails.fromJson(json['fulltime'] ?? {}),
-        extratime: json['extratime'] != null
-            ? ScoreDetails.fromJson(json['extratime'])
-            : null,
-        penalty: json['penalty'] != null
-            ? ScoreDetails.fromJson(json['penalty'])
-            : null,
+        extratime: json['extratime'] != null ? ScoreDetails.fromJson(json['extratime']) : null,
+        penalty: json['penalty'] != null ? ScoreDetails.fromJson(json['penalty']) : null,
       );
     } catch (e) {
       print('Error in Score.fromJson: $e');
@@ -619,13 +617,13 @@ class Score {
       );
     }
   }
-
+  
   Map<String, dynamic> toJson() => {
-        'halftime': halftime.toJson(),
-        'fulltime': fulltime.toJson(),
-        'extratime': extratime?.toJson(),
-        'penalty': penalty?.toJson(),
-      };
+    'halftime': halftime.toJson(),
+    'fulltime': fulltime.toJson(),
+    'extratime': extratime?.toJson(),
+    'penalty': penalty?.toJson(),
+  };
 }
 
 class ScoreDetails {
@@ -648,9 +646,9 @@ class ScoreDetails {
       return ScoreDetails(home: null, away: null);
     }
   }
-
+  
   Map<String, dynamic> toJson() => {
-        'home': home,
-        'away': away,
-      };
+    'home': home,
+    'away': away,
+  };
 }

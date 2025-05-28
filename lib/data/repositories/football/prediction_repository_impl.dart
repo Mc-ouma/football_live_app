@@ -82,67 +82,89 @@ class PredictionRepositoryImpl implements PredictionRepository {
 
   /// Converts [PredictionData] model to [Prediction] entity
   Prediction _predictionDataToEntity(PredictionData data) {
-    // Extract winner information
-    PredictionWinner? winner;
-    final winnerName = data.predictions.winner;
-    if (winnerName.isNotEmpty) {
-      if (winnerName == 'home') {
-        winner = PredictionWinner(
-          id: data.teams.home.id.toString(),
-          name: data.teams.home.name,
-          comment: 'Home team predicted to win',
-        );
-      } else if (winnerName == 'away') {
-        winner = PredictionWinner(
-          id: data.teams.away.id.toString(),
-          name: data.teams.away.name,
-          comment: 'Away team predicted to win',
-        );
-      } else if (winnerName == 'draw') {
-        winner = const PredictionWinner(
-          id: null,
-          name: 'Draw',
-          comment: 'Match predicted to end in a draw',
-        );
+    try {
+      // Log key prediction data
+      logger.info(
+          'Converting prediction data: advice=${data.predictions.advice}, ' +
+              'percent home=${data.predictions.percent?.home ?? "unknown"}, ' +
+              'percent away=${data.predictions.percent?.away ?? "unknown"}, ' +
+              'percent draw=${data.predictions.percent?.draw ?? "unknown"}');
+
+      // Extract winner information
+      PredictionWinner? winner;
+
+      final winnerData = data.predictions.winner;
+      if (winnerData != null) {
+        if (winnerData.id != null && winnerData.id == data.teams.home.id) {
+          winner = PredictionWinner(
+            id: data.teams.home.id.toString(),
+            name: data.teams.home.name,
+            comment: winnerData.comment ?? 'Home team predicted to win',
+          );
+        } else if (winnerData.id != null &&
+            winnerData.id == data.teams.away.id) {
+          winner = PredictionWinner(
+            id: data.teams.away.id.toString(),
+            name: data.teams.away.name,
+            comment: winnerData.comment ?? 'Away team predicted to win',
+          );
+        } else if (winnerData.name?.toLowerCase() == 'draw') {
+          winner = PredictionWinner(
+            id: null,
+            name: 'Draw',
+            comment: winnerData.comment ?? 'Match predicted to end in a draw',
+          );
+        } else if (winnerData.name != null) {
+          winner = PredictionWinner(
+            id: winnerData.id?.toString(),
+            name: winnerData.name!,
+            comment: winnerData.comment ?? 'Team predicted to win',
+          );
+        }
       }
+
+      // Extract percentage information with null safety
+      final percent = <String, String>{
+        'home': data.predictions.percent?.home ?? '33%',
+        'away': data.predictions.percent?.away ?? '33%',
+        'draw': data.predictions.percent?.draw ?? '33%',
+      };
+
+      // Extract goals information from the prediction data
+      final goals = <String, String>{
+        'home': data.predictions.goals?.home?.toString() ?? 'unknown',
+        'away': data.predictions.goals?.away?.toString() ?? 'unknown',
+      };
+
+      // Extract comparison data (convert percentage strings to doubles)
+      final comparison = <String, double>{
+        'home': double.tryParse(percent['home']!.replaceAll('%', '')) ?? 33.0,
+        'away': double.tryParse(percent['away']!.replaceAll('%', '')) ?? 33.0,
+        'draw': double.tryParse(percent['draw']!.replaceAll('%', '')) ?? 33.0,
+      };
+
+      return Prediction(
+        winner: winner,
+        percent: percent,
+        goals: goals,
+        advice: data.predictions.advice,
+        comparison: comparison,
+        winOrDraw: data.predictions.winOrDraw ?? false,
+        underOver: data.predictions.underOver?.toString(),
+      );
+    } catch (e) {
+      logger.error('Error converting prediction data to entity', error: e);
+
+      // Return a default prediction to avoid crashing the app
+      return Prediction(
+        winner: null,
+        percent: {'home': '33%', 'draw': '33%', 'away': '33%'},
+        goals: {'home': 'unknown', 'away': 'unknown'},
+        advice: 'No prediction available',
+        comparison: {'home': 33.0, 'away': 33.0, 'draw': 33.0},
+        winOrDraw: false,
+        underOver: null,
+      );
     }
-
-    // Extract percentage information
-    final percent = <String, String>{
-      'home': data.predictions.winnerSide.home,
-      'away': data.predictions.winnerSide.away,
-      'draw': data.predictions.winnerSide.draw,
-    };
-
-    // Extract goals information (simplified since we don't have detailed goals data)
-    final goals = <String, String>{
-      'home':
-          '1', // Default value, actual implementation would need detailed data
-      'away':
-          '1', // Default value, actual implementation would need detailed data
-    };
-
-    // Extract comparison data (convert percentage strings to doubles)
-    final comparison = <String, double>{
-      'home': double.tryParse(
-              data.predictions.winnerSide.home.replaceAll('%', '')) ??
-          0.0,
-      'away': double.tryParse(
-              data.predictions.winnerSide.away.replaceAll('%', '')) ??
-          0.0,
-      'draw': double.tryParse(
-              data.predictions.winnerSide.draw.replaceAll('%', '')) ??
-          0.0,
-    };
-
-    return Prediction(
-      winner: winner,
-      percent: percent,
-      goals: goals,
-      advice: data.predictions.advice ? 'Recommended bet' : null,
-      comparison: comparison,
-      winOrDraw: data.predictions.underOver,
-      underOver: data.predictions.goals ? 'over' : 'under',
-    );
   }
 }

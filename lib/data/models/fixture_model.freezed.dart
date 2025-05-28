@@ -21,7 +21,7 @@ mixin _$FixtureResponse {
   Map<String, dynamic> get errors => throw _privateConstructorUsedError;
   int get results => throw _privateConstructorUsedError;
   int get paging => throw _privateConstructorUsedError;
-  List<dynamic> get response => throw _privateConstructorUsedError;
+  List<FixtureData> get response => throw _privateConstructorUsedError;
 
   /// Create a copy of FixtureResponse
   /// with the given fields replaced by the non-null parameter values.
@@ -42,7 +42,7 @@ abstract class $FixtureResponseCopyWith<$Res> {
       Map<String, dynamic> errors,
       int results,
       int paging,
-      List<dynamic> response});
+      List<FixtureData> response});
 }
 
 /// @nodoc
@@ -91,7 +91,7 @@ class _$FixtureResponseCopyWithImpl<$Res, $Val extends FixtureResponse>
       response: null == response
           ? _value.response
           : response // ignore: cast_nullable_to_non_nullable
-              as List<dynamic>,
+              as List<FixtureData>,
     ) as $Val);
   }
 }
@@ -110,7 +110,7 @@ abstract class _$$FixtureResponseImplCopyWith<$Res>
       Map<String, dynamic> errors,
       int results,
       int paging,
-      List<dynamic> response});
+      List<FixtureData> response});
 }
 
 /// @nodoc
@@ -157,7 +157,7 @@ class __$$FixtureResponseImplCopyWithImpl<$Res>
       response: null == response
           ? _value._response
           : response // ignore: cast_nullable_to_non_nullable
-              as List<dynamic>,
+              as List<FixtureData>,
     ));
   }
 }
@@ -171,7 +171,7 @@ class _$FixtureResponseImpl implements _FixtureResponse {
       required final Map<String, dynamic> errors,
       required this.results,
       required this.paging,
-      required final List<dynamic> response})
+      required final List<FixtureData> response})
       : _parameters = parameters,
         _errors = errors,
         _response = response;
@@ -198,9 +198,9 @@ class _$FixtureResponseImpl implements _FixtureResponse {
   final int results;
   @override
   final int paging;
-  final List<dynamic> _response;
+  final List<FixtureData> _response;
   @override
-  List<dynamic> get response {
+  List<FixtureData> get response {
     if (_response is EqualUnmodifiableListView) return _response;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_response);
@@ -252,7 +252,7 @@ abstract class _FixtureResponse implements FixtureResponse {
       required final Map<String, dynamic> errors,
       required final int results,
       required final int paging,
-      required final List<dynamic> response}) = _$FixtureResponseImpl;
+      required final List<FixtureData> response}) = _$FixtureResponseImpl;
 
   @override
   String get get;
@@ -265,7 +265,7 @@ abstract class _FixtureResponse implements FixtureResponse {
   @override
   int get paging;
   @override
-  List<dynamic> get response;
+  List<FixtureData> get response;
 
   /// Create a copy of FixtureResponse
   /// with the given fields replaced by the non-null parameter values.
