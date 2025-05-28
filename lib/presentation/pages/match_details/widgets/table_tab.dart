@@ -366,8 +366,6 @@ class TableTab extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildTableLegend(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(16),
