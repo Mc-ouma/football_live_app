@@ -1,3 +1,4 @@
+// filepath: /home/luizzy/Flutter Projects/football_live_app/lib/presentation/pages/match_details/match_details_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/core/di/injection.dart';

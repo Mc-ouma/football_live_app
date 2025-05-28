@@ -20,7 +20,7 @@ abstract class FootballRepository {
   });
 
   /// Get detailed information about a specific match
-  Future<Either<Failure, FixtureData>> getMatchDetails(int matchId);
+  Future<Either<Failure, List<FixtureData>>> getMatchDetails(int matchId);
 
   /// Get detailed information about a team
   Future<Either<Failure, Team>> getTeamInformation(int teamId);

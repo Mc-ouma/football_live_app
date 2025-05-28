@@ -36,7 +36,7 @@ class FixtureDetailsBloc
 
     result.fold(
       (failure) => emit(FixtureDetailsError(failure.message)),
-      (fixture) => emit(FixtureDetailsLoaded(fixture)),
+      (fixtures) => emit(FixtureDetailsLoaded(fixtures)),
     );
   }
 }

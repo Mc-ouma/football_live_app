@@ -27,6 +27,21 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
   late List<DateTime> _dateTabs;
   final Map<DateTime, List<FixtureData>?> _cachedMatches = {};
 
+  // Define major leagues by their IDs
+  final List<int> majorLeagueIds = [
+    39, // Premier League (England)
+    140, // La Liga (Spain)
+    135, // Serie A (Italy)
+    78, // Bundesliga (Germany)
+    61, // Ligue 1 (France)
+    2, // UEFA Champions League
+    3, // UEFA Europa League
+    848, // Conference League
+    179, // Copa Libertadores
+    7, // CONMEBOL Sudamericana
+    253, // Major League Soccer (USA)
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -381,12 +396,36 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                     });
                   }
 
-                  // Sort leagues by name for consistency
+                  // Sort leagues: major leagues on top, then alphabetically by country
                   final sortedLeagueIds = groupedMatches.keys.toList()
                     ..sort((a, b) {
                       final leagueA = groupedMatches[a]!.first.league;
                       final leagueB = groupedMatches[b]!.first.league;
-                      return leagueA.name.compareTo(leagueB.name);
+
+                      // Check if leagues are in majorLeagueIds list
+                      final aIsMajor = majorLeagueIds.contains(leagueA.id);
+                      final bIsMajor = majorLeagueIds.contains(leagueB.id);
+
+                      // If both are major or both are not major, sort by the position in majorLeagueIds first, then by country
+                      if (aIsMajor && bIsMajor) {
+                        // Sort by position in majorLeagueIds
+                        return majorLeagueIds
+                            .indexOf(leagueA.id)
+                            .compareTo(majorLeagueIds.indexOf(leagueB.id));
+                      } else if (aIsMajor) {
+                        // A is major, B is not, so A comes first
+                        return -1;
+                      } else if (bIsMajor) {
+                        // B is major, A is not, so B comes first
+                        return 1;
+                      } else {
+                        // Neither is major, sort alphabetically by country, then by league name
+                        final countryComparison =
+                            leagueA.country.compareTo(leagueB.country);
+                        return countryComparison != 0
+                            ? countryComparison
+                            : leagueA.name.compareTo(leagueB.name);
+                      }
                     });
 
                   if (groupedMatches.isEmpty) {
@@ -421,8 +460,17 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
 
                           // Matches in this league
                           ...leagueMatches.map((match) {
-                            // Create a match with prediction if available
-                            if (match.fixture.status.short == "NS") {
+                            // Check if the fixture is in the future (upcoming)
+                            final fixtureDateTime =
+                                DateTime.fromMillisecondsSinceEpoch(
+                              match.fixture.timestamp * 1000,
+                            );
+                            final now = DateTime.now();
+                            final isUpcoming = fixtureDateTime.isAfter(now);
+
+                            // For upcoming non-started matches, we can show predictions
+                            if (match.fixture.status.short == "NS" &&
+                                isUpcoming) {
                               // Get prediction from BLoC if match is upcoming
                               return BlocBuilder<PredictionBloc,
                                   PredictionState>(
@@ -452,7 +500,7 @@ class _LiveMatchesTabState extends State<LiveMatchesTab>
                                 },
                               );
                             } else {
-                              // For non-upcoming matches, just show the match card
+                              // For non-upcoming or already started matches, just show the match card
                               return MatchCard(
                                 match: match,
                                 onTap: () => _navigateToMatchDetails(match),

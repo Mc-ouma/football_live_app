@@ -14,11 +14,21 @@ class CacheStrategy {
   }) : _logger = logger;
 
   /// Get cache expiry duration for a specific data type
-  Duration getCacheExpiryDuration(CacheDataType dataType) {
+  Duration getCacheExpiryDuration(CacheDataType dataType, {DateTime? date}) {
     switch (dataType) {
       case CacheDataType.liveMatch:
         return Duration(minutes: ApiRateConfig.liveDataCacheExpiryMinutes);
       case CacheDataType.fixture:
+        // For fixtures, check if the date is in the past
+        if (date != null) {
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+
+          if (date.isBefore(today)) {
+            // Past fixtures should have shorter cache time to refresh status
+            return Duration(minutes: 15);
+          }
+        }
         return Duration(hours: 1); // Fixtures can change but not as frequently
       case CacheDataType.prediction:
         return Duration(hours: 4); // Predictions change less frequently
@@ -50,7 +60,10 @@ class CacheStrategy {
       return true;
     }
 
-    final expiryDuration = getCacheExpiryDuration(dataType);
+    final expiryDuration = getCacheExpiryDuration(dataType,
+        date: endpoint.contains('date=')
+            ? _extractDateFromEndpoint(endpoint)
+            : null);
 
     // If cache is still fresh based on the data type, use cache
     if (cacheAge < expiryDuration) {
@@ -100,6 +113,26 @@ class CacheStrategy {
       return '${duration.inMinutes} minutes';
     } else {
       return '${duration.inSeconds} seconds';
+    }
+  }
+
+  /// Extracts date from endpoint URL if present in the format 'date=YYYY-MM-DD'
+  DateTime? _extractDateFromEndpoint(String endpoint) {
+    try {
+      if (endpoint.contains('date=')) {
+        final dateParam =
+            RegExp(r'date=(\d{4}-\d{2}-\d{2})').firstMatch(endpoint);
+        if (dateParam != null && dateParam.groupCount >= 1) {
+          final dateStr = dateParam.group(1);
+          if (dateStr != null) {
+            return DateTime.parse(dateStr);
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      _logger.error('Error extracting date from endpoint', error: e);
+      return null;
     }
   }
 }

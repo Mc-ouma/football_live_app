@@ -38,7 +38,7 @@ abstract class FootballRemoteDataSource {
   });
 
   /// Gets match details by ID
-  Future<FixtureData> getMatchDetails(int matchId);
+  Future<List<FixtureData>> getMatchDetails(int matchId);
 
   /// Gets team information
   Future<Team> getTeamInformation(int teamId);
@@ -218,6 +218,21 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
         // Format date as YYYY-MM-DD (API requirement)
         params['date'] =
             '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+        // Add status parameter based on date
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+
+        if (date.isBefore(today)) {
+          // For past dates, we want fixtures with any status (don't specify status)
+          // This will include finished matches (FT), cancelled (PST), etc.
+        } else {
+          // For today and future dates, we want not-started fixtures
+          params['status'] = 'NS'; // Not Started
+        }
+      } else {
+        // If no date specified, default to not started fixtures
+        params['status'] = 'NS'; // Not Started
       }
 
       if (teamId != null) {
@@ -231,9 +246,6 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       if (season != null) {
         params['season'] = season.toString();
       }
-
-      // Set the status to upcoming fixtures
-      params['status'] = 'NS'; // Not Started
 
       // Set the timezone (optional)
       params['timezone'] =
@@ -305,7 +317,7 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
   }
 
   @override
-  Future<FixtureData> getMatchDetails(int matchId) async {
+  Future<List<FixtureData>> getMatchDetails(int matchId) async {
     try {
       // Build the query parameters
       final Map<String, dynamic> params = {
@@ -339,9 +351,8 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
       logger.info('Retrieved match details for match ID: $matchId');
 
-      // Convert to List<FixtureData> first for type safety
-      final fixtures = fixtureResponse.response.toList().cast<FixtureData>();
-      return fixtures.first;
+      // Convert to List<FixtureData> for type safety and return the full list
+      return fixtureResponse.response.toList().cast<FixtureData>();
     } catch (e) {
       if (e is ServerException) {
         rethrow;

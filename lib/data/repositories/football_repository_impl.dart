@@ -191,21 +191,30 @@ class FootballRepositoryImpl implements FootballRepository {
   }
 
   @override
-  Future<Either<Failure, FixtureData>> getMatchDetails(int matchId) async {
+  Future<Either<Failure, List<FixtureData>>> getMatchDetails(
+      int matchId) async {
     if (await networkInfo.isConnected) {
       try {
-        final remoteMatch = await remoteDataSource.getMatchDetails(matchId);
-        await localDataSource.cacheMatchDetails(remoteMatch);
-        return Right(remoteMatch);
+        final remoteMatches = await remoteDataSource.getMatchDetails(matchId);
+
+        // Cache each match individually (since we now handle multiple matches)
+        for (final match in remoteMatches) {
+          await localDataSource.cacheMatchDetails(match);
+        }
+
+        return Right(remoteMatches);
       } on NotFoundException catch (e) {
         return Left(NotFoundFailure(message: e.message));
       } on RateLimitException catch (e) {
         logger.warning('API rate limit hit, returning cached data', error: e);
         try {
+          // When handling from cache, we'll need to adapt the local data source
+          // to return a list of matches for the given ID
           final localMatch = await localDataSource.getCachedMatchDetails(
             matchId,
           );
-          return Right(localMatch);
+          // Return as a list for consistency
+          return Right([localMatch]);
         } on CacheException catch (e) {
           return Left(CacheFailure(message: e.message));
         }
@@ -216,7 +225,8 @@ class FootballRepositoryImpl implements FootballRepository {
       logger.info('No internet connection, trying to fetch from local cache');
       try {
         final localMatch = await localDataSource.getCachedMatchDetails(matchId);
-        return Right(localMatch);
+        // Return as a list for consistency
+        return Right([localMatch]);
       } on CacheException catch (e) {
         return Left(CacheFailure(message: e.message));
       }

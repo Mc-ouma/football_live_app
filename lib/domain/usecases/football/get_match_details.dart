@@ -5,13 +5,13 @@ import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/domain/repositories/football_repository.dart';
 import 'package:football_live_app/domain/usecases/usecase.dart';
 
-class GetMatchDetails implements UseCase<FixtureData, Params> {
+class GetMatchDetails implements UseCase<List<FixtureData>, Params> {
   final FootballRepository repository;
 
   GetMatchDetails(this.repository);
 
   @override
-  Future<Either<Failure, FixtureData>> call(Params params) async {
+  Future<Either<Failure, List<FixtureData>>> call(Params params) async {
     return await repository.getMatchDetails(params.matchId);
   }
 }
