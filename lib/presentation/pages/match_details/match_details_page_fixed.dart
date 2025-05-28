@@ -6,7 +6,6 @@ import 'package:football_live_app/presentation/blocs/football/fixture_details_bl
 import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/events_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/h2h_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/lineup_tab.dart';
@@ -52,8 +51,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
     // Pre-fetch data for specific tabs based on the selected index
     // This improves user experience by loading data in advance
     final fixtureId = widget.fixture.fixture.id;
-    final leagueId = widget.fixture.league.id;
-    final season = widget.fixture.league.season;
 
     // Show a loading indicator for smoother transitions between tabs
     setState(() {
@@ -69,16 +66,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       if (_tabController.index >= 2) {
         context.read<FixtureDetailsBloc>().add(
               RefreshFixtureDetails(fixtureId),
-            );
-      }
-
-      // Load standings data when on the table tab
-      if (_tabController.index == 5) {
-        context.read<StandingsBloc>().add(
-              FetchStandingsEvent(
-                leagueId: leagueId,
-                season: season,
-              ),
             );
       }
 
@@ -116,9 +103,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
           create: (_) => getIt<PredictionBloc>()
             ..add(
                 FetchMatchPredictionEvent(matchId: widget.fixture.fixture.id)),
-        ),
-        BlocProvider(
-          create: (_) => getIt<StandingsBloc>(),
         ),
       ],
       child: Scaffold(

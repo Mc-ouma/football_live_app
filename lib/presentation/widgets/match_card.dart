@@ -151,7 +151,7 @@ class MatchCard extends StatelessWidget {
                           children: [
                             const SizedBox(height: 8),
                             Text(
-                              DateFormat('yyyy-MM-dd HH:mm').format(
+                              DateFormat('HH:mm').format(
                                 DateTime.fromMillisecondsSinceEpoch(
                                   match.fixture.timestamp * 1000,
                                 ),

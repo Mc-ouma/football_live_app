@@ -44,7 +44,7 @@ class _FixturesTabState extends State<FixturesTab>
     final today = DateTime.now();
     // Create date tabs: [today-2, today-1, today, today+1, today+2]
     _dateTabs = List.generate(
-        5, (index) => DateTime(today.year, today.month, today.day - 2 + index));
+        5, (index) => DateTime(today.year, today.month, today.day - 1 + index));
     _selectedDate = _dateTabs[2]; // Default to today (middle tab)
   }
 
