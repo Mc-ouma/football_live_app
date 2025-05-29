@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
@@ -29,9 +29,9 @@ class H2HTab extends StatelessWidget {
           return ErrorDisplayWidget(
             message: 'Could not load head-to-head matches',
             onRetry: () {
-              context.read<FixtureDetailsBloc>().add(
-                    RefreshFixtureDetails(fixture.fixture.id),
-                  );
+              // Use our FixtureDataProvider utility to request a refresh
+              FixtureDataProvider.requestFixtureRefresh(
+                  context, fixture.fixture.id);
             },
           );
         }

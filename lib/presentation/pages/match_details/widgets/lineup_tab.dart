@@ -5,6 +5,7 @@ import 'package:football_live_app/presentation/blocs/football/fixture_details_bl
 import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
@@ -37,14 +38,25 @@ class LineupTab extends StatelessWidget {
           );
         }
 
-        // Get data from loaded fixture if available
-        List<LineupData> lineups = [];
-        if (state is FixtureDetailsLoaded && state.hasFixtures) {
-          final loadedFixture = state.fixture;
-          if (loadedFixture != null) {
-            // Use the extension method from fixture_converter.dart
-            lineups = loadedFixture.getLineups();
-          }
+        // Get the most complete fixture data using our utility
+        final fixtureToUse =
+            FixtureDataProvider.getBestFixtureData(context, fixture);
+
+        // Get lineups using the selected fixture
+        List<LineupData> lineups = fixtureToUse.getLineups();
+
+        // Log the retrieved lineup data for debugging
+        if (lineups.isNotEmpty) {
+          print(
+              'Retrieved ${lineups.length} lineups for match ID: ${fixtureToUse.fixture.id}');
+          print('Home team formation: ${lineups[0].formation}');
+          print(
+              'Away team formation: ${lineups.length > 1 ? lineups[1].formation : "N/A"}');
+        } else if (state is! FixtureDetailsLoading) {
+          // If we don't have lineup data and we're not already loading, request it
+          print('No lineup data available, requesting from API...');
+          FixtureDataProvider.requestFixtureRefresh(
+              context, fixture.fixture.id);
         }
 
         // If we don't have lineup data, show an appropriate placeholder

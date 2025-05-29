@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
+import 'package:football_live_app/data/models/shared_models.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
-import 'package:football_live_app/presentation/utils/app_theme.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 import 'package:intl/intl.dart';
@@ -24,14 +24,9 @@ class SummaryTab extends StatelessWidget {
           return LoadingWidget(message: 'Loading match summary...');
         }
 
-        // Get the fixture with the most complete data
-        FixtureData fixtureToUse = fixture;
-        if (state is FixtureDetailsLoaded && state.hasFixtures) {
-          final loadedFixture = state.fixture;
-          if (loadedFixture != null && loadedFixture.hasDetailedData) {
-            fixtureToUse = loadedFixture;
-          }
-        }
+        // Get the fixture with the most complete data using our utility
+        FixtureData fixtureToUse =
+            FixtureDataProvider.getBestFixtureData(context, fixture);
 
         // Format date properly
         String formattedDate;
@@ -79,11 +74,8 @@ class SummaryTab extends StatelessWidget {
                       _buildInfoRow(
                           Icons.calendar_today, 'Date', formattedDate),
                       SizedBox(height: 12),
-                      _buildInfoRow(
-                          Icons.place,
-                          'Venue',
-                          fixtureToUse.fixture.venue?.name ??
-                              'Unknown Stadium'),
+                      _buildInfoRow(Icons.place, 'Venue',
+                          fixtureToUse.fixture.venue.name ?? 'Unknown Stadium'),
                       SizedBox(height: 12),
                       _buildInfoRow(Icons.public, 'League',
                           '${fixtureToUse.league.name} (${fixtureToUse.league.country})'),
@@ -399,12 +391,13 @@ class SummaryTab extends StatelessWidget {
     // Format the text for the event
     String eventText;
     if (event.type.toLowerCase() == 'goal') {
-      eventText = '${event.player.name ?? "Unknown player"} (${event.detail})';
+      eventText = '${event.player.name} (${event.detail})';
     } else if (event.type.toLowerCase() == 'card') {
-      eventText = '${event.player.name ?? "Unknown player"} (${event.detail})';
+      eventText = '${event.player.name} (${event.detail})';
     } else if (event.type.toLowerCase() == 'subst') {
-      eventText =
-          '${event.player.name ?? "In"} for ${event.assist?.name ?? "Out"}';
+      // For substitutions, display the player coming in and the player going out
+      final assistName = event.assist != null ? event.assist!.name : "Out";
+      eventText = '${event.player.name} for $assistName';
     } else {
       eventText = event.detail;
     }

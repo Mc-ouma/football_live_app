@@ -8,6 +8,7 @@ import 'package:football_live_app/presentation/blocs/football/fixture_details_st
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/events_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/h2h_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/lineup_tab.dart';
@@ -53,6 +54,77 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
     _tabController.addListener(_handleTabChange);
   }
 
+  /// Extract and log detailed fixture information
+  void _logDetailedFixtureInfo(FixtureData fixture) {
+    print('\n===== DETAILED FIXTURE INFO =====');
+    print('Match ID: ${fixture.fixture.id}');
+    print('Match: ${fixture.teams.home.name} vs ${fixture.teams.away.name}');
+    print('Score: ${fixture.goals.home ?? 0} - ${fixture.goals.away ?? 0}');
+    print('Status: ${fixture.fixture.status.long}');
+
+    // Extract events (goals, cards, subs)
+    final events = fixture.getEvents();
+    print('\nEvents: ${events.length}');
+    if (events.isNotEmpty) {
+      print(
+          'First event: ${events.first.type} at ${events.first.time.elapsed}\'');
+
+      // Count goals
+      final goals = events.where((e) => e.type.toLowerCase() == 'goal').length;
+      print('Goals: $goals');
+
+      // Count cards
+      final cards = events.where((e) => e.type.toLowerCase() == 'card').length;
+      print('Cards: $cards');
+    }
+
+    // Extract lineups
+    final lineups = fixture.getLineups();
+    print('\nLineups: ${lineups.length}');
+    if (lineups.isNotEmpty) {
+      print(
+          'Home formation: ${lineups.firstWhere((l) => l.team.id == fixture.teams.home.id, orElse: () => LineupData(team: fixture.teams.home, coach: Coach(id: 0, name: "Unknown"), formation: "Unknown", startXI: [], substitutes: [])).formation}');
+      print(
+          'Away formation: ${lineups.firstWhere((l) => l.team.id == fixture.teams.away.id, orElse: () => LineupData(team: fixture.teams.away, coach: Coach(id: 0, name: "Unknown"), formation: "Unknown", startXI: [], substitutes: [])).formation}');
+    }
+
+    // Extract statistics
+    final statistics = fixture.getStatistics();
+    print('\nStatistics available: ${statistics != null}');
+    if (statistics != null) {
+      // Check home and away stats
+      final homeStats = statistics.home;
+      final awayStats = statistics.away;
+
+      print('Home stats: ${homeStats?.length ?? 0} categories');
+      print('Away stats: ${awayStats?.length ?? 0} categories');
+
+      // Try to find possession stats for home team
+      if (homeStats != null && homeStats.isNotEmpty) {
+        final possessionStat = homeStats.firstWhere(
+          (stat) => stat.type.toLowerCase().contains('possession'),
+          orElse: () => TeamStatistics(type: 'Not found', value: '0'),
+        );
+
+        print(
+            '${fixture.teams.home.name} possession: ${possessionStat.value ?? 'N/A'}');
+      }
+
+      // Try to find possession stats for away team
+      if (awayStats != null && awayStats.isNotEmpty) {
+        final possessionStat = awayStats.firstWhere(
+          (stat) => stat.type.toLowerCase().contains('possession'),
+          orElse: () => TeamStatistics(type: 'Not found', value: '0'),
+        );
+
+        print(
+            '${fixture.teams.away.name} possession: ${possessionStat.value ?? 'N/A'}');
+      }
+    }
+
+    print('===== END DETAILED INFO =====\n');
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -74,6 +146,9 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       // If fetchFullDetails is true, we should prefetch all the required data for tabs
       if (widget.fetchFullDetails) {
         _preloadAllTabsData();
+      } else {
+        // Log detailed fixture info for debugging
+        _logDetailedFixtureInfo(widget.fixture);
       }
     }
   }
@@ -98,16 +173,21 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       Future.microtask(() {
         if (!mounted) return;
 
-        // The single fixture details API call returns comprehensive data including
-        // events, lineups, statistics, and player data - this powers multiple tabs
+        // Make a single API call to get fixture details by ID
+        // This single request returns comprehensive data for multiple tabs:
+        // - Events (goals, cards, subs)
+        // - Lineups (formations, players)
+        // - Statistics (possession, shots, etc.)
+        // - Player data
         try {
+          // Using the fixtures endpoint with ID parameter
           context.read<FixtureDetailsBloc>().add(LoadFixtureDetails(fixtureId));
           print('Fetching complete fixture details for ID: $fixtureId');
         } catch (e) {
           print('Error loading fixture details: $e');
         }
 
-        // We still need to load standings data separately since it's league-specific
+        // Standings data requires a separate API call with league ID and season
         try {
           context.read<StandingsBloc>().add(
                 FetchStandingsEvent(
@@ -120,7 +200,7 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
           print('Error loading standings: $e');
         }
 
-        // Predictions data is also a separate API endpoint
+        // Predictions data also requires a separate API call with fixture ID
         try {
           context
               .read<PredictionBloc>()
@@ -131,7 +211,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
         }
 
         // Clear loading state after all data has been loaded
-        // Use a shorter delay since we're making fewer API calls now
         Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
             setState(() {
@@ -153,6 +232,142 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
 
   // Store this to access bloc safely
   BuildContext? _providerContext;
+
+  /// Demonstrates extracting specific data from a fixture for different tabs
+  void _demonstrateFixtureDataExtraction(
+      BuildContext context, FixtureData fixture, int tabIndex) {
+    print("\n===== TAB ${tabIndex} DATA EXTRACTION =====");
+    switch (tabIndex) {
+      case 0: // Summary tab
+        print("SUMMARY TAB DATA:");
+        print(
+            "Match: ${fixture.teams.home.name} vs ${fixture.teams.away.name}");
+        print("Score: ${fixture.goals.home ?? 0} - ${fixture.goals.away ?? 0}");
+        print("Date: ${fixture.fixture.date}");
+        break;
+
+      case 1: // Events tab
+        final events = FixtureDataProvider.getSortedEvents(fixture);
+        print("EVENTS TAB DATA:");
+        print("Total events: ${events.length}");
+
+        if (events.isNotEmpty) {
+          // Group events by type
+          final goals =
+              events.where((e) => e.type.toLowerCase() == 'goal').toList();
+          final cards =
+              events.where((e) => e.type.toLowerCase() == 'card').toList();
+          final substitutions =
+              events.where((e) => e.type.toLowerCase() == 'subst').toList();
+
+          print("Goals: ${goals.length}");
+          print("Cards: ${cards.length}");
+          print("Substitutions: ${substitutions.length}");
+
+          // Home vs Away events
+          final homeEvents =
+              events.where((e) => e.team.id == fixture.teams.home.id).length;
+          final awayEvents =
+              events.where((e) => e.team.id == fixture.teams.away.id).length;
+          print("Home team events: $homeEvents");
+          print("Away team events: $awayEvents");
+        }
+        break;
+
+      case 2: // Lineups tab
+        print("LINEUPS TAB DATA:");
+        final lineups = fixture.getLineups();
+        print("Lineup data available: ${lineups.isNotEmpty}");
+
+        if (lineups.isNotEmpty) {
+          // Extract home team lineup
+          final homeLineup =
+              FixtureDataProvider.getTeamLineup(fixture, fixture.teams.home.id);
+          if (homeLineup != null) {
+            print(
+                "${fixture.teams.home.name} formation: ${homeLineup.formation}");
+            print(
+                "${fixture.teams.home.name} starting XI: ${homeLineup.startXI.length} players");
+            print(
+                "${fixture.teams.home.name} substitutes: ${homeLineup.substitutes.length} players");
+            print("${fixture.teams.home.name} coach: ${homeLineup.coach.name}");
+          }
+
+          // Extract away team lineup
+          final awayLineup =
+              FixtureDataProvider.getTeamLineup(fixture, fixture.teams.away.id);
+          if (awayLineup != null) {
+            print(
+                "${fixture.teams.away.name} formation: ${awayLineup.formation}");
+            print(
+                "${fixture.teams.away.name} starting XI: ${awayLineup.startXI.length} players");
+            print(
+                "${fixture.teams.away.name} substitutes: ${awayLineup.substitutes.length} players");
+            print("${fixture.teams.away.name} coach: ${awayLineup.coach.name}");
+          }
+        }
+        break;
+
+      case 3: // Stats tab
+        print("STATS TAB DATA:");
+        final statistics = fixture.getStatistics();
+        print("Statistics data available: ${statistics != null}");
+
+        if (statistics != null) {
+          // Print some key statistics for demonstration
+          if (statistics.home != null && statistics.home!.isNotEmpty) {
+            print(
+                "${fixture.teams.home.name} stats categories: ${statistics.home!.length}");
+
+            // Try to extract common statistics
+            _printTeamStat(
+                statistics.home!, "Ball Possession", fixture.teams.home.name);
+            _printTeamStat(
+                statistics.home!, "Total Shots", fixture.teams.home.name);
+            _printTeamStat(
+                statistics.home!, "Shots on Goal", fixture.teams.home.name);
+          }
+
+          if (statistics.away != null && statistics.away!.isNotEmpty) {
+            print(
+                "${fixture.teams.away.name} stats categories: ${statistics.away!.length}");
+
+            // Try to extract common statistics
+            _printTeamStat(
+                statistics.away!, "Ball Possession", fixture.teams.away.name);
+            _printTeamStat(
+                statistics.away!, "Total Shots", fixture.teams.away.name);
+            _printTeamStat(
+                statistics.away!, "Shots on Goal", fixture.teams.away.name);
+          }
+        }
+        break;
+
+      default:
+        print("Data extraction not implemented for tab $tabIndex");
+        break;
+    }
+    print("===== END TAB DATA EXTRACTION =====\n");
+  }
+
+  /// Helper method to print a team statistic if it exists
+  void _printTeamStat(
+      List<TeamStatistics> stats, String statName, String teamName) {
+    try {
+      final stat = stats.firstWhere(
+        (s) =>
+            s.type == statName ||
+            s.type.toLowerCase().contains(statName.toLowerCase()),
+        orElse: () => TeamStatistics(type: 'Not found', value: null),
+      );
+
+      if (stat.type != 'Not found') {
+        print("$teamName ${stat.type}: ${stat.value ?? 'N/A'}");
+      }
+    } catch (e) {
+      print("Error finding $statName stat: $e");
+    }
+  }
 
   void _handleTabChange() {
     // Only trigger when the tab actually changes
@@ -237,6 +452,12 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       }
 
       if (mounted) {
+        // Extract and demonstrate fixture data for the selected tab
+        final fixtureData =
+            FixtureDataProvider.getBestFixtureData(context, widget.fixture);
+        _demonstrateFixtureDataExtraction(
+            context, fixtureData, selectedTabIndex);
+
         setState(() {
           _isLoadingTabData = false;
         });
@@ -368,12 +589,10 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                     );
                   }
 
-                  // Use loaded fixture if available, otherwise fall back to the widget fixture
-                  // The API returns comprehensive data but we need to ensure we're correctly using it
+                  // Use the FixtureDataProvider to get the best available fixture data
                   FixtureData fixtureToUse =
-                      (state is FixtureDetailsLoaded && state.hasFixtures)
-                          ? state.fixture!
-                          : widget.fixture;
+                      FixtureDataProvider.getBestFixtureData(
+                          context, widget.fixture);
 
                   // Check if we have detailed data or need to show a hint
                   final hasDetailedData = fixtureToUse.hasDetailedData;
@@ -381,7 +600,7 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
 
                   // If no detailed data is available and this is a first load,
                   // we'll show a hint after the build is complete
-                  if (!hasDetailedData &&
+                  /* if (!hasDetailedData &&
                       !_isLoadingTabData &&
                       widget.fetchFullDetails) {
                     // Use a post-frame callback to safely show the SnackBar after build is complete
@@ -396,7 +615,7 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                         );
                       }
                     });
-                  }
+                  } */
 
                   // Create widgets for each tab using the imported widgets
                   final summaryWidget = SummaryTab(

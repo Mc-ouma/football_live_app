@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
-import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 
 class EventsTab extends StatelessWidget {
   final FixtureData fixture;
@@ -14,21 +15,19 @@ class EventsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
       builder: (context, state) {
-        List<Event> events = [];
+        // Get the most complete fixture data available using our utility
+        final fixtureToUse =
+            FixtureDataProvider.getBestFixtureData(context, fixture);
 
-        // Try to get events from detailed fixture data using our extension
-        if (state is FixtureDetailsLoaded && state.hasFixtures) {
-          final loadedFixture = state.fixture;
-          if (loadedFixture != null) {
-            // Use our extension method to safely get events
-            events = loadedFixture.getEvents();
-          }
-        }
+        // Get events sorted by time
+        List<Event> events = FixtureDataProvider.getSortedEvents(fixtureToUse);
 
-        // Fallback to original fixture if we haven't found any events yet
-        if (events.isEmpty) {
-          // Use our extension method on the original fixture
-          events = fixture.getEvents();
+        // If we don't have events data and we're not already loading, request it
+        if (events.isEmpty && state is! FixtureDetailsLoading) {
+          print('No events data available, requesting from API...');
+          context.read<FixtureDetailsBloc>().add(
+                RefreshFixtureDetails(fixture.fixture.id),
+              );
         }
 
         if (events.isEmpty) {

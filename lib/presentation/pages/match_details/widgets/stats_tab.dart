@@ -5,6 +5,7 @@ import 'package:football_live_app/presentation/blocs/football/fixture_details_bl
 import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
 import 'package:football_live_app/presentation/widgets/loading_widget.dart';
@@ -36,17 +37,19 @@ class StatsTab extends StatelessWidget {
           );
         }
 
-        // Get statistics data from loaded fixture if available
-        Statistics? stats;
-        FixtureData fixtureToUse = fixture;
+        // Get the most complete fixture data available using our utility
+        FixtureData fixtureToUse =
+            FixtureDataProvider.getBestFixtureData(context, fixture);
 
-        if (state is FixtureDetailsLoaded && state.hasFixtures) {
-          final loadedFixture = state.fixture;
-          if (loadedFixture != null) {
-            // Use the extension method from fixture_converter.dart
-            stats = loadedFixture.getStatistics();
-            fixtureToUse = loadedFixture;
-          }
+        // Get statistics data
+        Statistics? stats = fixtureToUse.getStatistics();
+
+        // If we don't have stats data yet, try requesting it
+        if (stats == null && state is! FixtureDetailsLoading) {
+          print(
+              'No statistics found for match ID: ${fixture.fixture.id}, requesting data...');
+          FixtureDataProvider.requestFixtureRefresh(
+              context, fixture.fixture.id);
         }
 
         // If we don't have statistics data, show an appropriate placeholder
