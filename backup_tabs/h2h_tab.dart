@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:football_live_app/data/models/fixture_model.dart';
+import 'package:football_live_app/data/models/fixture_model.dart' as models;
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
@@ -11,7 +11,7 @@ import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 import 'package:intl/intl.dart';
 
 class H2HTab extends StatelessWidget {
-  final FixtureData fixture;
+  final models.FixtureData fixture;
 
   const H2HTab({Key? key, required this.fixture}) : super(key: key);
 
@@ -37,7 +37,7 @@ class H2HTab extends StatelessWidget {
         }
 
         // Check if we have H2H data available
-        List<FixtureData> h2hFixtures = [];
+        List<models.FixtureData> h2hFixtures = [];
 
         if (state is FixtureDetailsLoaded && state.fixtures.length > 1) {
           // The first fixture is the current match, additional fixtures are H2H matches
@@ -232,7 +232,7 @@ class H2HTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMatchCard(BuildContext context, FixtureData match) {
+  Widget _buildMatchCard(BuildContext context, models.FixtureData match) {
     final DateFormat formatter = DateFormat('MMM d, yyyy');
     String dateStr;
 

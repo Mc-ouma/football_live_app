@@ -14,9 +14,39 @@ class PredictionsTab extends StatelessWidget {
     return BlocBuilder<PredictionBloc, PredictionState>(
       builder: (context, state) {
         if (state is PredictionLoading) {
-          return Center(child: CircularProgressIndicator());
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading match predictions...'),
+              ],
+            ),
+          );
+        } else if (state is PredictionError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: Colors.red),
+                SizedBox(height: 16),
+                Text('Failed to load predictions: ${state.message}'),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    // Retry loading predictions
+                    context.read<PredictionBloc>().add(
+                          FetchMatchPredictionEvent(matchId: fixtureId),
+                        );
+                  },
+                  child: Text('Retry'),
+                ),
+              ],
+            ),
+          );
         } else if (state is PredictionLoaded) {
-          // Use the prediction data from the state for dynamic content if needed
+          // Get prediction data but we'll use dynamic data for the UI later if needed
           // final prediction = state.prediction;
 
           return SingleChildScrollView(

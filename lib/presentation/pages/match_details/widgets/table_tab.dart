@@ -28,6 +28,7 @@ class TableTab extends StatelessWidget {
           return ErrorDisplayWidget(
             message: 'Could not load league table: ${state.message}',
             onRetry: () {
+              // Refresh the standings data
               context.read<StandingsBloc>().add(
                     FetchStandingsEvent(
                       leagueId: fixture.league.id,
@@ -131,7 +132,8 @@ class TableTab extends StatelessWidget {
                                     team['team'] == fixture.teams.away.name,
                             homeTeam: team['team'] == fixture.teams.home.name,
                             awayTeam: team['team'] == fixture.teams.away.name,
-                            teamLogo: team['logo']);
+                            teamLogo: team['logo'],
+                            description: team['description']);
                       },
                     ),
 
@@ -247,9 +249,14 @@ class TableTab extends StatelessWidget {
     bool homeTeam = false,
     bool awayTeam = false,
     String? teamLogo,
+    String? description,
   }) {
     final isSmallScreen = ResponsiveHelper.isMobile(context);
-    final positionColor = _getPositionColor(position);
+    // Use description-based color if availabl
+    final positionColor = description != null && description.isNotEmpty
+        ? _getDescriptionColor(description)
+        : null;
+
     final goalDifference = goalsFor - goalsAgainst;
 
     Color? rowColor;
@@ -366,7 +373,38 @@ class TableTab extends StatelessWidget {
     );
   }
 
+  /// Builds the table legend explaining qualification and relegation
   Widget _buildTableLegend(BuildContext context) {
+    // Group the qualification categories to display in the legend
+    Map<String, Color> qualificationCategories = {};
+
+    // Add a legend entry for each unique description from the standings
+    final currentState = BlocProvider.of<StandingsBloc>(context).state;
+    if (currentState is StandingsLoaded) {
+      if (currentState.standings.isNotEmpty &&
+          currentState.standings[0].league.standings.isNotEmpty) {
+        final standingsGroup = currentState.standings[0].league.standings[0];
+
+        // Collect unique descriptions and assign them colors
+        for (final standing in standingsGroup) {
+          if (standing.description != null &&
+              standing.description!.isNotEmpty) {
+            qualificationCategories[standing.description!] =
+                _getDescriptionColor(standing.description!);
+          }
+        }
+      }
+    }
+
+    // If no categories found from API, add default categories
+    if (qualificationCategories.isEmpty) {
+      qualificationCategories = {
+        'Champions League': Colors.green,
+        'Europa League': Colors.blue,
+        'Relegation': Colors.red,
+      };
+    }
+
     return Padding(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -377,58 +415,61 @@ class TableTab extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           SizedBox(height: 8),
-          Row(
-            children: [
-              Container(width: 12, height: 12, color: Colors.green),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Champions League',
-                  style: TextStyle(fontSize: 12),
-                ),
+          ...qualificationCategories.entries.map((entry) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: Row(
+                children: [
+                  Container(width: 12, height: 12, color: entry.value),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      entry.key,
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Row(
-            children: [
-              Container(width: 12, height: 12, color: Colors.blue),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Europa League',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
-          Row(
-            children: [
-              Container(width: 12, height: 12, color: Colors.red),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Relegation',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
+            );
+          }).toList(),
         ],
       ),
     );
   }
 
-  Color? _getPositionColor(int position) {
-    if (position <= 4) {
+  Color _getDescriptionColor(String description) {
+    // Assign colors based on description keywords
+    final desc = description.toLowerCase();
+
+    if (desc.contains('champion') ||
+        desc.contains('promotion') ||
+        desc.contains('ucl') ||
+        desc.contains('uefa champions')) {
       return Colors.green;
-    } else if (position >= 18) {
-      return Colors.red;
-    } else if (position == 5 || position == 6) {
+    } else if (desc.contains('europa') ||
+        desc.contains('conference') ||
+        desc.contains('uel') ||
+        desc.contains('uecl')) {
       return Colors.blue;
+    } else if (desc.contains('relegation') || desc.contains('relegated')) {
+      return Colors.red;
+    } else if (desc.contains('play-off') ||
+        desc.contains('playoffs') ||
+        desc.contains('qualification')) {
+      // Determine the context of the playoff
+      if (desc.contains('champions') || desc.contains('ucl')) {
+        return Colors.lightGreen;
+      } else if (desc.contains('europa') || desc.contains('uel')) {
+        return Colors.lightBlue;
+      } else if (desc.contains('relegation')) {
+        return Colors.deepOrange;
+      } else {
+        return Colors.orange;
+      }
     }
-    return null;
+
+    // Default color for other descriptions
+    return Colors.purple;
   }
 
   // Convert the real standings data from the API to our table format
@@ -458,6 +499,7 @@ class TableTab extends StatelessWidget {
             'goalsFor': standing.all.goals.forGoals ?? 0,
             'goalsAgainst': standing.all.goals.against ?? 0,
             'points': standing.points,
+            'description': standing.description,
           });
         }
       }
@@ -480,6 +522,7 @@ class TableTab extends StatelessWidget {
         'goalsFor': 95,
         'goalsAgainst': 26,
         'points': 95,
+        'description': 'Champions League',
       },
       {
         'position': 2,
@@ -492,6 +535,7 @@ class TableTab extends StatelessWidget {
         'goalsFor': 92,
         'goalsAgainst': 29,
         'points': 90,
+        'description': 'Champions League',
       },
       {
         'position': 3,
@@ -528,6 +572,7 @@ class TableTab extends StatelessWidget {
         'goalsFor': 62,
         'goalsAgainst': 47,
         'points': 59,
+        'description': 'Europa League',
       },
       {
         'position': 6,
@@ -564,6 +609,7 @@ class TableTab extends StatelessWidget {
         'goalsFor': 30,
         'goalsAgainst': 51,
         'points': 36,
+        'description': 'Relegation',
       },
       {
         'position': 19,

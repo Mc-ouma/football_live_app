@@ -51,67 +51,6 @@ class MatchCard extends StatelessWidget {
                   displayStatus == 'HT';
               return Column(
                 children: [
-                  // League name and match time/status
-                  /* Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // League info
-                  Expanded(
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Image.network(
-                            match.league.logo,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.sports_soccer, size: 20),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            match.league.name,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Match time/status
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: match.fixture.status.short == 'LIVE'
-                          ? Colors.red
-                          : Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      match.fixture.status.short == 'LIVE'
-                          ? '${match.fixture.status.elapsed ?? 0}\''
-                          : match.fixture.status.long,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: match.fixture.status.short == 'LIVE'
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16), */
-
                   // Team names and scores
                   Row(
                     children: [

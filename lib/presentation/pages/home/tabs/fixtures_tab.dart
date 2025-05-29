@@ -83,10 +83,15 @@ class _FixturesTabState extends State<FixturesTab>
   }
 
   void _navigateToMatchDetails(FixtureData match) {
+    // Navigate to match details and ensure all fixture data is fetched by ID
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MatchDetailsPage(fixture: match),
+        builder: (context) => MatchDetailsPage(
+          fixture: match,
+          // Pass this flag to ensure fresh data is fetched from API
+          fetchFullDetails: true,
+        ),
       ),
     );
   }

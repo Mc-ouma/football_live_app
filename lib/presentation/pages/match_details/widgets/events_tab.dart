@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 
 class EventsTab extends StatelessWidget {
   final FixtureData fixture;
@@ -15,31 +16,19 @@ class EventsTab extends StatelessWidget {
       builder: (context, state) {
         List<Event> events = [];
 
-        // Try to get events from detailed fixture data
+        // Try to get events from detailed fixture data using our extension
         if (state is FixtureDetailsLoaded && state.hasFixtures) {
-          // Check if the loaded fixture has events (when it's a detailed fixture)
           final loadedFixture = state.fixture;
           if (loadedFixture != null) {
-            // Check if this fixture has events by using the when method
-            events = loadedFixture.when(
-              detailed: (fixture, league, teams, goals, score, events, lineups,
-                      statistics, players) =>
-                  events ?? [],
-              live: (fixture, league, teams, goals, score, events) => events,
-              (fixture, league, teams, goals, score) => <Event>[],
-            );
+            // Use our extension method to safely get events
+            events = loadedFixture.getEvents();
           }
         }
 
-        // Fallback to original fixture if it has events and we haven't found any yet
+        // Fallback to original fixture if we haven't found any events yet
         if (events.isEmpty) {
-          events = fixture.when(
-            detailed: (fixture, league, teams, goals, score, events, lineups,
-                    statistics, players) =>
-                events ?? [],
-            live: (fixture, league, teams, goals, score, events) => events,
-            (fixture, league, teams, goals, score) => <Event>[],
-          );
+          // Use our extension method on the original fixture
+          events = fixture.getEvents();
         }
 
         if (events.isEmpty) {

@@ -190,12 +190,12 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                       : widget.fixture;
 
               // Create widgets for each tab to avoid the "method not defined" compiler error
-              final summaryWidget =
-                  SummaryTab(key: ValueKey('summary'), fixture: fixtureToUse);
-              final eventsWidget =
-                  EventsTab(key: ValueKey('events'), fixture: fixtureToUse);
-              final lineupWidget =
-                  LineupTab(key: ValueKey('lineup'), fixture: fixtureToUse);
+              final summaryWidget = SummaryTab(
+                  key: const ValueKey('summary'), fixture: fixtureToUse);
+              final eventsWidget = EventsTab(
+                  key: const ValueKey('events'), fixture: fixtureToUse);
+              final lineupWidget = LineupTab(
+                  key: const ValueKey('lineup'), fixture: fixtureToUse);
               final statsWidget =
                   StatsTab(key: ValueKey('stats'), fixture: fixtureToUse);
               final h2hWidget =

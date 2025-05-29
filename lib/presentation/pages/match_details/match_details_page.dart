@@ -7,6 +7,7 @@ import 'package:football_live_app/presentation/blocs/football/fixture_details_ev
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/events_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/h2h_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/lineup_tab.dart';
@@ -22,8 +23,14 @@ import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 
 class MatchDetailsPage extends StatefulWidget {
   final FixtureData fixture;
+  // Flag to indicate whether to fetch full details from API
+  final bool fetchFullDetails;
 
-  const MatchDetailsPage({Key? key, required this.fixture}) : super(key: key);
+  const MatchDetailsPage({
+    Key? key,
+    required this.fixture,
+    this.fetchFullDetails = false,
+  }) : super(key: key);
 
   @override
   _MatchDetailsPageState createState() => _MatchDetailsPageState();
@@ -34,6 +41,9 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
   late TabController _tabController;
   bool _isLoadingTabData = false;
 
+  // Track if we've loaded detailed fixture data
+  bool _initialDataLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +51,104 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
 
     // Add listener to load data for specific tabs as they are selected
     _tabController.addListener(_handleTabChange);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // This is a good place to load the initial data once
+    // after the context is available but before the build completes
+    if (!_initialDataLoaded) {
+      _initialDataLoaded = true;
+
+      // Log the initial fixture data received from navigation
+      print('Match details opened with fixture data:');
+      print('Match ID: ${widget.fixture.fixture.id}');
+      print(
+          'Match: ${widget.fixture.teams.home.name} vs ${widget.fixture.teams.away.name}');
+      print('Status: ${widget.fixture.fixture.status.long}');
+      print('League: ${widget.fixture.league.name}');
+      print('Fetch full details flag: ${widget.fetchFullDetails}');
+
+      // If fetchFullDetails is true, we should prefetch all the required data for tabs
+      if (widget.fetchFullDetails) {
+        _preloadAllTabsData();
+      }
+    }
+  }
+
+  /// Preload all the necessary data for all tabs at once to provide a complete experience
+  void _preloadAllTabsData() {
+    // Don't proceed if context is not ready yet
+    if (!mounted) return;
+
+    final fixtureId = widget.fixture.fixture.id;
+    final leagueId = widget.fixture.league.id;
+    final season = widget.fixture.league.season;
+
+    try {
+      // Set loading state
+      setState(() {
+        _isLoadingTabData = true;
+      });
+
+      // We need to make sure that the blocs are initialized before we can call read()
+      // So we use Future.microtask to ensure all dependencies are ready
+      Future.microtask(() {
+        if (!mounted) return;
+
+        // The single fixture details API call returns comprehensive data including
+        // events, lineups, statistics, and player data - this powers multiple tabs
+        try {
+          context.read<FixtureDetailsBloc>().add(LoadFixtureDetails(fixtureId));
+          print('Fetching complete fixture details for ID: $fixtureId');
+        } catch (e) {
+          print('Error loading fixture details: $e');
+        }
+
+        // We still need to load standings data separately since it's league-specific
+        try {
+          context.read<StandingsBloc>().add(
+                FetchStandingsEvent(
+                  leagueId: leagueId,
+                  season: season,
+                ),
+              );
+          print('Fetching standings for league ID: $leagueId, season: $season');
+        } catch (e) {
+          print('Error loading standings: $e');
+        }
+
+        // Predictions data is also a separate API endpoint
+        try {
+          context
+              .read<PredictionBloc>()
+              .add(FetchMatchPredictionEvent(matchId: fixtureId));
+          print('Fetching predictions for fixture ID: $fixtureId');
+        } catch (e) {
+          print('Error loading predictions: $e');
+        }
+
+        // Clear loading state after all data has been loaded
+        // Use a shorter delay since we're making fewer API calls now
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) {
+            setState(() {
+              _isLoadingTabData = false;
+              print('All tab data preloaded successfully');
+            });
+          }
+        });
+      });
+    } catch (e) {
+      print('Error in preloading tab data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingTabData = false;
+        });
+      }
+    }
   }
 
   // Store this to access bloc safely
@@ -52,11 +160,10 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       return;
     }
 
-    // Pre-fetch data for specific tabs based on the selected index
-    // This improves user experience by loading data in advance
     final fixtureId = widget.fixture.fixture.id;
     final leagueId = widget.fixture.league.id;
     final season = widget.fixture.league.season;
+    final selectedTabIndex = _tabController.index;
 
     // Show a loading indicator for smoother transitions between tabs
     setState(() {
@@ -68,8 +175,16 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       if (!mounted) return;
 
       try {
-        // Refresh data depending on which tab we're viewing
-        if (_tabController.index >= 2 && _providerContext != null) {
+        // For most tabs (0-4), we don't need to refresh fixture details data
+        // since we already have comprehensive data from the initial load.
+        // Only refresh if there's a specific reason (like real-time updates for live matches)
+
+        final isLiveMatch = widget.fixture.fixture.status.short == '1H' ||
+            widget.fixture.fixture.status.short == '2H' ||
+            widget.fixture.fixture.status.short == 'HT';
+
+        // For live matches, refresh fixture data more frequently
+        if (isLiveMatch && selectedTabIndex <= 4 && _providerContext != null) {
           try {
             final bloc = BlocProvider.of<FixtureDetailsBloc>(_providerContext!);
             bloc.add(RefreshFixtureDetails(fixtureId));
@@ -78,24 +193,41 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
           }
         }
 
-        // Load standings data when on the table tab
-        if (_tabController.index == 5 && _providerContext != null) {
+        // Only load standings data when the table tab is selected and it hasn't been loaded yet
+        if (selectedTabIndex == 5 && _providerContext != null) {
           try {
             final bloc = BlocProvider.of<StandingsBloc>(_providerContext!);
-            bloc.add(FetchStandingsEvent(
-              leagueId: leagueId,
-              season: season,
-            ));
+            final currentState = bloc.state;
+
+            // Only fetch if we don't have the data or if it's for a different league
+            bool shouldLoadStandings = currentState is! StandingsLoaded;
+            if (currentState is StandingsLoaded) {
+              shouldLoadStandings = currentState.standings.isEmpty;
+            }
+
+            if (shouldLoadStandings) {
+              bloc.add(FetchStandingsEvent(
+                leagueId: leagueId,
+                season: season,
+              ));
+            }
           } catch (e) {
             print('Error accessing StandingsBloc: $e');
           }
         }
 
-        // Specifically load prediction data when on that tab
-        if (_tabController.index == 6 && _providerContext != null) {
+        // Only load prediction data when the predictions tab is selected and it hasn't been loaded yet
+        if (selectedTabIndex == 6) {
           try {
-            final bloc = BlocProvider.of<PredictionBloc>(_providerContext!);
-            bloc.add(FetchMatchPredictionEvent(matchId: fixtureId));
+            if (_providerContext != null) {
+              final bloc = BlocProvider.of<PredictionBloc>(_providerContext!);
+              final currentState = bloc.state;
+
+              // Only fetch if we don't have the data or if it's for a different match
+              if (currentState is! PredictionLoaded) {
+                bloc.add(FetchMatchPredictionEvent(matchId: fixtureId));
+              }
+            }
           } catch (e) {
             print('Error accessing PredictionBloc: $e');
           }
@@ -121,19 +253,34 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
 
   @override
   Widget build(BuildContext context) {
+    // Get fixture ID needed for initializing blocs
+    final fixtureId = widget.fixture.fixture.id;
+
     return MultiBlocProvider(
       providers: [
+        // FixtureDetailsBloc for match summary, events, lineups, stats, and H2H
+        // This single API call retrieves comprehensive data for multiple tabs
         BlocProvider(
-          create: (_) => getIt<FixtureDetailsBloc>()
-            ..add(LoadFixtureDetails(widget.fixture.fixture.id)),
+          create: (_) {
+            final bloc = getIt<FixtureDetailsBloc>();
+            // Only trigger the load if we don't already have data from navigation
+            if (!widget.fetchFullDetails) {
+              bloc.add(LoadFixtureDetails(fixtureId));
+            }
+            return bloc;
+          },
         ),
+        // PredictionBloc for predictions tab - lazy loaded when needed
         BlocProvider(
-          create: (_) => getIt<PredictionBloc>()
-            ..add(
-                FetchMatchPredictionEvent(matchId: widget.fixture.fixture.id)),
+          create: (_) => getIt<PredictionBloc>(),
+          // We don't immediately trigger the event here to avoid unnecessary API calls
+          // It will be loaded when the tab is selected or during preload
         ),
+        // StandingsBloc for table tab - lazy loaded when needed
         BlocProvider(
           create: (_) => getIt<StandingsBloc>(),
+          // We don't immediately trigger the event here to avoid unnecessary API calls
+          // It will be loaded when the tab is selected or during preload
         ),
       ],
       child: Builder(
@@ -222,18 +369,42 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                   }
 
                   // Use loaded fixture if available, otherwise fall back to the widget fixture
-                  final fixtureToUse =
+                  // The API returns comprehensive data but we need to ensure we're correctly using it
+                  FixtureData fixtureToUse =
                       (state is FixtureDetailsLoaded && state.hasFixtures)
                           ? state.fixture!
                           : widget.fixture;
 
-                  // Create widgets for each tab to avoid the "method not defined" compiler error
+                  // Check if we have detailed data or need to show a hint
+                  final hasDetailedData = fixtureToUse.hasDetailedData;
+                  print('Fixture detailed data available: $hasDetailedData');
+
+                  // If no detailed data is available and this is a first load,
+                  // we'll show a hint after the build is complete
+                  if (!hasDetailedData &&
+                      !_isLoadingTabData &&
+                      widget.fetchFullDetails) {
+                    // Use a post-frame callback to safely show the SnackBar after build is complete
+                    Future.microtask(() {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Select a tab to view detailed match information'),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    });
+                  }
+
+                  // Create widgets for each tab using the imported widgets
                   final summaryWidget = SummaryTab(
-                      key: ValueKey('summary'), fixture: fixtureToUse);
-                  final eventsWidget =
-                      EventsTab(key: ValueKey('events'), fixture: fixtureToUse);
-                  final lineupWidget =
-                      LineupTab(key: ValueKey('lineup'), fixture: fixtureToUse);
+                      key: const ValueKey('summary'), fixture: fixtureToUse);
+                  final eventsWidget = EventsTab(
+                      key: const ValueKey('events'), fixture: fixtureToUse);
+                  final lineupWidget = LineupTab(
+                      key: const ValueKey('lineup'), fixture: fixtureToUse);
                   final statsWidget =
                       StatsTab(key: ValueKey('stats'), fixture: fixtureToUse);
                   final h2hWidget =
@@ -377,9 +548,29 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                       // Show loading indicator when transitioning between tabs
                       if (_isLoadingTabData)
                         Container(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withOpacity(0.2),
                           child: Center(
-                            child: CircularProgressIndicator(),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Loading match data...',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: 3.0,
+                                        color: Colors.black,
+                                        offset: Offset(1.0, 1.0),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                     ],

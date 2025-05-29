@@ -141,7 +141,7 @@ class StatsTab extends StatelessWidget {
 
               SizedBox(height: 24),
 
-              // Team stats visualizations
+              // Extract statistics by type from the team statistics lists
               _buildStatRowFromTeamStats(
                   context, homeStats ?? [], awayStats ?? [], "Ball Possession"),
               Divider(),
@@ -168,7 +168,7 @@ class StatsTab extends StatelessWidget {
         );
       },
     );
-  } // Removed unused _buildStatRowFromData method
+  }
 
   Widget _buildStatRow(
       BuildContext context, String title, String homeValue, String awayValue) {
