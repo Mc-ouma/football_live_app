@@ -23,6 +23,7 @@ import 'package:football_live_app/domain/usecases/auth/get_current_user.dart';
 import 'package:football_live_app/domain/usecases/auth/sign_in_with_email.dart';
 import 'package:football_live_app/domain/usecases/auth/sign_in_with_google.dart';
 import 'package:football_live_app/domain/usecases/auth/sign_out.dart';
+import 'package:football_live_app/domain/usecases/football/get_head_to_head_fixtures.dart';
 import 'package:football_live_app/domain/usecases/football/get_league_standings.dart';
 import 'package:football_live_app/domain/usecases/football/get_live_matches.dart';
 import 'package:football_live_app/domain/usecases/football/get_match_details.dart';
@@ -147,6 +148,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetLiveMatches(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetUpcomingFixtures(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetMatchDetails(sl<FootballRepository>()));
+  sl.registerLazySingleton(() => GetHeadToHeadFixtures(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetLeagueStandings(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetStandings(sl<FootballRepository>()));
 
@@ -185,6 +187,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => FixtureDetailsBloc(
       getMatchDetails: sl<GetMatchDetails>(),
+      getHeadToHeadFixtures: sl<GetHeadToHeadFixtures>(),
     ),
   );
 

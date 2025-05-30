@@ -53,6 +53,9 @@ dependencies:
   # For web views
   webview_flutter: ^4.4.2
 
+  # Environment variables
+  flutter_dotenv: ^5.1.0
+
   #preview
   device_preview: ^1.2.0
 

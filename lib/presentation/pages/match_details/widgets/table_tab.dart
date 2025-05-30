@@ -28,13 +28,21 @@ class TableTab extends StatelessWidget {
           return ErrorDisplayWidget(
             message: 'Could not load league table: ${state.message}',
             onRetry: () {
-              // Refresh the standings data
-              context.read<StandingsBloc>().add(
-                    FetchStandingsEvent(
-                      leagueId: fixture.league.id,
-                      season: fixture.league.season,
-                    ),
-                  );
+              // Refresh the standings data with improved error handling
+              try {
+                context.read<StandingsBloc>().add(
+                      FetchStandingsEvent(
+                        leagueId: fixture.league.id,
+                        season: fixture.league.season,
+                      ),
+                    );
+              } catch (e) {
+                // Log any errors that might occur during retry
+                print('Error during standings refresh: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error refreshing table data: $e')),
+                );
+              }
             },
           );
         }

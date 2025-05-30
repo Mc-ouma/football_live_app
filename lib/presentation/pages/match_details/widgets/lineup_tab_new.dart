@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
-import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
@@ -13,7 +13,7 @@ import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 class LineupTab extends StatelessWidget {
   final FixtureData fixture;
 
-  LineupTab({Key? key, required this.fixture}) : super(key: key);
+  const LineupTab({Key? key, required this.fixture}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class LineupTab extends StatelessWidget {
       builder: (context, state) {
         // Show loading state
         if (state is FixtureDetailsLoading) {
-          return const LoadingWidget(message: 'Loading lineup data...');
+          return LoadingWidget(message: 'Loading lineup data...');
         }
 
         // Show error state with retry button
@@ -29,68 +29,45 @@ class LineupTab extends StatelessWidget {
           return ErrorDisplayWidget(
             message: 'Failed to load lineup data: ${state.message}',
             onRetry: () {
-              // Retry loading fixture details using our provider
-              FixtureDataProvider.requestFixtureRefresh(
-                  context, fixture.fixture.id);
+              // Retry loading fixture details
+              context.read<FixtureDetailsBloc>().add(
+                    RefreshFixtureDetails(fixture.fixture.id),
+                  );
             },
           );
         }
 
-        // Get the most complete fixture data using our utility
-        final fixtureToUse =
-            FixtureDataProvider.getBestFixtureData(context, fixture);
-
-        // Get lineups using the selected fixture
-        List<LineupData> lineups = fixtureToUse.getLineups();
-
-        // If we don't have lineup data and we're not already loading, request it
-        if (lineups.isEmpty && state is! FixtureDetailsLoading) {
-          print(
-              'No lineup data available for match ID: ${fixture.fixture.id}, requesting data...');
-          // Use post-frame callback to avoid calling during build
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              FixtureDataProvider.requestFixtureRefresh(
-                  context, fixture.fixture.id);
-            }
-          });
+        // Get data from loaded fixture if available
+        List<LineupData> lineups = [];
+        if (state is FixtureDetailsLoaded && state.hasFixtures) {
+          final loadedFixture = state.fixture;
+          if (loadedFixture != null) {
+            // Use the extension method from fixture_converter.dart
+            lineups = loadedFixture.getLineups();
+          }
         }
 
-        // If lineups are empty, show a helpful message
+        // If we don't have lineup data, show an appropriate placeholder
         if (lineups.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                const Text(
-                  'No lineup data available',
+                SizedBox(height: 16),
+                Text(
+                  'No lineup data available for this match',
                   style: TextStyle(fontSize: 16),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
-                  'Lineups are typically available closer to match time',
+                  'Lineups are typically published closer to match time',
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => FixtureDataProvider.requestFixtureRefresh(
-                      context, fixture.fixture.id),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Check for Updates'),
                 ),
               ],
             ),
           );
         }
-
-        // Log the retrieved lineup data for debugging
-        print(
-            'Retrieved ${lineups.length} lineups for match ID: ${fixtureToUse.fixture.id}');
-        print('Home team formation: ${lineups[0].formation}');
-        print(
-            'Away team formation: ${lineups.length > 1 ? lineups[1].formation : "N/A"}');
 
         // Get the home and away teams from the fixture
         final homeTeam = fixture.teams.home;

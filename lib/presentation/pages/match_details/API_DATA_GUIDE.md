@@ -26,7 +26,7 @@ final Map<String, dynamic> params = {
 
 // Make API request to the fixtures endpoint
 final response = await apiClient.get(
-  EnvConfig.fixtures,  // This is the '/fixtures' endpoint 
+  EnvConfig.fixtures,  // This is the '/fixtures' endpoint
   queryParameters: params,
 );
 ```
@@ -75,14 +75,14 @@ if (fixture.hasDetailedData) {
 
 Each tab requires specific data from the API:
 
-| Tab | Data Required | API Parameter | Source |
-|-|-|-|-|
-| Summary | Basic fixture info + Events | `id` | `/fixtures?id={id}` |
-| Lineup | Lineups | `id` | `/fixtures?id={id}` |
-| Stats | Statistics | `id` | `/fixtures?id={id}` |
-| Events | Events | `id` | `/fixtures?id={id}` |
-| H2H | Head-to-head fixtures | `h2h` | `/fixtures/headtohead?h2h={team1Id}-{team2Id}` |
-| Table | League standings | `league` & `season` | `/standings?league={id}&season={year}` |
+| Tab     | Data Required               | API Parameter       | Source                                         |
+| ------- | --------------------------- | ------------------- | ---------------------------------------------- |
+| Summary | Basic fixture info + Events | `id`                | `/fixtures?id={id}`                            |
+| Lineup  | Lineups                     | `id`                | `/fixtures?id={id}`                            |
+| Stats   | Statistics                  | `id`                | `/fixtures?id={id}`                            |
+| Events  | Events                      | `id`                | `/fixtures?id={id}`                            |
+| H2H     | Head-to-head fixtures       | `h2h`               | `/fixtures/headtohead?h2h={team1Id}-{team2Id}` |
+| Table   | League standings            | `league` & `season` | `/standings?league={id}&season={year}`         |
 
 ## Implementation Pattern
 
@@ -95,15 +95,15 @@ Widget build(BuildContext context) {
     builder: (context, state) {
       // Get the most complete fixture data available
       final fixtureToUse = FixtureDataProvider.getBestFixtureData(context, fixture);
-      
+
       // Extract specific data needed for this tab
       final specificData = fixtureToUse.getSpecificData();
-      
+
       // If data is not available, request it
       if (specificData == null && state is! FixtureDetailsLoading) {
         FixtureDataProvider.requestFixtureRefresh(context, fixture.fixture.id);
       }
-      
+
       // Build UI using the data
       return YourSpecificTabUI(data: specificData);
     }

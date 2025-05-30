@@ -22,6 +22,13 @@ abstract class FootballRepository {
   /// Get detailed information about a specific match
   Future<Either<Failure, List<FixtureData>>> getMatchDetails(int matchId);
 
+  /// Get head-to-head fixtures between two teams
+  Future<Either<Failure, List<FixtureData>>> getHeadToHeadFixtures({
+    required int team1Id,
+    required int team2Id,
+    int limit = 10,
+  });
+
   /// Get detailed information about a team
   Future<Either<Failure, Team>> getTeamInformation(int teamId);
 

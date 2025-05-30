@@ -40,6 +40,13 @@ abstract class FootballRemoteDataSource {
   /// Gets match details by ID
   Future<List<FixtureData>> getMatchDetails(int matchId);
 
+  /// Gets head-to-head fixtures between two teams
+  Future<List<FixtureData>> getHeadToHeadFixtures({
+    required int team1Id,
+    required int team2Id,
+    int limit = 10,
+  });
+
   /// Gets team information
   Future<Team> getTeamInformation(int teamId);
 
@@ -681,6 +688,63 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       throw ServerException(
         message: 'Failed to get match predictions data: ${e.toString()}',
       );
+    }
+  }
+
+  @override
+  Future<List<FixtureData>> getHeadToHeadFixtures({
+    required int team1Id,
+    required int team2Id,
+    int limit = 10,
+  }) async {
+    try {
+      // Build the query parameters for H2H fixtures
+      // API endpoint: /fixtures/headtohead?h2h={team1Id}-{team2Id}
+      final Map<String, dynamic> params = {
+        'h2h': '$team1Id-$team2Id',
+        'last': limit.toString(), // Limit the number of results
+      };
+
+      final response = await apiClient.get(
+        EnvConfig.headToHead,
+        queryParameters: params,
+      );
+
+      final responseBody = response.data;
+
+      // Check for API errors
+      if (responseBody['errors'] != null &&
+          responseBody['errors'] is Map &&
+          responseBody['errors'].isNotEmpty) {
+        throw ServerException(
+          message: 'API Error: ${responseBody['errors']}',
+        );
+      }
+
+      // Check if we have results
+      if (responseBody['results'] == 0) {
+        logger.info('No H2H fixtures found between teams $team1Id and $team2Id');
+        return [];
+      }
+
+      // Parse response using the fixture model
+      final fixtureResponse = FixtureResponse.fromJson(responseBody);
+      logger.info('Retrieved ${fixtureResponse.results} H2H fixtures between teams $team1Id and $team2Id');
+
+      // Convert to List<FixtureData> and return
+      return fixtureResponse.response.toList().cast<FixtureData>();
+    } catch (e) {
+      if (e is ServerException) {
+        // If we hit a rate limit, log and return empty list rather than failing
+        if (e.code == 429) {
+          logger.warning('Rate limit hit when fetching H2H fixtures, returning empty list');
+          return [];
+        }
+        rethrow;
+      }
+      logger.error('Error fetching H2H fixtures for teams $team1Id vs $team2Id', error: e);
+      // Return empty list instead of throwing to make app more resilient
+      return [];
     }
   }
 }

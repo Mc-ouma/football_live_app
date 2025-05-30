@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
-import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
@@ -27,11 +27,14 @@ class H2HTab extends StatelessWidget {
         // Check for errors
         if (state is FixtureDetailsError) {
           return ErrorDisplayWidget(
-            message: 'Could not load head-to-head matches',
+            message: 'Could not load head-to-head matches: ${state.message}',
             onRetry: () {
-              // Use our FixtureDataProvider utility to request a refresh
-              FixtureDataProvider.requestFixtureRefresh(
-                  context, fixture.fixture.id);
+              // Request H2H data using the specific event
+              context.read<FixtureDetailsBloc>().add(LoadHeadToHeadFixtures(
+                team1Id: fixture.teams.home.id,
+                team2Id: fixture.teams.away.id,
+                limit: 10,
+              ));
             },
           );
         }
@@ -39,9 +42,26 @@ class H2HTab extends StatelessWidget {
         // Check if we have H2H data available
         List<FixtureData> h2hFixtures = [];
 
-        if (state is FixtureDetailsLoaded && state.fixtures.length > 1) {
-          // The first fixture is the current match, additional fixtures are H2H matches
-          h2hFixtures = state.fixtures.sublist(1);
+        if (state is FixtureDetailsLoaded) {
+          // Use the dedicated H2H fixtures from the enhanced state
+          h2hFixtures = state.headToHeadFixtures;
+        }
+
+        // If we don't have H2H data and we're not already loading, request it
+        if (h2hFixtures.isEmpty && state is! FixtureDetailsLoading) {
+          print(
+              'No H2H data found for match ID: ${fixture.fixture.id}, requesting H2H data...');
+          // Use post-frame callback to avoid calling during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              // Request H2H data specifically
+              context.read<FixtureDetailsBloc>().add(LoadHeadToHeadFixtures(
+                team1Id: fixture.teams.home.id,
+                team2Id: fixture.teams.away.id,
+                limit: 10,
+              ));
+            }
+          });
         }
 
         // If we don't have H2H data, show an appropriate message
@@ -50,6 +70,30 @@ class H2HTab extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Icon(Icons.sports_soccer_outlined,
+                    size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                const Text(
+                  'No head-to-head matches found',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'These teams may not have played against each other recently',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<FixtureDetailsBloc>().add(LoadHeadToHeadFixtures(
+                      team1Id: fixture.teams.home.id,
+                      team2Id: fixture.teams.away.id,
+                      limit: 10,
+                    ));
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Check for Updates'),
+                ),
                 Icon(Icons.sports_soccer, size: 48, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(

@@ -4,6 +4,7 @@ import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
@@ -14,14 +15,6 @@ class LineupTab extends StatelessWidget {
 
   const LineupTab({Key? key, required this.fixture}) : super(key: key);
 
-  // Helper method to get a position based on index
-  String _getPositionByIndex(int index) {
-    if (index == 0) return 'GK';
-    if (index < 5) return 'DEF';
-    if (index < 9) return 'MID';
-    return 'FWD';
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
@@ -30,7 +23,7 @@ class LineupTab extends StatelessWidget {
         if (state is FixtureDetailsLoading) {
           return LoadingWidget(message: 'Loading lineup data...');
         }
-        
+
         // Show error state with retry button
         if (state is FixtureDetailsError) {
           return ErrorDisplayWidget(
@@ -43,7 +36,7 @@ class LineupTab extends StatelessWidget {
             },
           );
         }
-        
+
         // Get data from loaded fixture if available
         List<LineupData> lineups = [];
         if (state is FixtureDetailsLoaded && state.hasFixtures) {
@@ -53,7 +46,7 @@ class LineupTab extends StatelessWidget {
             lineups = loadedFixture.getLineups();
           }
         }
-        
+
         // If we don't have lineup data, show an appropriate placeholder
         if (lineups.isEmpty) {
           return Center(
@@ -75,11 +68,11 @@ class LineupTab extends StatelessWidget {
             ),
           );
         }
-        
+
         // Get the home and away teams from the fixture
         final homeTeam = fixture.teams.home;
         final awayTeam = fixture.teams.away;
-        
+
         // Get the actual lineup data for home and away teams
         final homeLineup = lineups.firstWhere(
           (lineup) => lineup.team.id == homeTeam.id,
@@ -91,7 +84,7 @@ class LineupTab extends StatelessWidget {
             substitutes: [],
           ),
         );
-        
+
         final awayLineup = lineups.firstWhere(
           (lineup) => lineup.team.id == awayTeam.id,
           orElse: () => LineupData(
@@ -102,7 +95,7 @@ class LineupTab extends StatelessWidget {
             substitutes: [],
           ),
         );
-        
+
         // Use DefaultTabController for the team lineups tabs
         return DefaultTabController(
           length: 2,
@@ -202,7 +195,9 @@ class LineupTab extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        lineup.coach?.name ?? 'Unknown',
+                        lineup.coach.name.isNotEmpty
+                            ? lineup.coach.name
+                            : 'Unknown',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -250,7 +245,9 @@ class LineupTab extends StatelessWidget {
             ),
           )
         else
-          ...players.map((player) => _buildPlayerCard(context, player)).toList(),
+          ...players
+              .map((player) => _buildPlayerCard(context, player))
+              .toList(),
       ],
     );
   }
@@ -283,7 +280,9 @@ class LineupTab extends StatelessWidget {
             SizedBox(width: 12),
             Expanded(
               child: Text(
-                player.player.name ?? 'Unknown Player',
+                player.player.name.isNotEmpty
+                    ? player.player.name
+                    : 'Unknown Player',
                 style: TextStyle(fontSize: 14),
               ),
             ),
@@ -309,7 +308,7 @@ class LineupTab extends StatelessWidget {
 
   Color _getPositionColor(String? position) {
     if (position == null) return Colors.grey;
-    
+
     switch (position.toUpperCase()) {
       case 'G':
       case 'GK':

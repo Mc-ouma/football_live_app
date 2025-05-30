@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
@@ -29,10 +28,9 @@ class StatsTab extends StatelessWidget {
           return ErrorDisplayWidget(
             message: 'Failed to load statistics: ${state.message}',
             onRetry: () {
-              // Retry loading fixture details
-              context.read<FixtureDetailsBloc>().add(
-                    RefreshFixtureDetails(fixture.fixture.id),
-                  );
+              // Retry loading fixture details using our provider
+              FixtureDataProvider.requestFixtureRefresh(
+                  context, fixture.fixture.id);
             },
           );
         }
@@ -41,18 +39,46 @@ class StatsTab extends StatelessWidget {
         FixtureData fixtureToUse =
             FixtureDataProvider.getBestFixtureData(context, fixture);
 
-        // Get statistics data
-        Statistics? stats = fixtureToUse.getStatistics();
+        // Check if we have statistics data
+        if (!FixtureDataProvider.hasStatisticsData(fixtureToUse)) {
+          // If we don't have stats data yet and we're not already loading, try requesting it
+          if (state is! FixtureDetailsLoading) {
+            print(
+                'No statistics found for match ID: ${fixture.fixture.id}, requesting data...');
+            // Use post-frame callback to avoid calling during build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                FixtureDataProvider.requestFixtureRefresh(
+                    context, fixture.fixture.id);
+              }
+            });
+          }
 
-        // If we don't have stats data yet, try requesting it
-        if (stats == null && state is! FixtureDetailsLoading) {
-          print(
-              'No statistics found for match ID: ${fixture.fixture.id}, requesting data...');
-          FixtureDataProvider.requestFixtureRefresh(
-              context, fixture.fixture.id);
+          // If we don't have statistics data, show an appropriate placeholder
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.insert_chart_outlined,
+                    size: 64, color: Colors.grey[400]),
+                SizedBox(height: 16),
+                Text(
+                  'No statistics available for this match',
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Statistics are typically available during or after the match',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          );
         }
 
-        // If we don't have statistics data, show an appropriate placeholder
+        // Get statistics using the fixture extension
+        final stats = fixtureToUse.getStatistics();
+
         if (stats == null) {
           return Center(
             child: Column(

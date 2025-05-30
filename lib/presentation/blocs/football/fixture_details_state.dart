@@ -14,8 +14,12 @@ class FixtureDetailsLoading extends FixtureDetailsState {}
 
 class FixtureDetailsLoaded extends FixtureDetailsState {
   final List<FixtureData> fixtures;
+  final List<FixtureData> headToHeadFixtures;
 
-  const FixtureDetailsLoaded(this.fixtures);
+  const FixtureDetailsLoaded(
+    this.fixtures, {
+    this.headToHeadFixtures = const [],
+  });
 
   // Convenience getter to access the first fixture when we expect exactly one
   // Returns null if the list is empty to allow for safer handling
@@ -23,6 +27,9 @@ class FixtureDetailsLoaded extends FixtureDetailsState {
 
   // Check if the fixture list has any items
   bool get hasFixtures => fixtures.isNotEmpty;
+
+  // Check if we have H2H data
+  bool get hasHeadToHeadFixtures => headToHeadFixtures.isNotEmpty;
 
   // For cases where we need to access fixtures by index safely
   FixtureData? getFixtureAt(int index) {
@@ -35,8 +42,22 @@ class FixtureDetailsLoaded extends FixtureDetailsState {
   // Get the count of fixtures
   int get fixtureCount => fixtures.length;
 
+  // Get the count of H2H fixtures
+  int get headToHeadCount => headToHeadFixtures.length;
+
+  // Copy with method for updating state
+  FixtureDetailsLoaded copyWith({
+    List<FixtureData>? fixtures,
+    List<FixtureData>? headToHeadFixtures,
+  }) {
+    return FixtureDetailsLoaded(
+      fixtures ?? this.fixtures,
+      headToHeadFixtures: headToHeadFixtures ?? this.headToHeadFixtures,
+    );
+  }
+
   @override
-  List<Object> get props => [fixtures];
+  List<Object> get props => [fixtures, headToHeadFixtures];
 }
 
 class FixtureDetailsError extends FixtureDetailsState {

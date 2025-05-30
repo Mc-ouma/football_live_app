@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
-import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
+import 'package:football_live_app/presentation/widgets/error_widget.dart';
+import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 
 class EventsTab extends StatelessWidget {
   final FixtureData fixture;
@@ -15,6 +16,23 @@ class EventsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
       builder: (context, state) {
+        // Show loading state
+        if (state is FixtureDetailsLoading) {
+          return const LoadingWidget(message: 'Loading match events...');
+        }
+
+        // Show error state with retry button
+        if (state is FixtureDetailsError) {
+          return ErrorDisplayWidget(
+            message: 'Failed to load events: ${state.message}',
+            onRetry: () {
+              // Retry loading fixture details using our provider
+              FixtureDataProvider.requestFixtureRefresh(
+                  context, fixture.fixture.id);
+            },
+          );
+        }
+
         // Get the most complete fixture data available using our utility
         final fixtureToUse =
             FixtureDataProvider.getBestFixtureData(context, fixture);
@@ -25,14 +43,34 @@ class EventsTab extends StatelessWidget {
         // If we don't have events data and we're not already loading, request it
         if (events.isEmpty && state is! FixtureDetailsLoading) {
           print('No events data available, requesting from API...');
-          context.read<FixtureDetailsBloc>().add(
-                RefreshFixtureDetails(fixture.fixture.id),
-              );
+          // Use post-frame callback to avoid calling during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              FixtureDataProvider.requestFixtureRefresh(
+                  context, fixture.fixture.id);
+            }
+          });
         }
 
         if (events.isEmpty) {
           return Center(
-            child: Text('No events available for this match'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.sports_soccer_outlined,
+                    size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                const Text(
+                  'No events available for this match',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Events will appear as they occur during the match',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
+            ),
           );
         }
 

@@ -11,13 +11,12 @@ import 'package:football_live_app/presentation/pages/match_details/utils/fixture
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/events_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/h2h_tab.dart';
-import 'package:football_live_app/presentation/pages/match_details/widgets/lineup_tab.dart';
+import 'package:football_live_app/presentation/pages/match_details/widgets/lineup_tab_enhanced.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/match_score_header.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/predictions_tab.dart';
-import 'package:football_live_app/presentation/pages/match_details/widgets/stats_tab.dart';
+import 'package:football_live_app/presentation/pages/match_details/widgets/stats_tab_enhanced.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/summary_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/table_tab.dart';
-import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
 import 'package:football_live_app/presentation/widgets/loading_widget.dart';
@@ -40,89 +39,44 @@ class MatchDetailsPage extends StatefulWidget {
 class _MatchDetailsPageState extends State<MatchDetailsPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  late ScrollController _scrollController;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
   bool _isLoadingTabData = false;
 
   // Track if we've loaded detailed fixture data
   bool _initialDataLoaded = false;
+  double _scrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 7, vsync: this);
+    _scrollController = ScrollController();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
 
     // Add listener to load data for specific tabs as they are selected
     _tabController.addListener(_handleTabChange);
+
+    // Add scroll listener for parallax effects
+    _scrollController.addListener(_onScroll);
+
+    // Start fade animation
+    _fadeController.forward();
   }
 
-  /// Extract and log detailed fixture information
-  void _logDetailedFixtureInfo(FixtureData fixture) {
-    print('\n===== DETAILED FIXTURE INFO =====');
-    print('Match ID: ${fixture.fixture.id}');
-    print('Match: ${fixture.teams.home.name} vs ${fixture.teams.away.name}');
-    print('Score: ${fixture.goals.home ?? 0} - ${fixture.goals.away ?? 0}');
-    print('Status: ${fixture.fixture.status.long}');
-
-    // Extract events (goals, cards, subs)
-    final events = fixture.getEvents();
-    print('\nEvents: ${events.length}');
-    if (events.isNotEmpty) {
-      print(
-          'First event: ${events.first.type} at ${events.first.time.elapsed}\'');
-
-      // Count goals
-      final goals = events.where((e) => e.type.toLowerCase() == 'goal').length;
-      print('Goals: $goals');
-
-      // Count cards
-      final cards = events.where((e) => e.type.toLowerCase() == 'card').length;
-      print('Cards: $cards');
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+      });
     }
-
-    // Extract lineups
-    final lineups = fixture.getLineups();
-    print('\nLineups: ${lineups.length}');
-    if (lineups.isNotEmpty) {
-      print(
-          'Home formation: ${lineups.firstWhere((l) => l.team.id == fixture.teams.home.id, orElse: () => LineupData(team: fixture.teams.home, coach: Coach(id: 0, name: "Unknown"), formation: "Unknown", startXI: [], substitutes: [])).formation}');
-      print(
-          'Away formation: ${lineups.firstWhere((l) => l.team.id == fixture.teams.away.id, orElse: () => LineupData(team: fixture.teams.away, coach: Coach(id: 0, name: "Unknown"), formation: "Unknown", startXI: [], substitutes: [])).formation}');
-    }
-
-    // Extract statistics
-    final statistics = fixture.getStatistics();
-    print('\nStatistics available: ${statistics != null}');
-    if (statistics != null) {
-      // Check home and away stats
-      final homeStats = statistics.home;
-      final awayStats = statistics.away;
-
-      print('Home stats: ${homeStats?.length ?? 0} categories');
-      print('Away stats: ${awayStats?.length ?? 0} categories');
-
-      // Try to find possession stats for home team
-      if (homeStats != null && homeStats.isNotEmpty) {
-        final possessionStat = homeStats.firstWhere(
-          (stat) => stat.type.toLowerCase().contains('possession'),
-          orElse: () => TeamStatistics(type: 'Not found', value: '0'),
-        );
-
-        print(
-            '${fixture.teams.home.name} possession: ${possessionStat.value ?? 'N/A'}');
-      }
-
-      // Try to find possession stats for away team
-      if (awayStats != null && awayStats.isNotEmpty) {
-        final possessionStat = awayStats.firstWhere(
-          (stat) => stat.type.toLowerCase().contains('possession'),
-          orElse: () => TeamStatistics(type: 'Not found', value: '0'),
-        );
-
-        print(
-            '${fixture.teams.away.name} possession: ${possessionStat.value ?? 'N/A'}');
-      }
-    }
-
-    print('===== END DETAILED INFO =====\n');
   }
 
   @override
@@ -146,9 +100,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       // If fetchFullDetails is true, we should prefetch all the required data for tabs
       if (widget.fetchFullDetails) {
         _preloadAllTabsData();
-      } else {
-        // Log detailed fixture info for debugging
-        _logDetailedFixtureInfo(widget.fixture);
       }
     }
   }
@@ -168,9 +119,8 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
         _isLoadingTabData = true;
       });
 
-      // We need to make sure that the blocs are initialized before we can call read()
-      // So we use Future.microtask to ensure all dependencies are ready
-      Future.microtask(() {
+      // Use SchedulerBinding.addPostFrameCallback to ensure this runs after the build phase
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
 
         // Make a single API call to get fixture details by ID
@@ -180,11 +130,30 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
         // - Statistics (possession, shots, etc.)
         // - Player data
         try {
-          // Using the fixtures endpoint with ID parameter
-          context.read<FixtureDetailsBloc>().add(LoadFixtureDetails(fixtureId));
-          print('Fetching complete fixture details for ID: $fixtureId');
+          // Show loading indicator for better UX
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Loading match details...'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+
+          // Use FixtureDataProvider to request fixture refresh
+          // This ensures we follow the app's rate limiting policy
+          FixtureDataProvider.requestFixtureRefresh(context, fixtureId);
+          print(
+              'Fetching complete fixture details for ID: $fixtureId using FixtureDataProvider');
         } catch (e) {
           print('Error loading fixture details: $e');
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading match details: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
 
         // Standings data requires a separate API call with league ID and season
@@ -233,142 +202,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
   // Store this to access bloc safely
   BuildContext? _providerContext;
 
-  /// Demonstrates extracting specific data from a fixture for different tabs
-  void _demonstrateFixtureDataExtraction(
-      BuildContext context, FixtureData fixture, int tabIndex) {
-    print("\n===== TAB ${tabIndex} DATA EXTRACTION =====");
-    switch (tabIndex) {
-      case 0: // Summary tab
-        print("SUMMARY TAB DATA:");
-        print(
-            "Match: ${fixture.teams.home.name} vs ${fixture.teams.away.name}");
-        print("Score: ${fixture.goals.home ?? 0} - ${fixture.goals.away ?? 0}");
-        print("Date: ${fixture.fixture.date}");
-        break;
-
-      case 1: // Events tab
-        final events = FixtureDataProvider.getSortedEvents(fixture);
-        print("EVENTS TAB DATA:");
-        print("Total events: ${events.length}");
-
-        if (events.isNotEmpty) {
-          // Group events by type
-          final goals =
-              events.where((e) => e.type.toLowerCase() == 'goal').toList();
-          final cards =
-              events.where((e) => e.type.toLowerCase() == 'card').toList();
-          final substitutions =
-              events.where((e) => e.type.toLowerCase() == 'subst').toList();
-
-          print("Goals: ${goals.length}");
-          print("Cards: ${cards.length}");
-          print("Substitutions: ${substitutions.length}");
-
-          // Home vs Away events
-          final homeEvents =
-              events.where((e) => e.team.id == fixture.teams.home.id).length;
-          final awayEvents =
-              events.where((e) => e.team.id == fixture.teams.away.id).length;
-          print("Home team events: $homeEvents");
-          print("Away team events: $awayEvents");
-        }
-        break;
-
-      case 2: // Lineups tab
-        print("LINEUPS TAB DATA:");
-        final lineups = fixture.getLineups();
-        print("Lineup data available: ${lineups.isNotEmpty}");
-
-        if (lineups.isNotEmpty) {
-          // Extract home team lineup
-          final homeLineup =
-              FixtureDataProvider.getTeamLineup(fixture, fixture.teams.home.id);
-          if (homeLineup != null) {
-            print(
-                "${fixture.teams.home.name} formation: ${homeLineup.formation}");
-            print(
-                "${fixture.teams.home.name} starting XI: ${homeLineup.startXI.length} players");
-            print(
-                "${fixture.teams.home.name} substitutes: ${homeLineup.substitutes.length} players");
-            print("${fixture.teams.home.name} coach: ${homeLineup.coach.name}");
-          }
-
-          // Extract away team lineup
-          final awayLineup =
-              FixtureDataProvider.getTeamLineup(fixture, fixture.teams.away.id);
-          if (awayLineup != null) {
-            print(
-                "${fixture.teams.away.name} formation: ${awayLineup.formation}");
-            print(
-                "${fixture.teams.away.name} starting XI: ${awayLineup.startXI.length} players");
-            print(
-                "${fixture.teams.away.name} substitutes: ${awayLineup.substitutes.length} players");
-            print("${fixture.teams.away.name} coach: ${awayLineup.coach.name}");
-          }
-        }
-        break;
-
-      case 3: // Stats tab
-        print("STATS TAB DATA:");
-        final statistics = fixture.getStatistics();
-        print("Statistics data available: ${statistics != null}");
-
-        if (statistics != null) {
-          // Print some key statistics for demonstration
-          if (statistics.home != null && statistics.home!.isNotEmpty) {
-            print(
-                "${fixture.teams.home.name} stats categories: ${statistics.home!.length}");
-
-            // Try to extract common statistics
-            _printTeamStat(
-                statistics.home!, "Ball Possession", fixture.teams.home.name);
-            _printTeamStat(
-                statistics.home!, "Total Shots", fixture.teams.home.name);
-            _printTeamStat(
-                statistics.home!, "Shots on Goal", fixture.teams.home.name);
-          }
-
-          if (statistics.away != null && statistics.away!.isNotEmpty) {
-            print(
-                "${fixture.teams.away.name} stats categories: ${statistics.away!.length}");
-
-            // Try to extract common statistics
-            _printTeamStat(
-                statistics.away!, "Ball Possession", fixture.teams.away.name);
-            _printTeamStat(
-                statistics.away!, "Total Shots", fixture.teams.away.name);
-            _printTeamStat(
-                statistics.away!, "Shots on Goal", fixture.teams.away.name);
-          }
-        }
-        break;
-
-      default:
-        print("Data extraction not implemented for tab $tabIndex");
-        break;
-    }
-    print("===== END TAB DATA EXTRACTION =====\n");
-  }
-
-  /// Helper method to print a team statistic if it exists
-  void _printTeamStat(
-      List<TeamStatistics> stats, String statName, String teamName) {
-    try {
-      final stat = stats.firstWhere(
-        (s) =>
-            s.type == statName ||
-            s.type.toLowerCase().contains(statName.toLowerCase()),
-        orElse: () => TeamStatistics(type: 'Not found', value: null),
-      );
-
-      if (stat.type != 'Not found') {
-        print("$teamName ${stat.type}: ${stat.value ?? 'N/A'}");
-      }
-    } catch (e) {
-      print("Error finding $statName stat: $e");
-    }
-  }
-
   void _handleTabChange() {
     // Only trigger when the tab actually changes
     if (!_tabController.indexIsChanging) {
@@ -401,10 +234,38 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
         // For live matches, refresh fixture data more frequently
         if (isLiveMatch && selectedTabIndex <= 4 && _providerContext != null) {
           try {
-            final bloc = BlocProvider.of<FixtureDetailsBloc>(_providerContext!);
-            bloc.add(RefreshFixtureDetails(fixtureId));
+            // Use FixtureDataProvider to request refresh with rate limiting
+            FixtureDataProvider.requestFixtureRefresh(
+                _providerContext!, fixtureId);
+            print(
+                'Refreshing live match data for tab $selectedTabIndex with FixtureDataProvider');
           } catch (e) {
-            print('Error accessing FixtureDetailsBloc: $e');
+            print('Error refreshing fixture data: $e');
+          }
+        }
+
+        // Only load H2H data when the H2H tab is selected
+        if (selectedTabIndex == 4 && _providerContext != null) {
+          try {
+            final bloc = BlocProvider.of<FixtureDetailsBloc>(_providerContext!);
+            final currentState = bloc.state;
+
+            // Check if we already have H2H data for these teams
+            bool shouldLoadH2H = true;
+            if (currentState is FixtureDetailsLoaded) {
+              shouldLoadH2H = !currentState.hasHeadToHeadFixtures;
+            }
+
+            if (shouldLoadH2H) {
+              bloc.add(LoadHeadToHeadFixtures(
+                team1Id: widget.fixture.teams.home.id,
+                team2Id: widget.fixture.teams.away.id,
+                limit: 10, // Load last 10 H2H matches
+              ));
+              print('Loading H2H data for teams: ${widget.fixture.teams.home.name} vs ${widget.fixture.teams.away.name}');
+            }
+          } catch (e) {
+            print('Error accessing FixtureDetailsBloc for H2H: $e');
           }
         }
 
@@ -452,12 +313,6 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
       }
 
       if (mounted) {
-        // Extract and demonstrate fixture data for the selected tab
-        final fixtureData =
-            FixtureDataProvider.getBestFixtureData(context, widget.fixture);
-        _demonstrateFixtureDataExtraction(
-            context, fixtureData, selectedTabIndex);
-
         setState(() {
           _isLoadingTabData = false;
         });
@@ -469,6 +324,9 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
   void dispose() {
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -511,61 +369,214 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
 
           return Scaffold(
             body: NestedScrollView(
+              controller: _scrollController,
               headerSliverBuilder: (context, innerBoxIsScrolled) {
+                // Calculate responsive height based on screen size
+                final screenHeight = MediaQuery.of(context).size.height;
+                final expandedHeight = ResponsiveHelper.isMobile(context)
+                    ? 280.0
+                    : screenHeight > 800
+                        ? 320.0
+                        : 300.0;
+
+                // Calculate parallax offset
+                final parallaxOffset = _scrollOffset * 0.5;
+
+                // Calculate opacity based on scroll position
+                final opacity =
+                    (1 - (_scrollOffset / expandedHeight)).clamp(0.0, 1.0);
+
                 return [
                   SliverAppBar(
-                    expandedHeight: 300.0,
-                    floating: false,
-                    pinned: true,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background:
-                          BlocBuilder<FixtureDetailsBloc, FixtureDetailsState>(
-                        builder: (context, state) {
-                          if (state is FixtureDetailsLoaded &&
-                              state.hasFixtures) {
-                            // Use the getter that returns the first fixture
-                            return MatchScoreHeader(fixture: state.fixture!);
-                          }
-                          return MatchScoreHeader(fixture: widget.fixture);
-                        },
-                      ),
+                    expandedHeight: expandedHeight,
+                    floating: true,
+                    snap: true,
+                    pinned: false,
+                    elevation: innerBoxIsScrolled ? 8.0 : 4.0,
+                    backgroundColor: Colors.transparent,
+                    leading: AnimatedBuilder(
+                      animation: _fadeAnimation,
+                      builder: (context, child) {
+                        return FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 3.0,
+                                  color: Colors.black.withOpacity(0.5),
+                                  offset: Offset(1.0, 1.0),
+                                ),
+                              ],
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        );
+                      },
                     ),
-                    bottom: TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      labelStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: ResponsiveHelper.isMobile(context) ? 13 : 14,
-                      ),
-                      unselectedLabelStyle: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        fontSize: ResponsiveHelper.isMobile(context) ? 13 : 14,
-                      ),
-                      indicator: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: AppTheme.primaryColor,
-                            width: 3.0,
+                    flexibleSpace: FlexibleSpaceBar(
+                      titlePadding: EdgeInsets.zero,
+                      centerTitle: false,
+                      title: AnimatedOpacity(
+                        opacity: opacity,
+                        duration: const Duration(milliseconds: 100),
+                        child: Container(
+                          height: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.9 * opacity),
+                                Theme.of(context)
+                                    .colorScheme
+                                    .secondary
+                                    .withOpacity(0.7 * opacity),
+                              ],
+                              stops: const [0.0, 1.0],
+                            ),
                           ),
                         ),
                       ),
-                      indicatorSize: TabBarIndicatorSize.label,
-                      labelColor: AppTheme.primaryColor,
-                      unselectedLabelColor: Colors.grey[600],
-                      labelPadding: EdgeInsets.symmetric(
-                        horizontal:
-                            ResponsiveHelper.isMobile(context) ? 12 : 16,
-                        vertical: 12,
+                      background: Transform.translate(
+                        offset: Offset(0, -parallaxOffset),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Theme.of(context).primaryColor.withOpacity(0.8),
+                                Theme.of(context)
+                                    .colorScheme
+                                    .secondary
+                                    .withOpacity(0.6),
+                              ],
+                              stops: const [0.0, 1.0],
+                            ),
+                          ),
+                          child: AnimatedBuilder(
+                            animation: _fadeAnimation,
+                            builder: (context, child) {
+                              return FadeTransition(
+                                opacity: _fadeAnimation,
+                                child: BlocBuilder<FixtureDetailsBloc,
+                                    FixtureDetailsState>(
+                                  builder: (context, state) {
+                                    if (state is FixtureDetailsLoaded &&
+                                        state.hasFixtures) {
+                                      // Use the getter that returns the first fixture
+                                      return MatchScoreHeader(
+                                          fixture: state.fixture!);
+                                    }
+                                    return MatchScoreHeader(
+                                        fixture: widget.fixture);
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                      tabs: [
-                        Tab(text: 'Summary'),
-                        Tab(text: 'Events'),
-                        Tab(text: 'Lineups'),
-                        Tab(text: 'Stats'),
-                        Tab(text: 'H2H'),
-                        Tab(text: 'Table'),
-                        Tab(text: 'Predictions'),
-                      ],
+                    ),
+                    bottom: PreferredSize(
+                      preferredSize: Size.fromHeight(60.0),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black
+                                  .withOpacity(innerBoxIsScrolled ? 0.2 : 0.1),
+                            ],
+                          ),
+                          boxShadow: innerBoxIsScrolled
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4.0,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _fadeAnimation,
+                          builder: (context, child) {
+                            return FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: TabBar(
+                                controller: _tabController,
+                                isScrollable: true,
+                                physics: const BouncingScrollPhysics(),
+                                labelStyle: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: ResponsiveHelper.isMobile(context)
+                                      ? 13
+                                      : 14,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 2.0,
+                                      color: Colors.black.withOpacity(0.4),
+                                      offset: Offset(0.5, 0.5),
+                                    ),
+                                  ],
+                                ),
+                                unselectedLabelStyle: TextStyle(
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: ResponsiveHelper.isMobile(context)
+                                      ? 13
+                                      : 14,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 1.0,
+                                      color: Colors.black.withOpacity(0.2),
+                                      offset: Offset(0.5, 0.5),
+                                    ),
+                                  ],
+                                ),
+                                indicator: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.white,
+                                      width: 3.0,
+                                    ),
+                                  ),
+                                  borderRadius: BorderRadius.vertical(
+                                    bottom: Radius.circular(2.0),
+                                  ),
+                                ),
+                                indicatorSize: TabBarIndicatorSize.label,
+                                labelColor: Colors.white,
+                                unselectedLabelColor:
+                                    Colors.white.withOpacity(0.7),
+                                labelPadding: EdgeInsets.symmetric(
+                                  horizontal: ResponsiveHelper.isMobile(context)
+                                      ? 12
+                                      : 16,
+                                  vertical: 12,
+                                ),
+                                tabs: [
+                                  Tab(text: 'Summary'),
+                                  Tab(text: 'Events'),
+                                  Tab(text: 'Lineups'),
+                                  Tab(text: 'Stats'),
+                                  Tab(text: 'H2H'),
+                                  Tab(text: 'Table'),
+                                  Tab(text: 'Predictions'),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ];
@@ -582,14 +593,15 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                     return ErrorDisplayWidget(
                       message: 'Error loading match details: ${state.message}',
                       onRetry: () {
-                        context.read<FixtureDetailsBloc>().add(
-                              RefreshFixtureDetails(widget.fixture.fixture.id),
-                            );
+                        // Use FixtureDataProvider for consistent error handling and rate limiting
+                        FixtureDataProvider.requestFixtureRefresh(
+                            context, widget.fixture.fixture.id);
                       },
                     );
                   }
 
-                  // Use the FixtureDataProvider to get the best available fixture data
+                  // Use FixtureDataProvider to get the best available fixture data
+                  // This ensures we consistently access the most complete data across all tabs
                   FixtureData fixtureToUse =
                       FixtureDataProvider.getBestFixtureData(
                           context, widget.fixture);
@@ -622,10 +634,12 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                       key: const ValueKey('summary'), fixture: fixtureToUse);
                   final eventsWidget = EventsTab(
                       key: const ValueKey('events'), fixture: fixtureToUse);
-                  final lineupWidget = LineupTab(
+                  // Use enhanced lineup tab for better data handling
+                  final lineupWidget = LineupTabEnhanced(
                       key: const ValueKey('lineup'), fixture: fixtureToUse);
-                  final statsWidget =
-                      StatsTab(key: ValueKey('stats'), fixture: fixtureToUse);
+                  // Use enhanced stats tab for better UI and data presentation
+                  final statsWidget = StatsTabEnhanced(
+                      key: ValueKey('stats'), fixture: fixtureToUse);
                   final h2hWidget =
                       H2HTab(key: ValueKey('h2h'), fixture: fixtureToUse);
                   final tableWidget =

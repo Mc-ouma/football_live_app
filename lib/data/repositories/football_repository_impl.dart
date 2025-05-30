@@ -463,6 +463,43 @@ class FootballRepositoryImpl implements FootballRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, List<FixtureData>>> getHeadToHeadFixtures({
+    required int team1Id,
+    required int team2Id,
+    int limit = 10,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final h2hFixtures = await remoteDataSource.getHeadToHeadFixtures(
+          team1Id: team1Id,
+          team2Id: team2Id,
+          limit: limit,
+        );
+        
+        // Cache H2H fixtures individually if needed
+        for (final fixture in h2hFixtures) {
+          await localDataSource.cacheMatchDetails(fixture);
+        }
+        
+        return Right(h2hFixtures);
+      } on NotFoundException catch (e) {
+        return Left(NotFoundFailure(message: e.message));
+      } on RateLimitException catch (e) {
+        logger.warning('API rate limit hit for H2H data', error: e);
+        // For H2H, we could potentially return cached individual match details
+        // but for simplicity, we'll return empty list
+        return Right([]);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message, code: e.code));
+      }
+    } else {
+      logger.info('No internet connection, H2H data not available from cache');
+      // H2H data is not typically cached separately, return empty list
+      return Right([]);
+    }
+  }
+
   /// Determines if a request should be made based on rate limiting status
   /// Consider the importance of the feature, the remaining API calls,
   /// and whether we have cached data

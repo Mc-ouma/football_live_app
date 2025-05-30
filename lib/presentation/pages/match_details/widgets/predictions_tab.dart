@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
 import 'package:football_live_app/presentation/pages/match_details/models/prediction_odds_item.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/prediction_widgets.dart';
+import 'package:football_live_app/presentation/widgets/error_widget.dart';
+import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 
 class PredictionsTab extends StatelessWidget {
   final int fixtureId;
@@ -14,36 +16,16 @@ class PredictionsTab extends StatelessWidget {
     return BlocBuilder<PredictionBloc, PredictionState>(
       builder: (context, state) {
         if (state is PredictionLoading) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading match predictions...'),
-              ],
-            ),
-          );
+          return LoadingWidget(message: 'Loading match predictions...');
         } else if (state is PredictionError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 48, color: Colors.red),
-                SizedBox(height: 16),
-                Text('Failed to load predictions: ${state.message}'),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    // Retry loading predictions
-                    context.read<PredictionBloc>().add(
-                          FetchMatchPredictionEvent(matchId: fixtureId),
-                        );
-                  },
-                  child: Text('Retry'),
-                ),
-              ],
-            ),
+          return ErrorDisplayWidget(
+            message: 'Failed to load predictions: ${state.message}',
+            onRetry: () {
+              // Retry loading predictions
+              context.read<PredictionBloc>().add(
+                    FetchMatchPredictionEvent(matchId: fixtureId),
+                  );
+            },
           );
         } else if (state is PredictionLoaded) {
           // Get prediction data but we'll use dynamic data for the UI later if needed

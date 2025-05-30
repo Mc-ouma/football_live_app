@@ -93,7 +93,7 @@ class _StandingsPageState extends State<StandingsPage> {
         return ListTile(
           leading: SizedBox(
             width: 30,
-            child: (team.team.logo != null)
+            child: team.team.logo.isNotEmpty
                 ? Image.network(
                     team.team.logo,
                     errorBuilder: (_, __, ___) =>

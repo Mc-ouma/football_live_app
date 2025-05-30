@@ -4,9 +4,9 @@ import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/data/models/shared_models.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
-import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
+import 'package:football_live_app/presentation/widgets/error_widget.dart';
 import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 import 'package:intl/intl.dart';
 
@@ -21,12 +21,38 @@ class SummaryTab extends StatelessWidget {
       builder: (context, state) {
         // Show loading state
         if (state is FixtureDetailsLoading) {
-          return LoadingWidget(message: 'Loading match summary...');
+          return const LoadingWidget(message: 'Loading match summary...');
+        }
+
+        // Show error state with retry button
+        if (state is FixtureDetailsError) {
+          return ErrorDisplayWidget(
+            message: 'Failed to load match summary: ${state.message}',
+            onRetry: () {
+              // Retry loading fixture details using our provider
+              FixtureDataProvider.requestFixtureRefresh(
+                  context, fixture.fixture.id);
+            },
+          );
         }
 
         // Get the fixture with the most complete data using our utility
         FixtureData fixtureToUse =
             FixtureDataProvider.getBestFixtureData(context, fixture);
+
+        // Check if we have events data
+        if (!FixtureDataProvider.hasEventsData(fixtureToUse) &&
+            state is! FixtureDetailsLoading) {
+          print(
+              'No events data found for match ID: ${fixture.fixture.id}, requesting data...');
+          // Use post-frame callback to avoid calling during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              FixtureDataProvider.requestFixtureRefresh(
+                  context, fixture.fixture.id);
+            }
+          });
+        }
 
         // Format date properly
         String formattedDate;
@@ -38,14 +64,12 @@ class SummaryTab extends StatelessWidget {
           formattedDate = fixtureToUse.fixture.date;
         }
 
-        // Get events to show in summary
-        final events = fixtureToUse.getEvents();
-        final homeTeamEvents = events
-            .where((e) => e.team.id == fixtureToUse.teams.home.id)
-            .toList();
-        final awayTeamEvents = events
-            .where((e) => e.team.id == fixtureToUse.teams.away.id)
-            .toList();
+        // Get events to show in summary using the utility functions
+        final events = FixtureDataProvider.getSortedEvents(fixtureToUse);
+        final homeTeamEvents = FixtureDataProvider.getTeamEvents(
+            fixtureToUse, fixtureToUse.teams.home.id);
+        final awayTeamEvents = FixtureDataProvider.getTeamEvents(
+            fixtureToUse, fixtureToUse.teams.away.id);
 
         return SingleChildScrollView(
           padding: ResponsiveHelper.getPadding(context),

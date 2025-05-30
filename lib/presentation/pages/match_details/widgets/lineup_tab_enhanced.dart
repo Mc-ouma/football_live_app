@@ -3,17 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
-import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/presentation/utils/app_theme.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
 import 'package:football_live_app/presentation/widgets/loading_widget.dart';
 
-class LineupTab extends StatelessWidget {
+class LineupTabEnhanced extends StatelessWidget {
   final FixtureData fixture;
 
-  LineupTab({Key? key, required this.fixture}) : super(key: key);
+  const LineupTabEnhanced({Key? key, required this.fixture}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -40,13 +40,11 @@ class LineupTab extends StatelessWidget {
         final fixtureToUse =
             FixtureDataProvider.getBestFixtureData(context, fixture);
 
-        // Get lineups using the selected fixture
-        List<LineupData> lineups = fixtureToUse.getLineups();
-
-        // If we don't have lineup data and we're not already loading, request it
-        if (lineups.isEmpty && state is! FixtureDetailsLoading) {
+        // Check if lineup data is available
+        if (!FixtureDataProvider.hasLineupData(fixtureToUse) &&
+            state is! FixtureDetailsLoading) {
           print(
-              'No lineup data available for match ID: ${fixture.fixture.id}, requesting data...');
+              'No lineup data found for match ID: ${fixture.fixture.id}, requesting data...');
           // Use post-frame callback to avoid calling during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
@@ -55,6 +53,9 @@ class LineupTab extends StatelessWidget {
             }
           });
         }
+
+        // Get lineups using the selected fixture
+        List<LineupData> lineups = fixtureToUse.getLineups();
 
         // If lineups are empty, show a helpful message
         if (lineups.isEmpty) {
@@ -88,13 +89,17 @@ class LineupTab extends StatelessWidget {
         // Log the retrieved lineup data for debugging
         print(
             'Retrieved ${lineups.length} lineups for match ID: ${fixtureToUse.fixture.id}');
-        print('Home team formation: ${lineups[0].formation}');
-        print(
-            'Away team formation: ${lineups.length > 1 ? lineups[1].formation : "N/A"}');
+
+        if (lineups.isNotEmpty) {
+          print('Home team formation: ${lineups[0].formation}');
+        }
+        if (lineups.length > 1) {
+          print('Away team formation: ${lineups[1].formation}');
+        }
 
         // Get the home and away teams from the fixture
-        final homeTeam = fixture.teams.home;
-        final awayTeam = fixture.teams.away;
+        final homeTeam = fixtureToUse.teams.home;
+        final awayTeam = fixtureToUse.teams.away;
 
         // Get the actual lineup data for home and away teams
         final homeLineup = lineups.firstWhere(
@@ -126,8 +131,8 @@ class LineupTab extends StatelessWidget {
             children: [
               TabBar(
                 tabs: [
-                  Tab(text: fixture.teams.home.name),
-                  Tab(text: fixture.teams.away.name),
+                  Tab(text: homeTeam.name),
+                  Tab(text: awayTeam.name),
                 ],
                 labelColor: Theme.of(context).primaryColor,
                 unselectedLabelColor: Colors.grey,
@@ -163,13 +168,13 @@ class LineupTab extends StatelessWidget {
                 backgroundImage: NetworkImage(lineup.team.logo),
                 radius: 20,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     lineup.team.name,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -185,14 +190,14 @@ class LineupTab extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           // Coach information
           Card(
             elevation: 1,
-            margin: EdgeInsets.symmetric(vertical: 8),
+            margin: const EdgeInsets.symmetric(vertical: 8),
             child: Padding(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   Container(
@@ -206,7 +211,7 @@ class LineupTab extends StatelessWidget {
                       child: Icon(Icons.person, color: Colors.grey[800]),
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -219,7 +224,7 @@ class LineupTab extends StatelessWidget {
                       ),
                       Text(
                         lineup.coach.name,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -247,7 +252,7 @@ class LineupTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
             title,
             style: TextStyle(
@@ -262,7 +267,7 @@ class LineupTab extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Text(
               'No $title data available',
-              style: TextStyle(fontStyle: FontStyle.italic),
+              style: const TextStyle(fontStyle: FontStyle.italic),
             ),
           )
         else
@@ -276,9 +281,9 @@ class LineupTab extends StatelessWidget {
   Widget _buildPlayerCard(BuildContext context, StartXI player) {
     return Card(
       elevation: 1,
-      margin: EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         child: Row(
           children: [
             Container(
@@ -293,29 +298,29 @@ class LineupTab extends StatelessWidget {
                   player.player.number != null
                       ? '${player.player.number}'
                       : '?',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 player.player.name,
-                style: TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 14),
               ),
             ),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 player.player.pos ?? '?',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
