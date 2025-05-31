@@ -19,6 +19,7 @@ import 'package:football_live_app/core/network/api_client.dart';
 import 'package:football_live_app/core/utils/logger.dart';
 import 'package:football_live_app/data/datasources/remote/direct_prediction_service_fixed.dart';
 import 'package:football_live_app/data/models/fixture_model.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/data/models/prediction_model.dart';
 import 'package:football_live_app/data/models/standings_model.dart'
     as standings_models;
@@ -325,23 +326,41 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
 
   @override
   Future<List<FixtureData>> getMatchDetails(int matchId) async {
+    print(
+        '🌍 RemoteDataSource: Starting getMatchDetails() for match ID: $matchId');
     try {
       // Build the query parameters
       final Map<String, dynamic> params = {
         'id': matchId.toString(),
       };
 
+      print('📝 RemoteDataSource: Request parameters: $params');
+      print('🔗 RemoteDataSource: Calling API endpoint: ${EnvConfig.fixtures}');
+
       final response = await apiClient.get(
         EnvConfig.fixtures,
         queryParameters: params,
       );
 
+      print(
+          '📄 RemoteDataSource: Received response with status code: ${response.statusCode}');
       final responseBody = response.data;
+
+      // Log response structure
+      if (responseBody is Map) {
+        print('📊 RemoteDataSource: Response structure:');
+        print('   - Results: ${responseBody['results']}');
+        print('   - Parameters: ${responseBody['parameters']}');
+        print(
+            '   - Response length: ${responseBody['response']?.length ?? 'null'}');
+      }
 
       // Check for API errors
       if (responseBody['errors'] != null &&
           responseBody['errors'] is Map &&
           responseBody['errors'].isNotEmpty) {
+        print(
+            '❌ RemoteDataSource: API Error detected: ${responseBody['errors']}');
         throw ServerException(
           message: 'API Error: ${responseBody['errors']}',
         );
@@ -349,17 +368,42 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
 
       // Check if we have results
       if (responseBody['results'] == 0) {
+        print('❌ RemoteDataSource: No results found for match ID: $matchId');
         throw ServerException(
           message: 'No match found with ID: $matchId',
         );
       }
 
       // Parse response using the fixture model
+      print(
+          '🔄 RemoteDataSource: Parsing response using FixtureResponse.fromJson()');
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
+
+      final fixtures = fixtureResponse.response.toList().cast<FixtureData>();
+      print(
+          '✅ RemoteDataSource: Successfully parsed ${fixtures.length} fixtures');
+
+      // Log detailed information about each fixture
+      for (int i = 0; i < fixtures.length; i++) {
+        final fixture = fixtures[i];
+        print('📊 RemoteDataSource: Fixture $i details:');
+        print('   - ID: ${fixture.fixture.id}');
+        print(
+            '   - Status: ${fixture.fixture.status.short} (${fixture.fixture.status.long})');
+        print(
+            '   - Teams: ${fixture.teams.home.name} vs ${fixture.teams.away.name}');
+        print('   - Events count: ${fixture.getEvents().length}');
+        print('   - Lineups count: ${fixture.getLineups().length}');
+        print('   - Statistics available: ${fixture.getStatistics() != null}');
+        print('   - Has detailed data: ${fixture.hasDetailedData}');
+      }
+
       logger.info('Retrieved match details for match ID: $matchId');
+      print(
+          '🎯 RemoteDataSource: Returning ${fixtures.length} fixtures for match ID $matchId');
 
       // Convert to List<FixtureData> for type safety and return the full list
-      return fixtureResponse.response.toList().cast<FixtureData>();
+      return fixtures;
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -723,13 +767,15 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
 
       // Check if we have results
       if (responseBody['results'] == 0) {
-        logger.info('No H2H fixtures found between teams $team1Id and $team2Id');
+        logger
+            .info('No H2H fixtures found between teams $team1Id and $team2Id');
         return [];
       }
 
       // Parse response using the fixture model
       final fixtureResponse = FixtureResponse.fromJson(responseBody);
-      logger.info('Retrieved ${fixtureResponse.results} H2H fixtures between teams $team1Id and $team2Id');
+      logger.info(
+          'Retrieved ${fixtureResponse.results} H2H fixtures between teams $team1Id and $team2Id');
 
       // Convert to List<FixtureData> and return
       return fixtureResponse.response.toList().cast<FixtureData>();
@@ -737,12 +783,14 @@ class FootballRemoteDataSourceImpl implements FootballRemoteDataSource {
       if (e is ServerException) {
         // If we hit a rate limit, log and return empty list rather than failing
         if (e.code == 429) {
-          logger.warning('Rate limit hit when fetching H2H fixtures, returning empty list');
+          logger.warning(
+              'Rate limit hit when fetching H2H fixtures, returning empty list');
           return [];
         }
         rethrow;
       }
-      logger.error('Error fetching H2H fixtures for teams $team1Id vs $team2Id', error: e);
+      logger.error('Error fetching H2H fixtures for teams $team1Id vs $team2Id',
+          error: e);
       // Return empty list instead of throwing to make app more resilient
       return [];
     }

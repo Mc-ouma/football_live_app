@@ -6,6 +6,8 @@ import 'package:football_live_app/core/network/network_info.dart';
 import 'package:football_live_app/presentation/blocs/auth/auth_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/live_matches_bloc.dart';
 import 'package:football_live_app/presentation/blocs/football/prediction_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/fixture_details_bloc.dart';
+import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/pages/home/home_page.dart';
 import 'package:football_live_app/presentation/pages/splash_screen.dart';
 import 'package:provider/provider.dart';
@@ -32,6 +34,10 @@ class MyApp extends StatelessWidget {
         BlocProvider<LiveMatchesBloc>(create: (_) => getIt<LiveMatchesBloc>()),
         BlocProvider<PredictionBloc>(create: (_) => getIt<PredictionBloc>()),
         BlocProvider<AuthBloc>(create: (_) => getIt<AuthBloc>()),
+        // Add missing BLoCs that are referenced in the app
+        BlocProvider<FixtureDetailsBloc>(
+            create: (_) => getIt<FixtureDetailsBloc>()),
+        BlocProvider<StandingsBloc>(create: (_) => getIt<StandingsBloc>()),
       ],
       child: MaterialApp(
         title: 'Football Live App',

@@ -41,51 +41,54 @@ class RateLimiterInterceptor extends Interceptor {
   ) async {
     final now = DateTime.now();
 
-    // Create new mutex to lock the queue
-    var currentMutex = _mutex;
-    var nextMutex = Completer<void>();
-    _mutex.future.then((_) {
-      try {
-        _cleanupOldRequests(now);
+    // Wait for any pending operations to complete
+    await _mutex.future;
 
-        if (_requestTimestamps.length >= maxRequests) {
-          final oldestTs = _requestTimestamps.first;
-          final windowEndTime =
-              oldestTs.add(Duration(milliseconds: timeWindowMs));
-          final waitTimeMs = windowEndTime.difference(now).inMilliseconds;
+    try {
+      _cleanupOldRequests(now);
 
-          if (waitTimeMs > 0) {
-            logger?.info(
-              'Rate limiting applied - delaying request by ${waitTimeMs}ms ' +
-                  'to stay within limit of $maxRequests requests per ${timeWindowMs}ms',
-            );
+      if (_requestTimestamps.length >= maxRequests) {
+        final oldestTs = _requestTimestamps.first;
+        final windowEndTime =
+            oldestTs.add(Duration(milliseconds: timeWindowMs));
+        final waitTimeMs = windowEndTime.difference(now).inMilliseconds;
 
-            // Release the mutex and delay
-            nextMutex.complete();
-            return Future.delayed(Duration(milliseconds: waitTimeMs), () {
-              // Now we can make the request
-              _requestTimestamps.add(DateTime.now());
-              handler.next(options);
-            });
-          }
+        if (waitTimeMs > 0) {
+          logger?.info(
+            'Rate limiting applied - delaying request by ${waitTimeMs}ms ' +
+                'to stay within limit of $maxRequests requests per ${timeWindowMs}ms',
+          );
+
+          // Create a new mutex for the next operation
+          _mutex = Completer<void>();
+
+          // Delay and then proceed with the request
+          await Future.delayed(Duration(milliseconds: waitTimeMs));
+          _requestTimestamps.add(DateTime.now());
+          _mutex.complete();
+          handler.next(options);
+          return;
         }
-
-        // Add current request timestamp and proceed
-        _requestTimestamps.add(now);
-
-        // Log the current usage
-        final usage = '${_requestTimestamps.length}/$maxRequests';
-        logger?.debug('API Request: $usage in current window');
-      } finally {
-        nextMutex.complete();
       }
-    });
 
-    // Replace the old mutex with the new one
-    _mutex = nextMutex;
+      // Add current request timestamp and proceed
+      _requestTimestamps.add(now);
 
-    // Continue with the request if we haven't returned early
-    if (currentMutex.isCompleted) {
+      // Log the current usage
+      final usage = '${_requestTimestamps.length}/$maxRequests';
+      logger?.debug('API Request: $usage in current window');
+
+      // Create a new mutex for the next operation
+      _mutex = Completer<void>();
+      _mutex.complete();
+
+      handler.next(options);
+    } catch (e) {
+      logger?.error('Error in rate limiter: $e');
+      // Ensure mutex is completed even on error
+      if (!_mutex.isCompleted) {
+        _mutex.complete();
+      }
       handler.next(options);
     }
   }

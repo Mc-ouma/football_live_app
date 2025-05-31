@@ -3,6 +3,7 @@ import 'package:football_live_app/domain/usecases/football/get_match_details.dar
 import 'package:football_live_app/domain/usecases/football/get_head_to_head_fixtures.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_event.dart';
 import 'package:football_live_app/presentation/blocs/football/fixture_details_state.dart';
+import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 
 class FixtureDetailsBloc
     extends Bloc<FixtureDetailsEvent, FixtureDetailsState> {
@@ -22,6 +23,8 @@ class FixtureDetailsBloc
     LoadFixtureDetails event,
     Emitter<FixtureDetailsState> emit,
   ) async {
+    print(
+        '🔄 FixtureDetailsBloc: Starting to load fixture details for ID: ${event.fixtureId}');
     emit(FixtureDetailsLoading());
     await _fetchFixtureDetails(event.fixtureId, emit);
   }
@@ -30,6 +33,8 @@ class FixtureDetailsBloc
     RefreshFixtureDetails event,
     Emitter<FixtureDetailsState> emit,
   ) async {
+    print(
+        '🔄 FixtureDetailsBloc: Refreshing fixture details for ID: ${event.fixtureId}');
     await _fetchFixtureDetails(event.fixtureId, emit);
   }
 
@@ -67,11 +72,39 @@ class FixtureDetailsBloc
     int fixtureId,
     Emitter<FixtureDetailsState> emit,
   ) async {
+    print(
+        '📡 FixtureDetailsBloc: Calling repository.getMatchDetails() for ID: $fixtureId');
     final result = await getMatchDetails(Params(matchId: fixtureId));
 
     result.fold(
-      (failure) => emit(FixtureDetailsError(failure.message)),
-      (fixtures) => emit(FixtureDetailsLoaded(fixtures)),
+      (failure) {
+        print(
+            '❌ FixtureDetailsBloc: Failed to fetch fixture details for ID $fixtureId: ${failure.message}');
+        emit(FixtureDetailsError(failure.message));
+      },
+      (fixtures) {
+        print(
+            '✅ FixtureDetailsBloc: Successfully received ${fixtures.length} fixtures for ID $fixtureId');
+        if (fixtures.isNotEmpty) {
+          final fixture = fixtures.first;
+          print(
+              '📊 FixtureDetailsBloc: Fixture data analysis for ID $fixtureId:');
+          print('   - Events: ${fixture.getEvents().length} events found');
+          print('   - Lineups: ${fixture.getLineups().length} lineups found');
+          print(
+              '   - Statistics: ${fixture.getStatistics() != null ? 'Available' : 'Not available'}');
+          print(
+              '   - Match status: ${fixture.fixture.status.short} (${fixture.fixture.status.long})');
+
+          // Check for detailed data
+          if (fixture.hasDetailedData) {
+            print('   - ✅ Detailed data is available');
+          } else {
+            print('   - ⚠️  Detailed data is NOT available');
+          }
+        }
+        emit(FixtureDetailsLoaded(fixtures));
+      },
     );
   }
 }

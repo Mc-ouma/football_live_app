@@ -11,17 +11,31 @@ class FixtureDataProvider {
   /// Gets the most complete fixture data available, combining data from multiple sources
   static FixtureData getBestFixtureData(
       BuildContext context, FixtureData initialFixture) {
+    print(
+        '🔍 FixtureDataProvider.getBestFixtureData() called for fixture ID: ${initialFixture.fixture.id}');
+
     final state = context.watch<FixtureDetailsBloc>().state;
+    print('   - Current BLoC state: ${state.runtimeType}');
 
     // If we have loaded detailed fixture data, use that
     if (state is FixtureDetailsLoaded && state.hasFixtures) {
       final loadedFixture = state.fixture;
       if (loadedFixture != null && loadedFixture.hasDetailedData) {
+        print('   - ✅ Using detailed fixture data from BLoC state');
+        print(
+            '   - Detailed data includes: ${loadedFixture.getEvents().length} events, ${loadedFixture.getLineups().length} lineups, stats: ${loadedFixture.getStatistics() != null}');
         return loadedFixture;
+      } else {
+        print('   - ⚠️  BLoC has fixture data but no detailed data');
       }
+    } else {
+      print('   - ⚠️  BLoC state does not contain loaded fixtures');
     }
 
     // Otherwise, use the initial fixture data
+    print('   - 📋 Using initial fixture data (may be limited)');
+    print(
+        '   - Initial data includes: ${initialFixture.getEvents().length} events, ${initialFixture.getLineups().length} lineups, stats: ${initialFixture.getStatistics() != null}');
     return initialFixture;
   }
 
@@ -67,6 +81,9 @@ class FixtureDataProvider {
 
   /// Request fresh fixture data from the API
   static void requestFixtureRefresh(BuildContext context, int fixtureId) {
+    print(
+        '🔄 FixtureDataProvider.requestFixtureRefresh() called for fixture ID: $fixtureId');
+
     try {
       // Check if we've refreshed this fixture recently (within the last 30 seconds)
       final now = DateTime.now();
@@ -76,7 +93,7 @@ class FixtureDataProvider {
         final timeSinceLastRefresh = now.difference(lastRefresh);
         if (timeSinceLastRefresh.inSeconds < 30) {
           print(
-              'Skipping refresh for fixture $fixtureId - last refreshed ${timeSinceLastRefresh.inSeconds}s ago');
+              '⏰ FixtureDataProvider: Skipping refresh for fixture $fixtureId - last refreshed ${timeSinceLastRefresh.inSeconds}s ago');
           return;
         }
       }
@@ -84,7 +101,8 @@ class FixtureDataProvider {
       // Update last refresh time
       _lastRefreshTimes[fixtureId] = now;
 
-      print('Requesting fresh fixture data for match ID: $fixtureId');
+      print(
+          '📡 FixtureDataProvider: Requesting fresh fixture data for match ID: $fixtureId');
       context.read<FixtureDetailsBloc>().add(RefreshFixtureDetails(fixtureId));
 
       // Use SchedulerBinding to show snackbar after the current frame

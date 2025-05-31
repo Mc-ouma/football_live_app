@@ -42,10 +42,27 @@ class StatsTabEnhanced extends StatelessWidget {
         // Get statistics data
         final stats = fixtureToUse.getStatistics();
 
+        // Log statistics data for debugging
+        print(
+            '📊 StatsTabEnhanced: Analyzing statistics for fixture ID ${fixtureToUse.fixture.id}:');
+        print('   - Statistics available: ${stats != null}');
+        print(
+            '   - Match status: ${fixtureToUse.fixture.status.short} (${fixtureToUse.fixture.status.long})');
+        print('   - Has detailed data: ${fixtureToUse.hasDetailedData}');
+
+        if (stats != null) {
+          print('   - Home team stats: ${stats.home?.length ?? 0} categories');
+          print('   - Away team stats: ${stats.away?.length ?? 0} categories');
+          if (stats.home?.isNotEmpty == true) {
+            print(
+                '   - Sample stat: ${stats.home!.first.type} - ${stats.home!.first.value}');
+          }
+        }
+
         // If we don't have stats data yet, try requesting it
         if (stats == null && state is! FixtureDetailsLoading) {
           print(
-              'No statistics found for match ID: ${fixture.fixture.id}, requesting data...');
+              '⚠️  StatsTabEnhanced: No statistics found for match ID: ${fixture.fixture.id}, requesting data...');
           // Use post-frame callback to avoid calling during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {

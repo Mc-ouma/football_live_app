@@ -684,11 +684,18 @@ class _FixturesTabState extends State<FixturesTab>
                             });
                           }
 
-                          // Sort leagues by name for consistency
+                          // Sort leagues by country first, then by name for consistency
                           final sortedLeagueIds = groupedMatches.keys.toList()
                             ..sort((a, b) {
                               final leagueA = groupedMatches[a]!.first.league;
                               final leagueB = groupedMatches[b]!.first.league;
+                              // First sort by country
+                              final countryComparison =
+                                  leagueA.country.compareTo(leagueB.country);
+                              if (countryComparison != 0) {
+                                return countryComparison;
+                              }
+                              // If countries are the same, sort by league name
                               return leagueA.name.compareTo(leagueB.name);
                             });
 
@@ -840,17 +847,88 @@ class _FixturesTabState extends State<FixturesTab>
                                                       overflow:
                                                           TextOverflow.ellipsis,
                                                     ),
-                                                    Text(
-                                                      league.country,
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .bodySmall
-                                                          ?.copyWith(
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .colorScheme
-                                                                .onSurfaceVariant,
+                                                    Row(
+                                                      children: [
+                                                        if (league.flag != null)
+                                                          Container(
+                                                            width: 16,
+                                                            height: 12,
+                                                            margin:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    right: 6),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          2),
+                                                              boxShadow: [
+                                                                BoxShadow(
+                                                                  color: Colors
+                                                                      .black
+                                                                      .withOpacity(
+                                                                          0.1),
+                                                                  blurRadius: 2,
+                                                                  offset:
+                                                                      const Offset(
+                                                                          0, 1),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            child: ClipRRect(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          2),
+                                                              child:
+                                                                  Image.network(
+                                                                league.flag!,
+                                                                fit: BoxFit
+                                                                    .cover,
+                                                                errorBuilder:
+                                                                    (context,
+                                                                        error,
+                                                                        stackTrace) {
+                                                                  return Container(
+                                                                    color: Theme.of(
+                                                                            context)
+                                                                        .colorScheme
+                                                                        .surfaceVariant,
+                                                                    child: Icon(
+                                                                      Icons
+                                                                          .flag,
+                                                                      size: 8,
+                                                                      color: Theme.of(
+                                                                              context)
+                                                                          .colorScheme
+                                                                          .onSurfaceVariant,
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ),
                                                           ),
+                                                        Expanded(
+                                                          child: Text(
+                                                            league.country,
+                                                            style: Theme.of(
+                                                                    context)
+                                                                .textTheme
+                                                                .bodySmall
+                                                                ?.copyWith(
+                                                                  color: Theme.of(
+                                                                          context)
+                                                                      .colorScheme
+                                                                      .onSurfaceVariant,
+                                                                ),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),

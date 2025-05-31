@@ -31,10 +31,10 @@ class H2HTab extends StatelessWidget {
             onRetry: () {
               // Request H2H data using the specific event
               context.read<FixtureDetailsBloc>().add(LoadHeadToHeadFixtures(
-                team1Id: fixture.teams.home.id,
-                team2Id: fixture.teams.away.id,
-                limit: 10,
-              ));
+                    team1Id: fixture.teams.home.id,
+                    team2Id: fixture.teams.away.id,
+                    limit: 10,
+                  ));
             },
           );
         }
@@ -56,10 +56,10 @@ class H2HTab extends StatelessWidget {
             if (context.mounted) {
               // Request H2H data specifically
               context.read<FixtureDetailsBloc>().add(LoadHeadToHeadFixtures(
-                team1Id: fixture.teams.home.id,
-                team2Id: fixture.teams.away.id,
-                limit: 10,
-              ));
+                    team1Id: fixture.teams.home.id,
+                    team2Id: fixture.teams.away.id,
+                    limit: 10,
+                  ));
             }
           });
         }
@@ -85,11 +85,13 @@ class H2HTab extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () {
-                    context.read<FixtureDetailsBloc>().add(LoadHeadToHeadFixtures(
-                      team1Id: fixture.teams.home.id,
-                      team2Id: fixture.teams.away.id,
-                      limit: 10,
-                    ));
+                    context
+                        .read<FixtureDetailsBloc>()
+                        .add(LoadHeadToHeadFixtures(
+                          team1Id: fixture.teams.home.id,
+                          team2Id: fixture.teams.away.id,
+                          limit: 10,
+                        ));
                   },
                   icon: const Icon(Icons.refresh),
                   label: const Text('Check for Updates'),

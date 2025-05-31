@@ -148,7 +148,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetLiveMatches(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetUpcomingFixtures(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetMatchDetails(sl<FootballRepository>()));
-  sl.registerLazySingleton(() => GetHeadToHeadFixtures(sl<FootballRepository>()));
+  sl.registerLazySingleton(
+      () => GetHeadToHeadFixtures(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetLeagueStandings(sl<FootballRepository>()));
   sl.registerLazySingleton(() => GetStandings(sl<FootballRepository>()));
 

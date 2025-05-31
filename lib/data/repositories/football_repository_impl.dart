@@ -193,19 +193,35 @@ class FootballRepositoryImpl implements FootballRepository {
   @override
   Future<Either<Failure, List<FixtureData>>> getMatchDetails(
       int matchId) async {
+    print('🌐 Repository: Starting getMatchDetails() for match ID: $matchId');
+
     if (await networkInfo.isConnected) {
+      print(
+          '✅ Repository: Network connection available, fetching from remote source');
       try {
+        print(
+            '📡 Repository: Calling remoteDataSource.getMatchDetails($matchId)');
         final remoteMatches = await remoteDataSource.getMatchDetails(matchId);
+        print(
+            '✅ Repository: Successfully received ${remoteMatches.length} matches from remote source');
 
         // Cache each match individually (since we now handle multiple matches)
         for (final match in remoteMatches) {
+          print(
+              '💾 Repository: Caching match data for fixture ID: ${match.fixture.id}');
           await localDataSource.cacheMatchDetails(match);
         }
 
+        print(
+            '🎯 Repository: Returning ${remoteMatches.length} matches for ID $matchId');
         return Right(remoteMatches);
       } on NotFoundException catch (e) {
+        print(
+            '❌ Repository: NotFoundException for match ID $matchId: ${e.message}');
         return Left(NotFoundFailure(message: e.message));
       } on RateLimitException catch (e) {
+        print(
+            '⏰ Repository: Rate limit hit for match ID $matchId, attempting cached data: ${e.message}');
         logger.warning('API rate limit hit, returning cached data', error: e);
         try {
           // When handling from cache, we'll need to adapt the local data source
@@ -213,21 +229,32 @@ class FootballRepositoryImpl implements FootballRepository {
           final localMatch = await localDataSource.getCachedMatchDetails(
             matchId,
           );
+          print('✅ Repository: Retrieved cached data for match ID $matchId');
           // Return as a list for consistency
           return Right([localMatch]);
         } on CacheException catch (e) {
+          print(
+              '❌ Repository: Cache error for match ID $matchId: ${e.message}');
           return Left(CacheFailure(message: e.message));
         }
       } on ServerException catch (e) {
+        print(
+            '❌ Repository: Server error for match ID $matchId: ${e.message} (code: ${e.code})');
         return Left(ServerFailure(message: e.message, code: e.code));
       }
     } else {
+      print(
+          '🔌 Repository: No internet connection, attempting to fetch from local cache for match ID $matchId');
       logger.info('No internet connection, trying to fetch from local cache');
       try {
         final localMatch = await localDataSource.getCachedMatchDetails(matchId);
+        print(
+            '✅ Repository: Retrieved cached data for match ID $matchId (offline mode)');
         // Return as a list for consistency
         return Right([localMatch]);
       } on CacheException catch (e) {
+        print(
+            '❌ Repository: Cache error for match ID $matchId (offline mode): ${e.message}');
         return Left(CacheFailure(message: e.message));
       }
     }
@@ -476,12 +503,12 @@ class FootballRepositoryImpl implements FootballRepository {
           team2Id: team2Id,
           limit: limit,
         );
-        
+
         // Cache H2H fixtures individually if needed
         for (final fixture in h2hFixtures) {
           await localDataSource.cacheMatchDetails(fixture);
         }
-        
+
         return Right(h2hFixtures);
       } on NotFoundException catch (e) {
         return Left(NotFoundFailure(message: e.message));

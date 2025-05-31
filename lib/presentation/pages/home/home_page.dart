@@ -174,34 +174,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Football Live',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: ResponsiveHelper.getFontSize(context, 20),
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 3.0,
-                          color: Colors.black.withOpacity(0.3),
-                          offset: const Offset(1.0, 1.0),
-                        ),
-                      ],
+                  Flexible(
+                    child: Text(
+                      'Football Live',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: ResponsiveHelper.getFontSize(context, 18),
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 3.0,
+                            color: Colors.black.withOpacity(0.3),
+                            offset: const Offset(1.0, 1.0),
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    _tabTitles[_currentIndex],
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: ResponsiveHelper.getFontSize(context, 14),
-                      shadows: [
-                        Shadow(
-                          blurRadius: 2.0,
-                          color: Colors.black.withOpacity(0.2),
-                          offset: const Offset(0.5, 0.5),
-                        ),
-                      ],
+                  const SizedBox(height: 2),
+                  Flexible(
+                    child: Text(
+                      _tabTitles[_currentIndex],
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: ResponsiveHelper.getFontSize(context, 12),
+                        shadows: [
+                          Shadow(
+                            blurRadius: 2.0,
+                            color: Colors.black.withOpacity(0.2),
+                            offset: const Offset(0.5, 0.5),
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

@@ -123,15 +123,107 @@ class FixtureData with _$FixtureData {
   }) = _FixtureDataLive;
 
   factory FixtureData.fromJson(Map<String, dynamic> json) {
-    // For now, return a basic fixture regardless of the type
-    // Once the generated code exists we can use the specific constructors
-    return FixtureData(
-      fixture: Fixture.fromJson(json['fixture'] as Map<String, dynamic>),
-      league: League.fromJson(json['league'] as Map<String, dynamic>),
-      teams: Teams.fromJson(json['teams'] as Map<String, dynamic>),
-      goals: Goals.fromJson(json['goals'] as Map<String, dynamic>),
-      score: Score.fromJson(json['score'] as Map<String, dynamic>),
-    );
+    try {
+      // Parse core fixture data
+      final fixture = Fixture.fromJson(json['fixture'] as Map<String, dynamic>);
+      final league = League.fromJson(json['league'] as Map<String, dynamic>);
+      final teams = Teams.fromJson(json['teams'] as Map<String, dynamic>);
+      final goals = Goals.fromJson(json['goals'] as Map<String, dynamic>);
+      final score = Score.fromJson(json['score'] as Map<String, dynamic>);
+
+      // Check for additional data to determine which constructor to use
+      final hasEvents = json['events'] != null;
+      final hasLineups = json['lineups'] != null;
+      final hasStatistics = json['statistics'] != null;
+      final hasPlayers = json['players'] != null;
+
+      // Parse optional data
+      List<Event>? events;
+      List<LineupData>? lineups;
+      Statistics? statistics;
+      List<PlayerStatistics>? players;
+
+      if (hasEvents) {
+        try {
+          events = (json['events'] as List<dynamic>)
+              .map((eventJson) =>
+                  Event.fromJson(eventJson as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          print('Error parsing events: $e');
+          events = [];
+        }
+      }
+
+      if (hasLineups) {
+        try {
+          lineups = (json['lineups'] as List<dynamic>)
+              .map((lineupJson) =>
+                  LineupData.fromJson(lineupJson as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          print('Error parsing lineups: $e');
+          lineups = [];
+        }
+      }
+
+      if (hasStatistics) {
+        try {
+          statistics =
+              Statistics.fromJson(json['statistics'] as Map<String, dynamic>);
+        } catch (e) {
+          print('Error parsing statistics: $e');
+          statistics = null;
+        }
+      }
+
+      if (hasPlayers) {
+        try {
+          players = (json['players'] as List<dynamic>)
+              .map((playerJson) =>
+                  PlayerStatistics.fromJson(playerJson as Map<String, dynamic>))
+              .toList();
+        } catch (e) {
+          print('Error parsing players: $e');
+          players = [];
+        }
+      }
+
+      // Determine which constructor to use based on available data
+      if (hasEvents || hasLineups || hasStatistics || hasPlayers) {
+        // Create detailed fixture with all available data
+        return FixtureData.detailed(
+          fixture: fixture,
+          league: league,
+          teams: teams,
+          goals: goals,
+          score: score,
+          events: events,
+          lineups: lineups,
+          statistics: statistics,
+          players: players,
+        );
+      } else {
+        // Create basic fixture
+        return FixtureData(
+          fixture: fixture,
+          league: league,
+          teams: teams,
+          goals: goals,
+          score: score,
+        );
+      }
+    } catch (e) {
+      print('Error parsing FixtureData: $e');
+      // Return a basic fixture as fallback
+      return FixtureData(
+        fixture: Fixture.fromJson(json['fixture'] as Map<String, dynamic>),
+        league: League.fromJson(json['league'] as Map<String, dynamic>),
+        teams: Teams.fromJson(json['teams'] as Map<String, dynamic>),
+        goals: Goals.fromJson(json['goals'] as Map<String, dynamic>),
+        score: Score.fromJson(json['score'] as Map<String, dynamic>),
+      );
+    }
   }
 }
 

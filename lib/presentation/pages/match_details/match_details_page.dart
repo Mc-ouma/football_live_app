@@ -9,13 +9,13 @@ import 'package:football_live_app/presentation/blocs/football/prediction_bloc.da
 import 'package:football_live_app/presentation/blocs/football/standings_bloc.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_converter.dart';
 import 'package:football_live_app/presentation/pages/match_details/utils/fixture_data_provider.dart';
-import 'package:football_live_app/presentation/pages/match_details/widgets/events_tab.dart';
+import 'package:football_live_app/presentation/pages/match_details/widgets/events_tab_enhanced.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/h2h_tab.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/lineup_tab_enhanced.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/match_score_header.dart';
-import 'package:football_live_app/presentation/pages/match_details/widgets/predictions_tab.dart';
+import 'package:football_live_app/presentation/pages/match_details/widgets/predictions_tab_enhanced.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/stats_tab_enhanced.dart';
-import 'package:football_live_app/presentation/pages/match_details/widgets/summary_tab.dart';
+import 'package:football_live_app/presentation/pages/match_details/widgets/summary_tab_enhanced.dart';
 import 'package:football_live_app/presentation/pages/match_details/widgets/table_tab.dart';
 import 'package:football_live_app/presentation/utils/responsive_helper.dart';
 import 'package:football_live_app/presentation/widgets/error_widget.dart';
@@ -130,6 +130,9 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
         // - Statistics (possession, shots, etc.)
         // - Player data
         try {
+          print(
+              '🚀 MatchDetailsPage: Starting comprehensive data load for fixture ID: $fixtureId');
+
           // Show loading indicator for better UX
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -143,7 +146,7 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
           // This ensures we follow the app's rate limiting policy
           FixtureDataProvider.requestFixtureRefresh(context, fixtureId);
           print(
-              'Fetching complete fixture details for ID: $fixtureId using FixtureDataProvider');
+              '📡 MatchDetailsPage: Fetching complete fixture details for ID: $fixtureId using FixtureDataProvider');
         } catch (e) {
           print('Error loading fixture details: $e');
           // Show error message
@@ -262,7 +265,8 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                 team2Id: widget.fixture.teams.away.id,
                 limit: 10, // Load last 10 H2H matches
               ));
-              print('Loading H2H data for teams: ${widget.fixture.teams.home.name} vs ${widget.fixture.teams.away.name}');
+              print(
+                  'Loading H2H data for teams: ${widget.fixture.teams.home.name} vs ${widget.fixture.teams.away.name}');
             }
           } catch (e) {
             print('Error accessing FixtureDetailsBloc for H2H: $e');
@@ -629,10 +633,10 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                     });
                   } */
 
-                  // Create widgets for each tab using the imported widgets
-                  final summaryWidget = SummaryTab(
+                  // Create widgets for each tab using the enhanced widgets
+                  final summaryWidget = SummaryTabEnhanced(
                       key: const ValueKey('summary'), fixture: fixtureToUse);
-                  final eventsWidget = EventsTab(
+                  final eventsWidget = EventsTabEnhanced(
                       key: const ValueKey('events'), fixture: fixtureToUse);
                   // Use enhanced lineup tab for better data handling
                   final lineupWidget = LineupTabEnhanced(
@@ -644,9 +648,10 @@ class _MatchDetailsPageState extends State<MatchDetailsPage>
                       H2HTab(key: ValueKey('h2h'), fixture: fixtureToUse);
                   final tableWidget =
                       TableTab(key: ValueKey('table'), fixture: fixtureToUse);
-                  final predictionsWidget = PredictionsTab(
+                  final predictionsWidget = PredictionsTabEnhanced(
                       key: ValueKey('predictions'),
-                      fixtureId: fixtureToUse.fixture.id);
+                      fixtureId: fixtureToUse.fixture.id,
+                      fixture: fixtureToUse);
 
                   return Stack(
                     children: [

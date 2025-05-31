@@ -57,6 +57,23 @@ class LineupTabEnhanced extends StatelessWidget {
         // Get lineups using the selected fixture
         List<LineupData> lineups = fixtureToUse.getLineups();
 
+        // Log lineup data for debugging
+        print(
+            '📊 LineupTabEnhanced: Analyzing lineup data for fixture ID ${fixtureToUse.fixture.id}:');
+        print('   - Lineups found: ${lineups.length}');
+        print(
+            '   - Match status: ${fixtureToUse.fixture.status.short} (${fixtureToUse.fixture.status.long})');
+        print('   - Has detailed data: ${fixtureToUse.hasDetailedData}');
+
+        if (lineups.isNotEmpty) {
+          for (int i = 0; i < lineups.length; i++) {
+            final lineup = lineups[i];
+            print('   - Lineup $i: ${lineup.team.name} (${lineup.formation})');
+            print('     - Starting XI: ${lineup.startXI.length} players');
+            print('     - Substitutes: ${lineup.substitutes.length} players');
+          }
+        }
+
         // If lineups are empty, show a helpful message
         if (lineups.isEmpty) {
           return Center(
